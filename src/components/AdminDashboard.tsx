@@ -142,7 +142,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const productToUpdate = products.find(p => p.id === id);
     if (!productToUpdate) return;
 
-    const nextColors = productToUpdate.colors.map((c, i) => (i === 0 ? { ...c, price: updatedPrice } : c));
+    // تأمين المصفوفة لو مش موجودة
+    const nextColors = (productToUpdate.colors || []).map((c, i) => (i === 0 ? { ...c, price: updatedPrice } : c));
 
     try {
       await updateDoc(doc(db, 'products', id), {
@@ -210,7 +211,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleColorImageUpload = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 200000) {
+      if (file.size > 800000) {
         alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت لتعمل مع السحابة.');
         return;
       }
@@ -457,6 +458,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {loadingProducts ? (
                 <div className="text-center py-10 font-bold text-[#8C6D46]">جاري تحميل المنتجات من السحابة...</div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-[#EDE5D8] p-8">
+                  <p className="text-sm font-bold text-[#1C1917] mb-1">لا توجد منتجات مسجلة حتى الآن</p>
+                  <p className="text-xs text-[#78716C]">قم بإضافة منتجاتك من تبويب "إضافة عفش / طاولة جديدة".</p>
+                </div>
               ) : (
                 <div className="border border-[#E5DDD0] rounded-2xl overflow-x-auto shadow-xs bg-white">
                   <table className="w-full text-right text-xs">
@@ -478,10 +484,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         return (
                           <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
-                            <td className="p-3.5 font-mono text-[#78716C]">#{p.itemNumber}</td>
+                            <td className="p-3.5 font-mono text-[#78716C]">#{p.itemNumber || '-'}</td>
                             <td className="p-3.5">
+                              {/* هنا ضفنا ?. عشان نمنع الشاشة البيضاء */}
                               <img
-                                src={p.colors[0]?.image || p.images[0]}
+                                src={p.colors?.[0]?.image || p.images?.[0] || 'https://via.placeholder.com/150'}
                                 alt=""
                                 className="w-12 h-12 rounded-lg object-cover border border-[#E9E1D4] bg-[#F4EFE6]"
                               />
@@ -490,10 +497,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <p className="font-bold text-[#1C1917] leading-snug">{p.name}</p>
                               <p className="text-[11px] text-[#8C827A] mt-0.5">{p.woodType}</p>
                             </td>
-                            <td className="p-3.5 text-[#57534E] font-medium">{p.categoryLabel}</td>
+                            <td className="p-3.5 text-[#57534E] font-medium">{p.categoryLabel || p.category}</td>
                             <td className="p-3.5">
                               <div className="flex items-center gap-1">
-                                {p.colors.map((c) => (
+                                {/* هنا ضفنا ?. عشان نمنع الشاشة البيضاء */}
+                                {p.colors?.map((c) => (
                                   <span
                                     key={c.name}
                                     title={`${c.name} (${c.price} د.أ)`}
@@ -508,7 +516,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <input
                                   type="number"
                                   step="0.5"
-                                  value={currentPriceVal}
+                                  value={currentPriceVal || 0}
                                   onChange={(e) => handlePriceChange(p.id, Number(e.target.value))}
                                   className="w-20 py-1 px-2 border border-[#DDD5C7] rounded-lg font-mono font-bold text-[#1C1917] text-left"
                                 />
@@ -617,7 +625,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       'ملغي': 'bg-rose-50 text-rose-800 border-rose-200',
                     };
 
-                    const orderDate = new Date(order.createdAt).toLocaleString('ar-JO', {
+                    const orderDate = new Date(order.createdAt || Date.now()).toLocaleString('ar-JO', {
                       dateStyle: 'medium',
                       timeStyle: 'short',
                     });
@@ -709,7 +717,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <Phone className="w-3 h-3" />
                               </a>
                               <a
-                                href={`https://wa.me/962${order.phone.replace(/^0+/, '')}`}
+                                href={`https://wa.me/962${order.phone?.replace(/^0+/, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-1 rounded bg-[#EDF4EE] hover:bg-[#DEEFE0] text-[#2E5339] border border-[#C5DEC8]"
@@ -758,26 +766,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               القطع المطلوبة:
                             </span>
                             <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                              {order.items.map((it, idx) => (
+                              {order.items?.map((it, idx) => (
                                 <div
                                   key={idx}
                                   className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-[#E9E1D4]"
                                 >
                                   <div className="flex items-center gap-2">
                                     <img
-                                      src={it.selectedColor.image || it.product.images[0]}
+                                      src={it.selectedColor?.image || it.product?.images?.[0] || 'https://via.placeholder.com/150'}
                                       alt=""
                                       className="w-8 h-8 rounded-md object-cover"
                                     />
                                     <div>
-                                      <p className="font-bold text-[#1C1917]">{it.product.name}</p>
+                                      <p className="font-bold text-[#1C1917]">{it.product?.name || 'قطعة'}</p>
                                       <span className="text-[10px] text-[#8C6D46]">
-                                        اللون: {it.selectedColor.name} | الكمية: {it.quantity}
+                                        اللون: {it.selectedColor?.name || 'افتراضي'} | الكمية: {it.quantity || 1}
                                       </span>
                                     </div>
                                   </div>
                                   <span className="font-mono font-bold text-[#1C1917]">
-                                    {(it.selectedColor.price * it.quantity).toFixed(2)} د.أ
+                                    {((it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ
                                   </span>
                                 </div>
                               ))}
@@ -785,10 +793,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             <div className="pt-2 border-t border-[#E5DDD0] flex justify-between items-center text-xs">
                               <span className="text-[#78716C]">
-                                المجموع (شامل التوصيل {order.deliveryFee === 0 ? 'مجاني' : order.deliveryFee + ' د.أ'}):
+                                المجموع (شامل التوصيل {order.deliveryFee === 0 ? 'مجاني' : (order.deliveryFee || 0) + ' د.أ'}):
                               </span>
                               <strong className="text-sm font-black text-[#1C1917] font-mono">
-                                {order.total.toFixed(2)} دينار أردني
+                                {(order.total || 0).toFixed(2)} دينار أردني
                               </strong>
                             </div>
                           </div>
@@ -1159,16 +1167,17 @@ interface EditProductModalProps {
 }
 
 const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, onSave }) => {
-  const [name, setName] = useState(product.name);
-  const [basePrice, setBasePrice] = useState(product.basePrice);
-  const [category, setCategory] = useState(product.category);
-  const [woodType, setWoodType] = useState(product.woodType);
-  const [dimensions, setDimensions] = useState(product.dimensions);
-  const [warranty, setWarranty] = useState(product.warranty);
-  const [description, setDescription] = useState(product.description);
-  const [colors, setColors] = useState<ProductColor[]>(product.colors);
+  const [name, setName] = useState(product.name || '');
+  const [basePrice, setBasePrice] = useState(product.basePrice || 0);
+  const [category, setCategory] = useState(product.category || 'center-tables');
+  const [woodType, setWoodType] = useState(product.woodType || '');
+  const [dimensions, setDimensions] = useState(product.dimensions || '');
+  const [warranty, setWarranty] = useState(product.warranty || '');
+  const [description, setDescription] = useState(product.description || '');
+  // تأمين المصفوفة هنا كمان
+  const [colors, setColors] = useState<ProductColor[]>(product.colors || []);
 
-  const categoryLabels = {
+  const categoryLabels: Record<string, string> = {
     'center-tables': 'طاولات وسط وصالون',
     'tv-tables': 'طاولات شاشة وتلفزيون',
     'fireplace-tables': 'طاولات شاشة مع مدفأة',
@@ -1267,7 +1276,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
       name,
       basePrice: Number(basePrice),
       category,
-      categoryLabel: categoryLabels[category],
+      categoryLabel: categoryLabels[category] || category,
       woodType,
       dimensions,
       warranty,
@@ -1285,7 +1294,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
         <div className="p-5 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
           <div>
             <h3 className="text-base font-bold text-[#1C1917]">
-              تعديل القطعة رقم #{product.itemNumber}: {product.name}
+              تعديل القطعة رقم #{product.itemNumber || '-'}: {product.name}
             </h3>
             <p className="text-xs text-[#78716C]">
               تعديل الصور بالزوايا المختلفة، أسعار الألوان، والمواصفات (يُحفظ بشكل دائم لجميع الروابط والأجهزة)
