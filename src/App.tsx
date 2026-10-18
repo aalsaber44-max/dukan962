@@ -11,44 +11,60 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { Footer } from './components/Footer';
-import { DUKAN_PRODUCTS } from './data/dukanProducts';
 import { Product, CartItem, ProductColor } from './types/furniture';
 import { Check, Sparkles } from 'lucide-react';
 
-export default function App() {
-  // Products state (synchronized with server backend and cached in localStorage)
-  const [products, setProducts] = useState<Product[]>(() => {
-    try {
-      const saved = localStorage.getItem('dukan962_products_v3');
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
-    return DUKAN_PRODUCTS;
-  });
+// استيراد دوال Firebase
+import { collection, onSnapshot, setDoc, doc } from 'firebase/firestore';
+import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts صحيح
 
-  // Sync products with backend on mount (so mobile and laptop are always identical)
+export default function App() {
+  // 1. حالة المنتجات تبدأ فاضية وتتحدث تلقائياً من السحابة
+  const [products, setProducts] = useState<Product[]>([]);
+
+  // 2. جلب المنتجات من السحابة (Live Sync)
   useEffect(() => {
-    const fetchServerProducts = async () => {
-      try {
-        const res = await fetch('/api/products');
-        const data = await res.json();
-        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-          setProducts(data.products);
-          localStorage.setItem('dukan962_products_v3', JSON.stringify(data.products));
-        } else {
-          // Initialize server store if first run
-          await fetch('/api/products', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ products }),
-          });
+    const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const prods: Product[] = [];
+      snapshot.forEach((doc) => {
+        prods.push({ id: doc.id, ...doc.data() } as Product);
+      });
+      setProducts(prods);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 3. كود ترحيل المنتجات القديمة من المتصفح إلى السحابة (يعمل مرة واحدة فقط)
+  useEffect(() => {
+    const migrateOldProducts = async () => {
+      const savedOldProducts = localStorage.getItem('dukan962_products_v3');
+      
+      if (savedOldProducts) {
+        const oldProducts = JSON.parse(savedOldProducts);
+        
+        if (oldProducts.length > 0) {
+          const confirmMigration = window.confirm(
+            `وجدنا ${oldProducts.length} منتج محفوظ في هذا المتصفح من قبل. هل تريد رفعهم إلى السحابة (Firebase) الآن؟`
+          );
+          
+          if (confirmMigration) {
+            try {
+              for (const prod of oldProducts) {
+                await setDoc(doc(db, 'products', prod.id), prod);
+              }
+              localStorage.removeItem('dukan962_products_v3');
+              alert('تم رفع جميع المنتجات والتعديلات إلى السحابة بنجاح! 🎉');
+              window.location.reload(); 
+            } catch (error) {
+              console.error('Error migrating data:', error);
+              alert('حدث خطأ أثناء الرفع. تأكد من اتصالك بالإنترنت.');
+            }
+          }
         }
-      } catch (err) {
-        console.warn('Backend products fetch warning:', err);
       }
     };
-    fetchServerProducts();
+    // تأخير بسيط للتأكد من تحميل Firebase
+    setTimeout(migrateOldProducts, 1500); 
   }, []);
 
   // Cart state
@@ -56,9 +72,7 @@ export default function App() {
     try {
       const saved = localStorage.getItem('dukan962_cart');
       if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
+    } catch {}
     return [];
   });
 
@@ -67,9 +81,7 @@ export default function App() {
     try {
       const saved = localStorage.getItem('dukan962_wishlist');
       if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
+    } catch {}
     return [];
   });
 
@@ -104,31 +116,6 @@ export default function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
-  };
-
-  // Update products permanently (saved to server database & localStorage)
-  const handleUpdateProducts = async (nextProducts: Product[]) => {
-    setProducts(nextProducts);
-    localStorage.setItem('dukan962_products_v3', JSON.stringify(nextProducts));
-
-    try {
-      await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: nextProducts }),
-      });
-    } catch (err) {
-      console.warn('Failed to sync products to server:', err);
-    }
-  };
-
-  const handleResetDefaults = async () => {
-    setProducts(DUKAN_PRODUCTS);
-    localStorage.removeItem('dukan962_products_v3');
-    try {
-      await fetch('/api/products/reset', { method: 'POST' });
-    } catch {}
-    showToast('تمت استعادة كافة المنتجات والأسعار الأصلية لـ دكان 962');
   };
 
   // Add to cart with color & quantity
@@ -241,7 +228,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Top Banner Notice (Jordan Delivery & Cash / CliQ / Inspection) */}
+      {/* Top Banner Notice */}
       <aside aria-label="شريط العروض" className="bg-[#1C1917] text-[#EDE8E0] text-[11px] py-2 px-4 text-center border-b border-[#2C2825]">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
           <span className="text-[#D4AF37] font-bold">👑 دكان 962 (Dukan 962) للأثاث</span>
@@ -256,7 +243,7 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Navigation Header (Clicking Logo prompts Password Auth for Admin) */}
+      {/* Navigation Header */}
       <Navbar
         cartCount={cartTotalCount}
         wishlistCount={wishlist.length}
@@ -274,7 +261,7 @@ export default function App() {
       {/* Hero Section */}
       <Hero onExploreClick={scrollToCatalog} />
 
-      {/* Categories Visual Section (Dynamic Lowest Price Badges) */}
+      {/* Categories Visual Section */}
       <CategoryBoxes
         products={products}
         selectedCategory={selectedCategory}
@@ -286,7 +273,6 @@ export default function App() {
 
       {/* Catalog & Shop Section */}
       <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-        {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-4 border-b border-[#EAE3D7]">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
@@ -306,7 +292,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Filter Bar */}
         <FilterBar
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
@@ -317,14 +302,13 @@ export default function App() {
           onResetFilters={handleResetFilters}
         />
 
-        {/* Products Grid */}
         {filteredProducts.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-3xl border border-[#ECE5D9] p-8">
             <p className="text-base font-bold text-[#1C1917] mb-2">
-              لا توجد طاولات مطابقة لمعايير البحث الحالية
+              لا توجد طاولات مطابقة لمعايير البحث الحالية (أو لم يتم إضافة منتجات بعد)
             </p>
             <p className="text-xs text-[#78716C] mb-6">
-              جرّب توسيع نطاق السعر أو اختيار تصنيف آخر.
+              جرّب توسيع نطاق السعر أو اختيار تصنيف آخر، أو قم بإضافة منتجات من لوحة التحكم.
             </p>
             <button
               onClick={handleResetFilters}
@@ -349,10 +333,8 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
       <Footer onOpenAdmin={() => setIsAdminAuthOpen(true)} />
 
-      {/* Product Details Page / Modal */}
       <ProductDetailsPage
         product={selectedProductModal}
         isWishlisted={Boolean(selectedProductModal && wishlist.some((w) => w.id === selectedProductModal.id))}
@@ -361,7 +343,6 @@ export default function App() {
         onAddToCart={handleAddToCart}
       />
 
-      {/* Slide-in Cart Drawer */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -374,7 +355,6 @@ export default function App() {
         }}
       />
 
-      {/* Wishlist Drawer */}
       <WishlistDrawer
         isOpen={isWishlistOpen}
         onClose={() => setIsWishlistOpen(false)}
@@ -383,7 +363,6 @@ export default function App() {
         onAddToCart={(p) => handleAddToCart(p)}
       />
 
-      {/* Checkout Modal (with CliQ & Cash on delivery, backend order storage) */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
@@ -394,7 +373,6 @@ export default function App() {
         }}
       />
 
-      {/* Admin Security Password Auth Modal (Triggered by Logo Click) */}
       <AdminAuthModal
         isOpen={isAdminAuthOpen}
         onClose={() => setIsAdminAuthOpen(false)}
@@ -404,13 +382,10 @@ export default function App() {
         }}
       />
 
-      {/* Admin Dashboard (Orders management, price editing, new products, password settings) */}
+      {/* لوحة التحكم - تم إزالة الـ Props القديمة لأنها تتصل بـ Firebase مباشرة */}
       <AdminDashboard
         isOpen={isAdminOpen}
         onClose={() => setIsAdminOpen(false)}
-        products={products}
-        onUpdateProducts={handleUpdateProducts}
-        onResetDefaults={handleResetDefaults}
       />
     </div>
   );
