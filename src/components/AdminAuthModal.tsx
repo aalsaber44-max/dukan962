@@ -20,7 +20,10 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // 🔐 كلمة السر الجديدة المعقدة (يمكنك تغييرها من هنا في أي وقت)
+  const SECRET_PASSWORD = "Dukan962@Admin#2024!";
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) {
       setError('يرجى إدخال كلمة المرور');
@@ -30,40 +33,17 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     setLoading(true);
     setError('');
 
-    try {
-      const response = await fetch('/api/admin/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: password.trim() }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
+    // محاكاة التحميل لإعطاء طابع احترافي
+    setTimeout(() => {
+      if (password === SECRET_PASSWORD) {
         setPassword('');
         setError('');
-        onSuccess();
+        onSuccess(); // الدخول ناجح
       } else {
-        // Fallback for offline/client match
-        if (password.trim() === '962' || password.trim() === 'dukan962') {
-          setPassword('');
-          setError('');
-          onSuccess();
-        } else {
-          setError(data.message || 'كلمة المرور غير صحيحة، يرجى المحاولة مجدداً');
-        }
+        setError('كلمة المرور غير صحيحة، يرجى المحاولة مجدداً');
       }
-    } catch {
-      // Offline fallback
-      if (password.trim() === '962' || password.trim() === 'dukan962') {
-        setPassword('');
-        setError('');
-        onSuccess();
-      } else {
-        setError('كلمة المرور غير صحيحة');
-      }
-    } finally {
       setLoading(false);
-    }
+    }, 800);
   };
 
   return (
