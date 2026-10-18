@@ -1,0 +1,6 @@
+{
+  "name": "آركا للأثاث الفاخر - Arkha Fine Interiors",
+  "description": "منصة أثاث وتصميم داخلي فاخر تجمع بين الراحة الفائقة والأناقة المعمارية مع متجر متكامل وخدمة استشارات.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
