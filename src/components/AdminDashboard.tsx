@@ -210,7 +210,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleColorImageUpload = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 800000) {
+      if (file.size > 200000) {
         alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت لتعمل مع السحابة.');
         return;
       }
