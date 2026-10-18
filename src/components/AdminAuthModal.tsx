@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, KeyRound, ArrowLeft, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { X, Lock, KeyRound, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { DukanLogo } from './DukanLogo';
 
 interface AdminAuthModalProps {
@@ -131,15 +131,6 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 {error}
               </p>
             )}
-          </div>
-
-          {/* Quick Helper Note for the Owner */}
-          <div className="p-3 bg-[#FAF4E8] rounded-xl border border-[#EDE2CC] text-right">
-            <p className="text-[11px] text-[#8C6D46] leading-relaxed">
-              💡 <strong>تلميح لصاحب المتجر:</strong> كلمة المرور الافتراضية هي{' '}
-              <strong className="font-mono text-[#1C1917] font-bold">962</strong> أو{' '}
-              <strong className="font-mono text-[#1C1917] font-bold">dukan962</strong> (يمكنك تغييرها لاحقاً من داخل اللوحة).
-            </p>
           </div>
 
           <button
