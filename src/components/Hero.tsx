@@ -13,7 +13,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
         {/* Main Hero Visual Card */}
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl aspect-16/10 sm:aspect-16/9 lg:aspect-21/9 min-h-[460px]">
           <img
-            src="/src/assets/images/hero_luxury_living_1792320991767.jpg"
+            src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=1920&auto=format&fit=crop"
             alt="صالة معيشة فاخرة مع طاولات دكان 962"
             referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover object-center"
