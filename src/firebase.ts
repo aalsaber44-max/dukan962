@@ -1,11 +1,10 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// src/firebase.ts
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore"; // هذا السطر هو المسؤول عن السحابة (الحفظ)
+import { getAuth } from "firebase/auth"; // هذا للدخول (لو حبيت تستخدمه لاحقاً)
+
+// إعدادات مشروعك الخاصة
 const firebaseConfig = {
   apiKey: "AIzaSyAjTUAL-AwdEh2WiE7B6TP2TsAuNj0ypRM",
   authDomain: "dukan962-3ea92.firebaseapp.com",
@@ -16,6 +15,11 @@ const firebaseConfig = {
   measurementId: "G-5MDVDGWW7W"
 };
 
-// Initialize Firebase
+// تشغيل Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+// تصدير قاعدة البيانات (db) عشان نستخدمها في لوحة التحكم
+export const db = getFirestore(app);
+
+// تصدير المصادقة (لو احتجتها بعدين)
+export const auth = getAuth(app);
