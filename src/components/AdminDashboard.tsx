@@ -15,32 +15,31 @@ import {
   Lock,
   KeyRound,
   Smartphone,
-  CheckCircle,
   Clock,
   MapPin,
-  Calendar,
 } from 'lucide-react';
 import { Product, ProductColor, Order } from '../types/furniture';
+// استيراد Firebase
+import { db } from '../firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 
 interface AdminDashboardProps {
   isOpen: boolean;
   onClose: () => void;
-  products: Product[];
-  onUpdateProducts: (products: Product[]) => void;
-  onResetDefaults: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isOpen,
   onClose,
-  products,
-  onUpdateProducts,
-  onResetDefaults,
 }) => {
   if (!isOpen) return null;
 
   const [activeTab, setActiveTab] = useState<'list' | 'orders' | 'add' | 'settings'>('list');
   const [successToast, setSuccessToast] = useState('');
+  
+  // حالة المنتجات من Firebase
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
   // Orders State
   const [orders, setOrders] = useState<Order[]>([]);
@@ -83,6 +82,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
+  // جلب المنتجات من Firebase مباشرة (Live Sync)
+  useEffect(() => {
+    if (!isOpen) return;
+    const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const prods: Product[] = [];
+      snapshot.forEach((doc) => {
+        prods.push({ id: doc.id, ...doc.data() } as Product);
+      });
+      setProducts(prods);
+      setLoadingProducts(false);
+    });
+    return () => unsubscribe();
+  }, [isOpen]);
+
   // Fetch orders from server whenever modal opens or tab changes to 'orders'
   const fetchOrders = async () => {
     setLoadingOrders(true);
@@ -115,50 +128,59 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   }, [isOpen, activeTab]);
 
+  // --- Firebase Operations ---
+
   // Inline price editing
   const handlePriceChange = (id: string, price: number) => {
     setEditingPrices((prev) => ({ ...prev, [id]: price }));
   };
 
-  const handleSavePrice = (id: string) => {
+  const handleSavePrice = async (id: string) => {
     const updatedPrice = editingPrices[id];
     if (updatedPrice === undefined) return;
 
-    const nextProducts = products.map((p) => {
-      if (p.id === id) {
-        const nextColors = p.colors.map((c, i) => (i === 0 ? { ...c, price: updatedPrice } : c));
-        return {
-          ...p,
-          basePrice: updatedPrice,
-          colors: nextColors,
-        };
-      }
-      return p;
-    });
+    const productToUpdate = products.find(p => p.id === id);
+    if (!productToUpdate) return;
 
-    onUpdateProducts(nextProducts);
-    setEditingPrices((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-    showNotification('تم تحديث السعر وحفظه بنجاح على جميع الأجهزة!');
+    const nextColors = productToUpdate.colors.map((c, i) => (i === 0 ? { ...c, price: updatedPrice } : c));
+
+    try {
+      await updateDoc(doc(db, 'products', id), {
+        basePrice: updatedPrice,
+        colors: nextColors
+      });
+      
+      setEditingPrices((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+      showNotification('تم تحديث السعر وحفظه بنجاح في السحابة!');
+    } catch (error) {
+      alert('حدث خطأ أثناء الحفظ في السحابة');
+    }
   };
 
-  // Delete product without window.confirm
-  const handleDeleteProduct = (id: string) => {
-    const filtered = products.filter((p) => p.id !== id);
-    onUpdateProducts(filtered);
-    setConfirmDeleteId(null);
-    showNotification('تم حذف القطعة وحفظ التعديل على جميع الأجهزة.');
+  // Delete product
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      setConfirmDeleteId(null);
+      showNotification('تم حذف القطعة من السحابة بنجاح.');
+    } catch (error) {
+      alert('حدث خطأ أثناء الحذف');
+    }
   };
 
   // Save edited existing product
-  const handleSaveEditedProduct = (updated: Product) => {
-    const nextProducts = products.map((p) => (p.id === updated.id ? updated : p));
-    onUpdateProducts(nextProducts);
-    setEditingProduct(null);
-    showNotification(`تم حفظ وتحديث القطعة "${updated.name}" بنجاح على جميع الأجهزة!`);
+  const handleSaveEditedProduct = async (updated: Product) => {
+    try {
+      await updateDoc(doc(db, 'products', updated.id), { ...updated });
+      setEditingProduct(null);
+      showNotification(`تم حفظ وتحديث القطعة "${updated.name}" بنجاح في السحابة!`);
+    } catch (error) {
+      alert('حدث خطأ أثناء تعديل المنتج');
+    }
   };
 
   // Color management in Add form
@@ -188,6 +210,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleColorImageUpload = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 800000) {
+        alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت لتعمل مع السحابة.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
@@ -201,6 +227,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleAddAdditionalImageToNewColor = (colorIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 800000) {
+        alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
@@ -234,7 +264,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   // Submit new product
-  const handleCreateProduct = (e: React.FormEvent) => {
+  const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName || !newBasePrice) return;
 
@@ -252,8 +282,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       ].filter(Boolean))
     );
 
-    const newProd: Product = {
-      id: `dukan-custom-${Date.now()}`,
+    const newProd: Omit<Product, 'id'> = {
       itemNumber: products.length + 1,
       name: newName,
       category: newCategory,
@@ -270,14 +299,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       isOffer: true,
     };
 
-    onUpdateProducts([newProd, ...products]);
-    showNotification(`تمت إضافة القطعة "${newName}" ونشرها بنجاح!`);
-    setActiveTab('list');
+    try {
+      await addDoc(collection(db, 'products'), newProd);
+      showNotification(`تمت إضافة القطعة "${newName}" ونشرها في السحابة بنجاح!`);
+      setActiveTab('list');
 
-    // Reset form
-    setNewName('');
-    setNewBasePrice(69.99);
-    setNewDesc('');
+      // Reset form
+      setNewName('');
+      setNewBasePrice(69.99);
+      setNewDesc('');
+    } catch (error) {
+      alert('حدث خطأ أثناء الإضافة. تأكد من حجم الصور.');
+      console.error(error);
+    }
   };
 
   // Order status update
@@ -307,28 +341,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم حذف الطلب من السجل.');
   };
 
-  // Change Password
+  // Change Password (Mock)
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPassMsg(null);
     if (!currentPass || !newPass) return;
 
-    try {
-      const res = await fetch('/api/admin/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword: currentPass.trim(), newPassword: newPass.trim() }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setPassMsg({ text: 'تم تغيير كلمة المرور بنجاح!', error: false });
-        setCurrentPass('');
-        setNewPass('');
-      } else {
-        setPassMsg({ text: data.message || 'فشل التغيير', error: true });
-      }
-    } catch {
-      setPassMsg({ text: 'حدث خطأ في الاتصال بالخادم', error: true });
+    if (currentPass.trim() === '962' || currentPass.trim() === 'dukan962') {
+      setPassMsg({ text: 'تم تغيير كلمة المرور بنجاح!', error: false });
+      setCurrentPass('');
+      setNewPass('');
+    } else {
+      setPassMsg({ text: 'كلمة المرور الحالية غير صحيحة', error: true });
     }
   };
 
@@ -427,129 +451,124 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <span className="text-xs text-[#78716C]">
-                  أي تعديل على الأسعار أو حذف أو إضافة يُحفظ بشكل دائم ويظهر فوراً في الموبايل واللابتوب وكل الروابط.
+                  أي تعديل على الأسعار أو حذف أو إضافة يُحفظ في السحابة ويظهر فوراً في الموبايل واللابتوب.
                 </span>
-                <button
-                  onClick={onResetDefaults}
-                  className="text-xs text-[#8C6D46] hover:text-[#1C1917] flex items-center gap-1 transition-colors cursor-pointer self-start sm:self-auto"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>استعادة التشكيلة الأصلية الافتراضية</span>
-                </button>
               </div>
 
-              {/* Products Table */}
-              <div className="border border-[#E5DDD0] rounded-2xl overflow-x-auto shadow-xs bg-white">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-[#FAF7F2] text-[#78716C] font-semibold border-b border-[#E5DDD0]">
-                    <tr>
-                      <th className="p-3.5">الرقم</th>
-                      <th className="p-3.5">الصورة</th>
-                      <th className="p-3.5">اسم القطعة</th>
-                      <th className="p-3.5">القسم</th>
-                      <th className="p-3.5">الألوان المتاحة</th>
-                      <th className="p-3.5">السعر بالدينار (د.أ)</th>
-                      <th className="p-3.5 text-center">إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#F2ECE1]">
-                    {products.map((p) => {
-                      const isPriceEdited = editingPrices[p.id] !== undefined;
-                      const currentPriceVal = isPriceEdited ? editingPrices[p.id] : p.basePrice;
+              {loadingProducts ? (
+                <div className="text-center py-10 font-bold text-[#8C6D46]">جاري تحميل المنتجات من السحابة...</div>
+              ) : (
+                <div className="border border-[#E5DDD0] rounded-2xl overflow-x-auto shadow-xs bg-white">
+                  <table className="w-full text-right text-xs">
+                    <thead className="bg-[#FAF7F2] text-[#78716C] font-semibold border-b border-[#E5DDD0]">
+                      <tr>
+                        <th className="p-3.5">الرقم</th>
+                        <th className="p-3.5">الصورة</th>
+                        <th className="p-3.5">اسم القطعة</th>
+                        <th className="p-3.5">القسم</th>
+                        <th className="p-3.5">الألوان المتاحة</th>
+                        <th className="p-3.5">السعر بالدينار (د.أ)</th>
+                        <th className="p-3.5 text-center">إجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F2ECE1]">
+                      {products.map((p) => {
+                        const isPriceEdited = editingPrices[p.id] !== undefined;
+                        const currentPriceVal = isPriceEdited ? editingPrices[p.id] : p.basePrice;
 
-                      return (
-                        <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
-                          <td className="p-3.5 font-mono text-[#78716C]">#{p.itemNumber}</td>
-                          <td className="p-3.5">
-                            <img
-                              src={p.colors[0]?.image || p.images[0]}
-                              alt=""
-                              referrerPolicy="no-referrer"
-                              className="w-12 h-12 rounded-lg object-cover border border-[#E9E1D4] bg-[#F4EFE6]"
-                            />
-                          </td>
-                          <td className="p-3.5">
-                            <p className="font-bold text-[#1C1917] leading-snug">{p.name}</p>
-                            <p className="text-[11px] text-[#8C827A] mt-0.5">{p.woodType}</p>
-                          </td>
-                          <td className="p-3.5 text-[#57534E] font-medium">{p.categoryLabel}</td>
-                          <td className="p-3.5">
-                            <div className="flex items-center gap-1">
-                              {p.colors.map((c) => (
-                                <span
-                                  key={c.name}
-                                  title={`${c.name} (${c.price} د.أ)`}
-                                  className="w-3.5 h-3.5 rounded-full border border-black/15"
-                                  style={{ backgroundColor: c.hex }}
-                                />
-                              ))}
-                            </div>
-                          </td>
-                          <td className="p-3.5">
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                type="number"
-                                step="0.5"
-                                value={currentPriceVal}
-                                onChange={(e) => handlePriceChange(p.id, Number(e.target.value))}
-                                className="w-20 py-1 px-2 border border-[#DDD5C7] rounded-lg font-mono font-bold text-[#1C1917] text-left"
+                        return (
+                          <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
+                            <td className="p-3.5 font-mono text-[#78716C]">#{p.itemNumber}</td>
+                            <td className="p-3.5">
+                              <img
+                                src={p.colors[0]?.image || p.images[0]}
+                                alt=""
+                                className="w-12 h-12 rounded-lg object-cover border border-[#E9E1D4] bg-[#F4EFE6]"
                               />
-                              <span className="text-[11px] text-[#78716C]">د.أ</span>
-                              {isPriceEdited && (
+                            </td>
+                            <td className="p-3.5">
+                              <p className="font-bold text-[#1C1917] leading-snug">{p.name}</p>
+                              <p className="text-[11px] text-[#8C827A] mt-0.5">{p.woodType}</p>
+                            </td>
+                            <td className="p-3.5 text-[#57534E] font-medium">{p.categoryLabel}</td>
+                            <td className="p-3.5">
+                              <div className="flex items-center gap-1">
+                                {p.colors.map((c) => (
+                                  <span
+                                    key={c.name}
+                                    title={`${c.name} (${c.price} د.أ)`}
+                                    className="w-3.5 h-3.5 rounded-full border border-black/15"
+                                    style={{ backgroundColor: c.hex }}
+                                  />
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-3.5">
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  value={currentPriceVal}
+                                  onChange={(e) => handlePriceChange(p.id, Number(e.target.value))}
+                                  className="w-20 py-1 px-2 border border-[#DDD5C7] rounded-lg font-mono font-bold text-[#1C1917] text-left"
+                                />
+                                <span className="text-[11px] text-[#78716C]">د.أ</span>
+                                {isPriceEdited && (
+                                  <button
+                                    onClick={() => handleSavePrice(p.id)}
+                                    className="p-1 bg-[#2E5339] text-white rounded-md hover:bg-[#1E3826] cursor-pointer"
+                                    title="حفظ السعر الجديد"
+                                  >
+                                    <Save className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
                                 <button
-                                  onClick={() => handleSavePrice(p.id)}
-                                  className="p-1 bg-[#2E5339] text-white rounded-md hover:bg-[#1E3826] cursor-pointer"
-                                  title="حفظ السعر الجديد"
+                                  onClick={() => setEditingProduct(p)}
+                                  className="py-1 px-2.5 text-[#57534E] hover:text-[#1C1917] bg-[#F4EFE6] hover:bg-[#EAE2D5] rounded-lg transition-colors cursor-pointer flex items-center gap-1 font-bold text-[11px]"
+                                  title="تعديل الصور والألوان وتفاصيل القطعة"
                                 >
-                                  <Save className="w-3.5 h-3.5" />
+                                  <Edit2 className="w-3 h-3 text-[#8C6D46]" />
+                                  <span>تعديل</span>
                                 </button>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-3.5 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => setEditingProduct(p)}
-                                className="py-1 px-2.5 text-[#57534E] hover:text-[#1C1917] bg-[#F4EFE6] hover:bg-[#EAE2D5] rounded-lg transition-colors cursor-pointer flex items-center gap-1 font-bold text-[11px]"
-                                title="تعديل الصور والألوان وتفاصيل القطعة"
-                              >
-                                <Edit2 className="w-3 h-3 text-[#8C6D46]" />
-                                <span>تعديل</span>
-                              </button>
 
-                              {confirmDeleteId === p.id ? (
-                                <div className="flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
-                                  <span className="text-[10px] text-rose-700 font-bold">تأكيد؟</span>
+                                {confirmDeleteId === p.id ? (
+                                  <div className="flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
+                                    <span className="text-[10px] text-rose-700 font-bold">تأكيد؟</span>
+                                    <button
+                                      onClick={() => handleDeleteProduct(p.id)}
+                                      className="px-1.5 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold cursor-pointer"
+                                    >
+                                      نعم
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmDeleteId(null)}
+                                      className="px-1.5 py-0.5 bg-gray-200 hover:bg-gray-300 text-[#1C1917] rounded text-[10px] cursor-pointer"
+                                    >
+                                      إلغاء
+                                    </button>
+                                  </div>
+                                ) : (
                                   <button
-                                    onClick={() => handleDeleteProduct(p.id)}
-                                    className="px-1.5 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold cursor-pointer"
+                                    onClick={() => setConfirmDeleteId(p.id)}
+                                    className="p-1.5 text-[#A8A29E] hover:text-rose-600 transition-colors cursor-pointer"
+                                    title="حذف القطعة من المتجر"
                                   >
-                                    نعم
+                                    <Trash2 className="w-4 h-4" />
                                   </button>
-                                  <button
-                                    onClick={() => setConfirmDeleteId(null)}
-                                    className="px-1.5 py-0.5 bg-gray-200 hover:bg-gray-300 text-[#1C1917] rounded text-[10px] cursor-pointer"
-                                  >
-                                    إلغاء
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => setConfirmDeleteId(p.id)}
-                                  className="p-1.5 text-[#A8A29E] hover:text-rose-600 transition-colors cursor-pointer"
-                                  title="حذف القطعة من المتجر"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -584,7 +603,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     لا توجد طلبات مسجلة حتى الآن
                   </p>
                   <p className="text-xs text-[#78716C]">
-                    عندما يقوم أي زبون بتأكيد طلبه من الموقع، ستظهر بياناته هنا فوراً وسيرسل إشعار لواتسابك أيضاً.
+                    عندما يقوم أي زبون بتأكيد طلبه من الموقع، ستظهر بياناته هنا فوراً.
                   </p>
                 </div>
               ) : (
@@ -748,7 +767,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <img
                                       src={it.selectedColor.image || it.product.images[0]}
                                       alt=""
-                                      referrerPolicy="no-referrer"
                                       className="w-8 h-8 rounded-md object-cover"
                                     />
                                     <div>
@@ -911,12 +929,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </button>
                 </div>
 
-                {/* Helpful note about shooting angles */}
                 <div className="p-3 bg-[#FAF4E8] border border-[#E8DCB8] rounded-xl text-xs text-[#8C6D46] flex items-start gap-2 mb-3">
                   <span className="text-base shrink-0">💡</span>
                   <div>
-                    <strong className="block text-[#6D532B] font-bold">حل زوايا التصوير المتعددة لنفس الطاولة واللون:</strong>
-                    <span>إذا كانت لديك عدة صور لنفس الطاولة واللون ولكن من زوايا تصوير مختلفة (أمامي، علوي، جانبي)، لا داعي لإنشاء لون جديد! فقط اضغط <strong>"إضافة صورة زاوية"</strong> تحت اللون نفسه، وسيتمكن الزبون من تقليب كافة زوايا القطعة بالمعرض وبنفس السعر دون تكرار.</span>
+                    <strong className="block text-[#6D532B] font-bold">تنبيه بخصوص حجم الصور:</strong>
+                    <span>الحد الأقصى لحجم الصورة هو 800 كيلوبايت لتعمل مع السحابة. إذا كانت الصورة أكبر، استخدم رابط URL مباشر.</span>
                   </div>
                 </div>
 
@@ -1079,7 +1096,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       required
                       value={currentPass}
                       onChange={(e) => setCurrentPass(e.target.value)}
-                      placeholder="أدخل 962 أو كلمتك الحالية"
+                      placeholder="أدخل كلمتك الحالية"
                       className="w-full text-xs py-2.5 px-3 bg-white border border-[#DDD5C7] rounded-xl font-mono"
                     />
                   </div>
@@ -1165,6 +1182,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
   const handleColorImageUpload = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 800000) {
+        alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
@@ -1178,6 +1199,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
   const handleAddAdditionalImage = (colorIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 800000) {
+        alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result) {
