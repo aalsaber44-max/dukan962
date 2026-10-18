@@ -12,8 +12,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
         
         {/* Main Hero Visual Card */}
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl aspect-16/10 sm:aspect-16/9 lg:aspect-21/9 min-h-[460px]">
+          
+          {/* هنا حطينا رابط Pexels اللي أنت بعته */}
           <img
-            src="/src/assets/images/living-room.jpg"
+            src="https://images.pexels.com/photos/32177962/pexels-photo-32177962.png"
             alt="صالة معيشة فاخرة مع طاولات دكان 962"
             referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover object-center"
@@ -24,7 +26,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
             <div className="p-6 sm:p-10 lg:p-14 max-w-3xl text-white">
               
               {/* Olive Green Tag */}
-              <div className="flex items-center gap-2 text-xs text-[#E2D5C4] mb-3 font-medium">
+              <div className="flex items-center gap-2 text-xs text-[#E2D5C4] mb-3 font-medium flex-wrap">
                 <span className="bg-[#2E5339] text-[#F0FDF4] px-2.5 py-0.5 rounded-md font-bold text-[11px] shadow-xs">
                   دكـان 962
                 </span>
