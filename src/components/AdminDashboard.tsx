@@ -32,8 +32,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isOpen,
   onClose,
 }) => {
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<'list' | 'orders' | 'add' | 'settings'>('list');
   const [successToast, setSuccessToast] = useState('');
   
@@ -45,10 +43,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Inline price editing state: { [productId]: newPrice }
+  // Inline price editing state
   const [editingPrices, setEditingPrices] = useState<Record<string, number>>({});
 
-  // Confirm delete state (no window.confirm)
+  // Confirm delete state
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteOrderId, setConfirmDeleteOrderId] = useState<string | null>(null);
 
@@ -82,7 +80,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
-  // جلب المنتجات من Firebase مباشرة (Live Sync)
+  // جلب المنتجات من Firebase مباشرة
   useEffect(() => {
     if (!isOpen) return;
     const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
@@ -96,7 +94,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return () => unsubscribe();
   }, [isOpen]);
 
-  // Fetch orders from server whenever modal opens or tab changes to 'orders'
+  // Fetch orders
   const fetchOrders = async () => {
     setLoadingOrders(true);
     try {
@@ -111,7 +109,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       // fallback
     }
 
-    // Local fallback
     try {
       const local = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
       setOrders(local);
@@ -128,9 +125,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   }, [isOpen, activeTab]);
 
+  // ✅ إصلاح: لا تعيد null قبل استدعاء الـ Hooks — نضعها هنا بعد آخر useEffect
+  if (!isOpen) return null;
+
   // --- Firebase Operations ---
 
-  // Inline price editing
   const handlePriceChange = (id: string, price: number) => {
     setEditingPrices((prev) => ({ ...prev, [id]: price }));
   };
@@ -142,7 +141,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const productToUpdate = products.find(p => p.id === id);
     if (!productToUpdate) return;
 
-    // تأمين المصفوفة لو مش موجودة
     const nextColors = (productToUpdate.colors || []).map((c, i) => (i === 0 ? { ...c, price: updatedPrice } : c));
 
     try {
@@ -162,7 +160,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Delete product
   const handleDeleteProduct = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'products', id));
@@ -173,7 +170,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Save edited existing product
   const handleSaveEditedProduct = async (updated: Product) => {
     try {
       await updateDoc(doc(db, 'products', updated.id), { ...updated });
@@ -184,7 +180,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Color management in Add form
   const handleAddColor = () => {
     setNewColors((prev) => [
       ...prev,
@@ -264,7 +259,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
   };
 
-  // Submit new product
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName || !newBasePrice) return;
@@ -305,7 +299,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       showNotification(`تمت إضافة القطعة "${newName}" ونشرها في السحابة بنجاح!`);
       setActiveTab('list');
 
-      // Reset form
       setNewName('');
       setNewBasePrice(69.99);
       setNewDesc('');
@@ -315,7 +308,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Order status update
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       await fetch(`/api/orders/${orderId}/status`, {
@@ -331,7 +323,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification(`تم تغيير حالة الطلب #${orderId} إلى "${newStatus}"`);
   };
 
-  // Delete an order
   const handleDeleteOrder = async (orderId: string) => {
     try {
       await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
@@ -342,7 +333,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم حذف الطلب من السجل.');
   };
 
-  // Change Password (Mock)
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPassMsg(null);
@@ -486,7 +476,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
                             <td className="p-3.5 font-mono text-[#78716C]">#{p.itemNumber || '-'}</td>
                             <td className="p-3.5">
-                              {/* هنا ضفنا ?. عشان نمنع الشاشة البيضاء */}
                               <img
                                 src={p.colors?.[0]?.image || p.images?.[0] || 'https://via.placeholder.com/150'}
                                 alt=""
@@ -500,7 +489,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <td className="p-3.5 text-[#57534E] font-medium">{p.categoryLabel || p.category}</td>
                             <td className="p-3.5">
                               <div className="flex items-center gap-1">
-                                {/* هنا ضفنا ?. عشان نمنع الشاشة البيضاء */}
                                 {p.colors?.map((c) => (
                                   <span
                                     key={c.name}
@@ -1174,7 +1162,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
   const [dimensions, setDimensions] = useState(product.dimensions || '');
   const [warranty, setWarranty] = useState(product.warranty || '');
   const [description, setDescription] = useState(product.description || '');
-  // تأمين المصفوفة هنا كمان
   const [colors, setColors] = useState<ProductColor[]>(product.colors || []);
 
   const categoryLabels: Record<string, string> = {
