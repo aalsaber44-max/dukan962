@@ -17,6 +17,7 @@ import {
   Smartphone,
   Clock,
   MapPin,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { Product, ProductColor, Order } from '../types/furniture';
 // استيراد Firebase
@@ -45,10 +46,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Inline price editing state
+  // Inline price editing state: { [productId]: newPrice }
   const [editingPrices, setEditingPrices] = useState<Record<string, number>>({});
 
-  // Confirm delete state
+  // Confirm delete state (no window.confirm)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteOrderId, setConfirmDeleteOrderId] = useState<string | null>(null);
 
@@ -174,11 +175,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSaveEditedProduct = async (updated: Product) => {
     try {
-      await updateDoc(doc(db, 'products', updated.id), { ...updated });
+      // 💡 إصلاح: فصلنا الـ id عن البيانات عشان Firebase متعملش مشكلة
+      const { id, ...dataToUpdate } = updated;
+      await updateDoc(doc(db, 'products', id), dataToUpdate);
       setEditingProduct(null);
       showNotification(`تم حفظ وتحديث القطعة "${updated.name}" بنجاح في السحابة!`);
     } catch (error) {
       alert('حدث خطأ أثناء تعديل المنتج');
+      console.error(error);
     }
   };
 
@@ -1037,23 +1041,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </span>
                           
                           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                             <input 
-                               type="text" 
-                               placeholder="رابط صورة إضافية..." 
-                               value={tempNewColorUrls[idx] || ''} 
-                               onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
-                               className="text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg w-full sm:w-40 bg-white" 
-                               dir="ltr" 
-                             />
-                             <button 
-                               type="button" 
-                               onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} 
-                               className="bg-[#1C1917] text-white px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[#332E2B]"
-                             >
-                               إضافة الرابط
-                             </button>
+                             <div className="flex items-center gap-1 bg-white border border-[#DDD5C7] rounded-lg p-1">
+                               <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                               <input 
+                                 type="text" 
+                                 placeholder="ضع رابط صورة إضافية هنا..." 
+                                 value={tempNewColorUrls[idx] || ''} 
+                                 onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
+                                 className="text-xs py-1 px-1 bg-transparent border-none outline-none w-full sm:w-48" 
+                                 dir="ltr" 
+                               />
+                               <button 
+                                 type="button" 
+                                 onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} 
+                                 className="bg-[#1C1917] text-white px-2 py-1 rounded-md text-[10px] font-bold hover:bg-[#332E2B] shrink-0"
+                               >
+                                 إضافة
+                               </button>
+                             </div>
                              
-                             <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-2 py-1 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
+                             <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
                                <Upload className="w-3 h-3" /> رفع
                                <input
                                  type="file"
@@ -1508,23 +1515,26 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
                       </span>
                       
                       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                         <input 
-                           type="text" 
-                           placeholder="رابط صورة إضافية..." 
-                           value={tempColorUrls[idx] || ''} 
-                           onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
-                           className="text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg w-full sm:w-40 bg-white" 
-                           dir="ltr" 
-                         />
-                         <button 
-                           type="button" 
-                           onClick={() => handleAddAdditionalImageUrl(idx)} 
-                           className="bg-[#1C1917] text-white px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[#332E2B]"
-                         >
-                           إضافة الرابط
-                         </button>
+                         <div className="flex items-center gap-1 bg-white border border-[#DDD5C7] rounded-lg p-1">
+                           <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                           <input 
+                             type="text" 
+                             placeholder="ضع رابط صورة إضافية هنا..." 
+                             value={tempColorUrls[idx] || ''} 
+                             onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
+                             className="text-xs py-1 px-1 bg-transparent border-none outline-none w-full sm:w-48" 
+                             dir="ltr" 
+                           />
+                           <button 
+                             type="button" 
+                             onClick={() => handleAddAdditionalImageUrl(idx)} 
+                             className="bg-[#1C1917] text-white px-2 py-1 rounded-md text-[10px] font-bold hover:bg-[#332E2B] shrink-0"
+                           >
+                             إضافة
+                           </button>
+                         </div>
                          
-                         <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-white border border-[#DDD5C7] px-2 py-1 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
+                         <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-white border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
                            <Upload className="w-3 h-3" /> رفع
                            <input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImage(idx, e)} className="hidden" />
                          </label>
