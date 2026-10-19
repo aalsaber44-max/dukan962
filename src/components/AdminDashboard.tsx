@@ -974,27 +974,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           />
                         </div>
 
-                        <div className="sm:col-span-4">
-                          <label className="block text-[10px] text-[#78716C] mb-1">صورة هذا اللون (الرئيسية):</label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={color.image}
-                              onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
-                              placeholder="رابط URL أو ارفع صورة"
-                              className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg"
-                            />
-                            <label className="p-1.5 border border-[#DDD5C7] rounded-lg hover:bg-[#F2EDE4] cursor-pointer shrink-0" title="رفع من جهازك">
-                              <Upload className="w-4 h-4 text-[#8C6D46]" />
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleColorImageUpload(idx, e)}
-                                className="hidden"
-                              />
-                            </label>
-                          </div>
-                        </div>
+<div className="sm:col-span-4 bg-white p-3 rounded-lg border border-[#DDD5C7]">
+  <label className="block text-[11px] font-bold text-[#1C1917] mb-2">صورة هذا اللون:</label>
+  
+  {/* الخيار الأول: رابط */}
+  <div className="mb-3">
+    <span className="text-[10px] text-[#78716C] block mb-1">1. ضع رابط الصورة (URL):</span>
+    <input
+      type="text"
+      value={color.image}
+      onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
+      placeholder="https://example.com/image.jpg"
+      className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg"
+      dir="ltr"
+    />
+  </div>
+
+  {/* الخيار التاني: رفع من الجهاز */}
+  <div>
+    <span className="text-[10px] text-[#78716C] block mb-1">2. أو ارفع صورة من جهازك:</span>
+    <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-[#DDD5C7] border-dashed rounded-lg cursor-pointer bg-[#FAF7F2] hover:bg-[#F2EDE4] transition-colors">
+      <div className="flex items-center gap-2">
+        <Upload className="w-4 h-4 text-[#8C6D46]" />
+        <span className="text-[10px] font-bold text-[#8C6D46]">اختر صورة (أقل من 500 كيلوبايت)</span>
+      </div>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => handleColorImageUpload(idx, e)}
+        className="hidden"
+      />
+    </label>
+  </div>
+</div>
 
                         <div className="sm:col-span-1 text-center">
                           {newColors.length > 1 && (
