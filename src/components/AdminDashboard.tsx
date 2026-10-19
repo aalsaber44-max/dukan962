@@ -17,7 +17,6 @@ import {
   Smartphone,
   Clock,
   MapPin,
-  Link as LinkIcon,
 } from 'lucide-react';
 import { Product, ProductColor, Order } from '../types/furniture';
 // استيراد Firebase
@@ -33,8 +32,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isOpen,
   onClose,
 }) => {
-  if (!isOpen) return null;
-
+  // ✅ تم إصلاح خطأ الـ Hooks: نقلنا الـ return لتحت كل الـ useState والـ useEffect
   const [activeTab, setActiveTab] = useState<'list' | 'orders' | 'add' | 'settings'>('list');
   const [successToast, setSuccessToast] = useState('');
   
@@ -131,6 +129,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   }, [isOpen, activeTab]);
 
+  // ✅ إصلاح: لا تعيد null قبل استدعاء الـ Hooks — نضعها هنا بعد آخر useEffect
+  if (!isOpen) return null;
+
   // --- Firebase Operations ---
 
   const handlePriceChange = (id: string, price: number) => {
@@ -175,7 +176,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSaveEditedProduct = async (updated: Product) => {
     try {
-      // 💡 إصلاح: فصلنا الـ id عن البيانات عشان Firebase متعملش مشكلة
       const { id, ...dataToUpdate } = updated;
       await updateDoc(doc(db, 'products', id), dataToUpdate);
       setEditingProduct(null);
@@ -1035,45 +1035,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       {/* الزوايا الإضافية (مع رابط + رفع) */}
                       <div className="pt-2 border-t border-[#EAE3D7]/70">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+                        <div className="flex flex-col gap-2 mb-2">
                           <span className="text-[11px] text-[#78716C]">
                             📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):
                           </span>
                           
-                          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                             <div className="flex items-center gap-1 bg-white border border-[#DDD5C7] rounded-lg p-1">
-                               <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                               <input 
-                                 type="text" 
-                                 placeholder="ضع رابط صورة إضافية هنا..." 
-                                 value={tempNewColorUrls[idx] || ''} 
-                                 onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
-                                 className="text-xs py-1 px-1 bg-transparent border-none outline-none w-full sm:w-48" 
-                                 dir="ltr" 
-                               />
+                          {/* واجهة إضافة الزوايا (رابط + رفع) تم توضيحها */}
+                          <div className="flex flex-col sm:flex-row gap-2 w-full">
+                             <input 
+                               type="text" 
+                               placeholder="ضع رابط الصورة الإضافية هنا (URL)..." 
+                               value={tempNewColorUrls[idx] || ''} 
+                               onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
+                               className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" 
+                               dir="ltr" 
+                             />
+                             <div className="flex gap-2">
                                <button 
                                  type="button" 
                                  onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} 
-                                 className="bg-[#1C1917] text-white px-2 py-1 rounded-md text-[10px] font-bold hover:bg-[#332E2B] shrink-0"
+                                 className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap"
                                >
-                                 إضافة
+                                 إضافة الرابط
                                </button>
+                               
+                               <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap">
+                                 <Upload className="w-3.5 h-3.5" /> رفع صورة
+                                 <input
+                                   type="file"
+                                   accept="image/*"
+                                   onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)}
+                                   className="hidden"
+                                 />
+                               </label>
                              </div>
-                             
-                             <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
-                               <Upload className="w-3 h-3" /> رفع
-                               <input
-                                 type="file"
-                                 accept="image/*"
-                                 onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)}
-                                 className="hidden"
-                               />
-                             </label>
                           </div>
                         </div>
 
                         {color.additionalImages && color.additionalImages.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <div className="flex flex-wrap items-center gap-2 mt-3">
                             {color.additionalImages.map((addImg, aIdx) => (
                               <div key={aIdx} className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#DDD5C7] group">
                                 <img src={addImg} alt="" className="w-full h-full object-cover" />
@@ -1509,40 +1509,40 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
 
                   {/* الزوايا الإضافية (مع رابط + رفع) في شاشة التعديل */}
                   <div className="pt-2 border-t border-[#EAE3D7]/70">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+                    <div className="flex flex-col gap-2 mb-2">
                       <span className="text-[11px] text-[#78716C]">
                         📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):
                       </span>
                       
-                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                         <div className="flex items-center gap-1 bg-white border border-[#DDD5C7] rounded-lg p-1">
-                           <LinkIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                           <input 
-                             type="text" 
-                             placeholder="ضع رابط صورة إضافية هنا..." 
-                             value={tempColorUrls[idx] || ''} 
-                             onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
-                             className="text-xs py-1 px-1 bg-transparent border-none outline-none w-full sm:w-48" 
-                             dir="ltr" 
-                           />
+                      {/* واجهة إضافة الزوايا (رابط + رفع) تم توضيحها */}
+                      <div className="flex flex-col sm:flex-row gap-2 w-full">
+                         <input 
+                           type="text" 
+                           placeholder="ضع رابط الصورة الإضافية هنا (URL)..." 
+                           value={tempColorUrls[idx] || ''} 
+                           onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
+                           className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" 
+                           dir="ltr" 
+                         />
+                         <div className="flex gap-2">
                            <button 
                              type="button" 
                              onClick={() => handleAddAdditionalImageUrl(idx)} 
-                             className="bg-[#1C1917] text-white px-2 py-1 rounded-md text-[10px] font-bold hover:bg-[#332E2B] shrink-0"
+                             className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap"
                            >
-                             إضافة
+                             إضافة الرابط
                            </button>
+                           
+                           <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-white border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap">
+                             <Upload className="w-3.5 h-3.5" /> رفع صورة
+                             <input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImage(idx, e)} className="hidden" />
+                           </label>
                          </div>
-                         
-                         <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-white border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
-                           <Upload className="w-3 h-3" /> رفع
-                           <input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImage(idx, e)} className="hidden" />
-                         </label>
                       </div>
                     </div>
 
                     {color.additionalImages && color.additionalImages.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
                         {color.additionalImages.map((addImg, aIdx) => (
                           <div key={aIdx} className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#DDD5C7] group">
                             <img src={addImg} alt="" className="w-full h-full object-cover" />
