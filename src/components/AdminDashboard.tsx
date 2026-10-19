@@ -980,14 +980,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   {/* الخيار الأول: رابط */}
   <div className="mb-3">
     <span className="text-[10px] text-[#78716C] block mb-1">1. ضع رابط الصورة (URL):</span>
-    <input
-      type="text"
-      value={color.image}
-      onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
-      placeholder="https://example.com/image.jpg"
-      className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg"
-      dir="ltr"
-    />
+ <div className="w-full flex items-center gap-2">
+  <input
+    type="text"
+    value={color.image.startsWith('data:image') ? '' : color.image} // لو صورة مرفوعة مش هيظهر الكود
+    onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
+    placeholder={color.image.startsWith('data:image') ? 'تم رفع الصورة من الجهاز ✓' : 'ضع رابط الصورة هنا...'}
+    className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white"
+  />
+</div>
   </div>
 
   {/* الخيار التاني: رفع من الجهاز */}
