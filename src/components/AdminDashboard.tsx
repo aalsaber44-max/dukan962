@@ -32,6 +32,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isOpen,
   onClose,
 }) => {
+  if (!isOpen) return null;
+
   const [activeTab, setActiveTab] = useState<'list' | 'orders' | 'add' | 'settings'>('list');
   const [successToast, setSuccessToast] = useState('');
   
@@ -69,6 +71,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986b88?w=800&auto=format&fit=crop&q=80',
     },
   ]);
+  
+  // حالة لحفظ الروابط المؤقتة للزوايا الإضافية (للإضافة الجديدة)
+  const [tempNewColorUrls, setTempNewColorUrls] = useState<Record<number, string>>({});
 
   // Password Change State
   const [currentPass, setCurrentPass] = useState('');
@@ -80,7 +85,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
-  // جلب المنتجات من Firebase مباشرة
+  // جلب المنتجات من Firebase مباشرة (Live Sync)
   useEffect(() => {
     if (!isOpen) return;
     const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
@@ -124,9 +129,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       fetchOrders();
     }
   }, [isOpen, activeTab]);
-
-  // ✅ إصلاح: لا تعيد null قبل استدعاء الـ Hooks — نضعها هنا بعد آخر useEffect
-  if (!isOpen) return null;
 
   // --- Firebase Operations ---
 
@@ -218,6 +220,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // دالة إضافة زاوية برابط للون الجديد
+  const handleAddAdditionalImageUrlToNewColor = (colorIdx: number) => {
+    const url = tempNewColorUrls[colorIdx];
+    if (!url) return;
+    setNewColors((prev) =>
+      prev.map((c, i) => {
+        if (i === colorIdx) return { ...c, additionalImages: [...(c.additionalImages || []), url] };
+        return c;
+      })
+    );
+    setTempNewColorUrls((prev) => ({ ...prev, [colorIdx]: '' }));
   };
 
   const handleAddAdditionalImageToNewColor = (colorIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,6 +365,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-[#E8DFD3] overflow-hidden my-6 max-h-[92vh] flex flex-col">
+        
         {/* Header */}
         <div className="p-6 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
           <div className="flex items-center gap-3">
@@ -437,6 +453,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          
           {/* TAB 1: PRODUCTS LIST */}
           {activeTab === 'list' && (
             <div className="space-y-4">
@@ -912,7 +929,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       ألوان وصور القطعة:
                     </h3>
                     <p className="text-[11px] text-[#78716C]">
-                      اختر اللون وحدد سعره الخاص وارفع صورته من جهازك
+                      اختر اللون وحدد سعره الخاص وارفع صورته من جهازك أو ضع رابط
                     </p>
                   </div>
                   <button
@@ -974,40 +991,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           />
                         </div>
 
-<div className="sm:col-span-4 bg-white p-3 rounded-lg border border-[#DDD5C7]">
-  <label className="block text-[11px] font-bold text-[#1C1917] mb-2">صورة هذا اللون:</label>
-  
-  {/* الخيار الأول: رابط */}
-  <div className="mb-3">
-    <span className="text-[10px] text-[#78716C] block mb-1">1. ضع رابط الصورة (URL):</span>
- <div className="w-full flex items-center gap-2">
-  <input
-    type="text"
-    value={color.image.startsWith('data:image') ? '' : color.image} // لو صورة مرفوعة مش هيظهر الكود
-    onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
-    placeholder={color.image.startsWith('data:image') ? 'تم رفع الصورة من الجهاز ✓' : 'ضع رابط الصورة هنا...'}
-    className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white"
-  />
-</div>
-  </div>
-
-  {/* الخيار التاني: رفع من الجهاز */}
-  <div>
-    <span className="text-[10px] text-[#78716C] block mb-1">2. أو ارفع صورة من جهازك:</span>
-    <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-[#DDD5C7] border-dashed rounded-lg cursor-pointer bg-[#FAF7F2] hover:bg-[#F2EDE4] transition-colors">
-      <div className="flex items-center gap-2">
-        <Upload className="w-4 h-4 text-[#8C6D46]" />
-        <span className="text-[10px] font-bold text-[#8C6D46]">اختر صورة (أقل من 500 كيلوبايت)</span>
-      </div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => handleColorImageUpload(idx, e)}
-        className="hidden"
-      />
-    </label>
-  </div>
-</div>
+                        {/* الصورة الرئيسية للون */}
+                        <div className="sm:col-span-4 bg-[#FAF7F2] p-2 rounded-lg border border-[#DDD5C7]">
+                          <label className="block text-[10px] font-bold text-[#1C1917] mb-1">الصورة الرئيسية:</label>
+                          <div className="flex flex-col gap-2">
+                            <input
+                              type="text"
+                              value={color.image.startsWith('data:image') ? '' : color.image}
+                              onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
+                              placeholder={color.image.startsWith('data:image') ? 'تم رفع الصورة ✓' : 'ضع رابط الصورة هنا...'}
+                              className="w-full text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg"
+                              dir="ltr"
+                            />
+                            <label className="flex items-center justify-center gap-1 p-1 bg-white border border-[#DDD5C7] rounded-lg cursor-pointer text-[10px] font-bold text-[#8C6D46] hover:bg-[#F2EDE4] transition-colors">
+                              <Upload className="w-3 h-3" /> رفع من الجهاز
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleColorImageUpload(idx, e)}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                        </div>
 
                         <div className="sm:col-span-1 text-center">
                           {newColors.length > 1 && (
@@ -1023,26 +1029,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
 
-                      {/* Additional angles for this color */}
+                      {/* الزوايا الإضافية (مع رابط + رفع) */}
                       <div className="pt-2 border-t border-[#EAE3D7]/70">
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                           <span className="text-[11px] text-[#78716C]">
-                            📷 زوايا تصوير إضافية لهذا اللون ({color.additionalImages?.length || 0}):
+                            📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):
                           </span>
-                          <label className="text-[10px] font-bold text-[#8C6D46] hover:text-[#1C1917] cursor-pointer flex items-center gap-1">
-                            <Plus className="w-3 h-3" />
-                            <span>إضافة صورة زاوية</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)}
-                              className="hidden"
-                            />
-                          </label>
+                          
+                          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                             <input 
+                               type="text" 
+                               placeholder="رابط صورة إضافية..." 
+                               value={tempNewColorUrls[idx] || ''} 
+                               onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
+                               className="text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg w-full sm:w-40 bg-white" 
+                               dir="ltr" 
+                             />
+                             <button 
+                               type="button" 
+                               onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} 
+                               className="bg-[#1C1917] text-white px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[#332E2B]"
+                             >
+                               إضافة الرابط
+                             </button>
+                             
+                             <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-2 py-1 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
+                               <Upload className="w-3 h-3" /> رفع
+                               <input
+                                 type="file"
+                                 accept="image/*"
+                                 onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)}
+                                 className="hidden"
+                               />
+                             </label>
+                          </div>
                         </div>
 
                         {color.additionalImages && color.additionalImages.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
                             {color.additionalImages.map((addImg, aIdx) => (
                               <div key={aIdx} className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#DDD5C7] group">
                                 <img src={addImg} alt="" className="w-full h-full object-cover" />
@@ -1161,6 +1185,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 };
 
+// ----------------------------------------------------------------------
+// EditProductModal
+// ----------------------------------------------------------------------
 interface EditProductModalProps {
   product: Product;
   onClose: () => void;
@@ -1177,6 +1204,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
   const [description, setDescription] = useState(product.description || '');
   const [colors, setColors] = useState<ProductColor[]>(product.colors || []);
 
+  // حالة لحفظ الروابط المؤقتة للزوايا الإضافية (للتعديل)
+  const [tempColorUrls, setTempColorUrls] = useState<Record<number, string>>({});
+
   const categoryLabels: Record<string, string> = {
     'center-tables': 'طاولات وسط وصالون',
     'tv-tables': 'طاولات شاشة وتلفزيون',
@@ -1191,57 +1221,47 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
   const handleColorImageUpload = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 800000) {
-        alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت.');
-        return;
-      }
+      if (file.size > 800000) { alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت.'); return; }
       const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.result) {
-          handleColorUpdate(idx, 'image', reader.result as string);
-        }
-      };
+      reader.onload = () => { if (reader.result) handleColorUpdate(idx, 'image', reader.result as string); };
       reader.readAsDataURL(file);
     }
+  };
+
+  // دالة إضافة زاوية برابط للون (في شاشة التعديل)
+  const handleAddAdditionalImageUrl = (colorIdx: number) => {
+    const url = tempColorUrls[colorIdx];
+    if (!url) return;
+    setColors((prev) => prev.map((c, i) => {
+        if (i === colorIdx) return { ...c, additionalImages: [...(c.additionalImages || []), url] };
+        return c;
+      })
+    );
+    setTempColorUrls((prev) => ({ ...prev, [colorIdx]: '' }));
   };
 
   const handleAddAdditionalImage = (colorIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 800000) {
-        alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت.');
-        return;
-      }
+      if (file.size > 800000) { alert('الصورة كبيرة جداً! يجب أن تكون أقل من 800 كيلوبايت.'); return; }
       const reader = new FileReader();
       reader.onload = () => {
-        if (reader.result) {
-          setColors((prev) =>
-            prev.map((c, i) => {
-              if (i === colorIdx) {
-                const addImages = c.additionalImages || [];
-                return { ...c, additionalImages: [...addImages, reader.result as string] };
-              }
-              return c;
-            })
-          );
-        }
+          if (reader.result) {
+            setColors((prev) => prev.map((c, i) => {
+                if (i === colorIdx) return { ...c, additionalImages: [...(c.additionalImages || []), reader.result as string] };
+                return c;
+            }));
+          }
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleRemoveAdditionalImage = (colorIdx: number, imgIdx: number) => {
-    setColors((prev) =>
-      prev.map((c, i) => {
-        if (i === colorIdx && c.additionalImages) {
-          return {
-            ...c,
-            additionalImages: c.additionalImages.filter((_, idx) => idx !== imgIdx),
-          };
-        }
+    setColors((prev) => prev.map((c, i) => {
+        if (i === colorIdx && c.additionalImages) return { ...c, additionalImages: c.additionalImages.filter((_, idx) => idx !== imgIdx) };
         return c;
-      })
-    );
+    }));
   };
 
   const handleAddColor = () => {
@@ -1396,7 +1416,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
                   ألوان القطعة والصور المخصصة لكل لون:
                 </h4>
                 <p className="text-[11px] text-[#78716C]">
-                  يمكنك تحديد سعر مختلف لكل لون ورفع صور متعددة للزوايا من جهازك
+                  يمكنك تحديد سعر مختلف لكل لون ورفع صور متعددة للزوايا من جهازك أو إضافة رابط
                 </p>
               </div>
               <button
@@ -1447,28 +1467,25 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
                       />
                     </div>
 
-                    <div className="sm:col-span-4">
-                      <label className="block text-[10px] text-[#78716C] mb-1">الصورة الرئيسية للون:</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={color.image}
-                          onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
-                          placeholder="رابط الصورة أو ارفعها"
-                          className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white"
+                    {/* الصورة الرئيسية */}
+                    <div className="sm:col-span-4 bg-white p-2 rounded-lg border border-[#DDD5C7]">
+                      <label className="block text-[10px] font-bold text-[#1C1917] mb-1">الصورة الرئيسية للون:</label>
+                      <div className="flex flex-col gap-2">
+                        <input 
+                          type="text" 
+                          value={color.image.startsWith('data:image') ? '' : color.image} 
+                          onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)} 
+                          placeholder={color.image.startsWith('data:image') ? 'تم الرفع ✓' : 'رابط الصورة...'} 
+                          className="w-full text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg" 
+                          dir="ltr" 
                         />
-                        <label className="p-1.5 bg-white border border-[#DDD5C7] rounded-lg hover:bg-[#F2EDE4] cursor-pointer shrink-0" title="رفع من جهازك">
-                          <Upload className="w-4 h-4 text-[#8C6D46]" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleColorImageUpload(idx, e)}
-                            className="hidden"
-                          />
+                        <label className="flex items-center justify-center gap-1 p-1 border border-[#DDD5C7] rounded-lg cursor-pointer text-[10px] font-bold text-[#8C6D46] hover:bg-[#F2EDE4]">
+                          <Upload className="w-3 h-3" /> رفع من الجهاز
+                          <input type="file" accept="image/*" onChange={(e) => handleColorImageUpload(idx, e)} className="hidden" />
                         </label>
                       </div>
                     </div>
-
+                    
                     <div className="sm:col-span-1 text-center">
                       {colors.length > 1 && (
                         <button
@@ -1483,26 +1500,39 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onClose, o
                     </div>
                   </div>
 
-                  {/* Additional angles for this color */}
+                  {/* الزوايا الإضافية (مع رابط + رفع) في شاشة التعديل */}
                   <div className="pt-2 border-t border-[#EAE3D7]/70">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                       <span className="text-[11px] text-[#78716C]">
-                        زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):
+                        📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):
                       </span>
-                      <label className="text-[10px] font-bold text-[#8C6D46] hover:text-[#1C1917] cursor-pointer flex items-center gap-1">
-                        <Plus className="w-3 h-3" />
-                        <span>إضافة صورة زاوية</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleAddAdditionalImage(idx, e)}
-                          className="hidden"
-                        />
-                      </label>
+                      
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                         <input 
+                           type="text" 
+                           placeholder="رابط صورة إضافية..." 
+                           value={tempColorUrls[idx] || ''} 
+                           onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
+                           className="text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg w-full sm:w-40 bg-white" 
+                           dir="ltr" 
+                         />
+                         <button 
+                           type="button" 
+                           onClick={() => handleAddAdditionalImageUrl(idx)} 
+                           className="bg-[#1C1917] text-white px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[#332E2B]"
+                         >
+                           إضافة الرابط
+                         </button>
+                         
+                         <label className="flex items-center gap-1 text-[10px] font-bold text-[#8C6D46] bg-white border border-[#DDD5C7] px-2 py-1 rounded-lg cursor-pointer hover:bg-[#F2EDE4]">
+                           <Upload className="w-3 h-3" /> رفع
+                           <input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImage(idx, e)} className="hidden" />
+                         </label>
+                      </div>
                     </div>
 
                     {color.additionalImages && color.additionalImages.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
                         {color.additionalImages.map((addImg, aIdx) => (
                           <div key={aIdx} className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#DDD5C7] group">
                             <img src={addImg} alt="" className="w-full h-full object-cover" />
