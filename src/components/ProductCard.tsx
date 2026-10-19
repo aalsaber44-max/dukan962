@@ -20,12 +20,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [addedAnim, setAddedAnim] = useState(false);
 
-  // Hover image switch: if product has secondary shooting angle or another color image, switch on hover!
-  const defaultImage = product.colors[0]?.image || product.images[0];
+  // Hover image switch
+  const defaultImage = product.colors?.[0]?.image || product.images?.[0] || 'https://via.placeholder.com/400';
   const secondaryImage =
-    product.colors[0]?.additionalImages?.[0] ||
-    product.images[1] ||
-    product.colors[1]?.image ||
+    product.colors?.[0]?.additionalImages?.[0] ||
+    product.images?.[1] ||
+    product.colors?.[1]?.image ||
     defaultImage;
 
   const currentDisplayImage = isHovered && secondaryImage ? secondaryImage : defaultImage;
@@ -55,7 +55,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           src={currentDisplayImage}
           alt={product.name}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-center group-hover:scale-104 transition-all duration-700 ease-out"
+          /* هنا التعديل: غيرنا object-cover لـ object-contain وضفنا p-2 */
+          className="w-full h-full object-contain object-center p-2 group-hover:scale-105 transition-all duration-700 ease-out"
         />
 
         {/* Quiet Olive Green Offer Badge */}
@@ -114,7 +115,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </p>
 
           {/* Color preview dots */}
-          {product.colors.length > 0 && (
+          {product.colors && product.colors.length > 0 && (
             <div className="flex items-center gap-1.5 mb-3">
               <span className="text-[11px] text-[#A8A29E]">الألوان:</span>
               <div className="flex items-center gap-1">
@@ -141,7 +142,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-black text-[#1C1917] tabular-nums font-mono">
-                {product.basePrice.toFixed(2)}
+                {product.basePrice?.toFixed(2) || '0.00'}
               </span>
               <span className="text-xs font-bold text-[#78716C]">
                 د.أ
