@@ -32,6 +32,10 @@ interface AdminDashboardProps {
   onClose: () => void;
 }
 
+// 🔑 كلمة المرور الافتراضية للوحة التحكم
+const DEFAULT_ADMIN_PASSWORD = 'Dukan962@Admin#2024!';
+const PASSWORD_STORAGE_KEY = 'dukan962_admin_password';
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isOpen,
   onClose,
@@ -39,7 +43,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // ✅ إضافة 'categories' إلى التبويبات
   const [activeTab, setActiveTab] = useState<'list' | 'orders' | 'add' | 'settings' | 'categories'>('list');
   const [successToast, setSuccessToast] = useState('');
-  
+
   // حالة المنتجات والأقسام من Firebase
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -76,7 +80,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986b88?w=800&auto=format&fit=crop&q=80',
     },
   ]);
-  
+
   // حالة لحفظ الروابط المؤقتة للزوايا الإضافية (للإضافة الجديدة)
   const [tempNewColorUrls, setTempNewColorUrls] = useState<Record<number, string>>({});
 
@@ -90,10 +94,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
+  // ============================================================
+  // 🔐 تعيين كلمة المرور الافتراضية عند أول تشغيل
+  // ============================================================
+  useEffect(() => {
+    if (!localStorage.getItem(PASSWORD_STORAGE_KEY)) {
+      localStorage.setItem(PASSWORD_STORAGE_KEY, DEFAULT_ADMIN_PASSWORD);
+    }
+  }, []);
+
   // جلب المنتجات والأقسام من Firebase مباشرة
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
       snapshot.forEach((doc) => {
@@ -170,7 +183,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         basePrice: updatedPrice,
         colors: nextColors
       });
-      
+
       setEditingPrices((prev) => {
         const copy = { ...prev };
         delete copy[id];
@@ -373,25 +386,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification(`تم تغيير حالة الطلب #${orderId} إلى "${newStatus}"`);
   };
 
+  // ✅ تم إصلاح الخطأ: كان في تعريفين مكررين لنفس الدالة، حذفنا القديم
   const handleDeleteOrder = async (orderId: string) => {
     try {
       await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
     } catch {}
 
     setOrders((prev) => prev.filter((o) => o.id !== orderId));
-    setConfirmDeleteOrderId(null);
-    showNotification('تم حذف الطلب من السجل.');
-  };
 
-  const handleDeleteOrder = async (orderId: string) => {
-    try {
-      await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
-    } catch {}
-
-    // تحديث الشاشة
-    setOrders((prev) => prev.filter((o) => o.id !== orderId));
-    
-    // 💡 التعديل هنا: مسح الطلب من الذاكرة المحلية عشان ميرجعش بعد التحديث
+    // 💡 مسح الطلب من الذاكرة المحلية عشان ميرجعش بعد التحديث
     try {
       const local = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
       const updatedLocal = local.filter((o: any) => o.id !== orderId);
@@ -402,10 +405,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم حذف الطلب من السجل نهائياً.');
   };
 
+  // ============================================================
+  // 🔐 إصلاح الخطأ: إضافة دالة تغيير كلمة المرور الناقصة
+  // ============================================================
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const storedPass = localStorage.getItem(PASSWORD_STORAGE_KEY) || DEFAULT_ADMIN_PASSWORD;
+
+    if (currentPass !== storedPass) {
+      setPassMsg({ text: 'كلمة المرور الحالية غير صحيحة، حاول مرة أخرى.', error: true });
+      return;
+    }
+
+    if (!newPass || newPass.trim().length < 6) {
+      setPassMsg({ text: 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل.', error: true });
+      return;
+    }
+
+    localStorage.setItem(PASSWORD_STORAGE_KEY, newPass);
+    setPassMsg({ text: 'تم تحديث كلمة المرور بنجاح! استخدمها في المرة القادمة.', error: false });
+    setCurrentPass('');
+    setNewPass('');
+    showNotification('تم تحديث كلمة المرور بنجاح!');
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-[#E8DFD3] overflow-hidden my-6 max-h-[92vh] flex flex-col">
-        
+
         {/* Header */}
         <div className="p-6 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
           <div className="flex items-center gap-3">
@@ -505,7 +533,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          
+
           {/* TAB 1: PRODUCTS LIST */}
           {activeTab === 'list' && (
             <div className="space-y-4">
@@ -1032,11 +1060,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="flex flex-col gap-2 mb-2">
                           <span className="text-[11px] text-[#78716C]">📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):</span>
                           <div className="flex flex-col sm:flex-row gap-2 w-full">
-                             <input type="text" placeholder="ضع رابط الصورة الإضافية هنا (URL)..." value={tempNewColorUrls[idx] || ''} onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" dir="ltr" />
-                             <div className="flex gap-2">
-                               <button type="button" onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap">إضافة الرابط</button>
-                               <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap"><Upload className="w-3.5 h-3.5" /> رفع صورة<input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)} className="hidden" /></label>
-                             </div>
+                            <input type="text" placeholder="ضع رابط الصورة الإضافية هنا (URL)..." value={tempNewColorUrls[idx] || ''} onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" dir="ltr" />
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap">إضافة الرابط</button>
+                              <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap"><Upload className="w-3.5 h-3.5" /> رفع صورة<input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)} className="hidden" /></label>
+                            </div>
                           </div>
                         </div>
                         {color.additionalImages && color.additionalImages.length > 0 && (
@@ -1419,13 +1447,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                     <div className="sm:col-span-4 bg-white p-2 rounded-lg border border-[#DDD5C7]">
                       <label className="block text-[10px] font-bold text-[#1C1917] mb-1">الصورة الرئيسية للون:</label>
                       <div className="flex flex-col gap-2">
-                        <input 
-                          type="text" 
-                          value={color.image.startsWith('data:image') ? '' : color.image} 
-                          onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)} 
-                          placeholder={color.image.startsWith('data:image') ? 'تم الرفع ✓' : 'رابط الصورة...'} 
-                          className="w-full text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg" 
-                          dir="ltr" 
+                        <input
+                          type="text"
+                          value={color.image.startsWith('data:image') ? '' : color.image}
+                          onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
+                          placeholder={color.image.startsWith('data:image') ? 'تم الرفع ✓' : 'رابط الصورة...'}
+                          className="w-full text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg"
+                          dir="ltr"
                         />
                         <label className="flex items-center justify-center gap-1 p-1 border border-[#DDD5C7] rounded-lg cursor-pointer text-[10px] font-bold text-[#8C6D46] hover:bg-[#F2EDE4]">
                           <Upload className="w-3 h-3" /> رفع من الجهاز
@@ -1433,7 +1461,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                         </label>
                       </div>
                     </div>
-                    
+
                     <div className="sm:col-span-1 text-center">
                       {colors.length > 1 && (
                         <button
@@ -1454,25 +1482,25 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                       <span className="text-[11px] text-[#78716C]">
                         📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):
                       </span>
-                      
+
                       <div className="flex flex-col sm:flex-row gap-2 w-full">
-                         <input 
-                           type="text" 
-                           placeholder="ضع رابط الصورة الإضافية هنا (URL)..." 
-                           value={tempColorUrls[idx] || ''} 
-                           onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
-                           className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" 
-                           dir="ltr" 
+                         <input
+                           type="text"
+                           placeholder="ضع رابط الصورة الإضافية هنا (URL)..."
+                           value={tempColorUrls[idx] || ''}
+                           onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))}
+                           className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white"
+                           dir="ltr"
                          />
                          <div className="flex gap-2">
-                           <button 
-                             type="button" 
-                             onClick={() => handleAddAdditionalImageUrl(idx)} 
+                           <button
+                             type="button"
+                             onClick={() => handleAddAdditionalImageUrl(idx)}
                              className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap"
                            >
                              إضافة الرابط
                            </button>
-                           
+
                            <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-white border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap">
                              <Upload className="w-3.5 h-3.5" /> رفع صورة
                              <input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImage(idx, e)} className="hidden" />
