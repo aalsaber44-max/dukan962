@@ -25,20 +25,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // إزالة خيار الفيزا
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'cliq'>('cod');
   const [name, setName] = useState('');
-  
-  // رقمين هاتف
   const [phone1, setPhone1] = useState('');
   const [phone2, setPhone2] = useState('');
-  
-  // تقسيم العنوان
   const [governorate, setGovernorate] = useState('عمان (العاصمة)');
   const [region, setRegion] = useState('');
   const [street, setStreet] = useState('');
   const [building, setBuilding] = useState('');
-  
   const [notes, setNotes] = useState('');
   const [cliqRef, setCliqRef] = useState('');
   const [copiedField, setCopiedField] = useState<'alias' | 'phone' | null>(null);
@@ -46,7 +40,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   
-  // أخطاء التحقق
+  const [nameError, setNameError] = useState<string | null>(null);
   const [phone1Error, setPhone1Error] = useState<string | null>(null);
   const [phone2Error, setPhone2Error] = useState<string | null>(null);
   const [autoDetectedGov, setAutoDetectedGov] = useState<string | null>(null);
@@ -60,7 +54,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const total = subtotal + deliveryFee;
 
   const cliqAlias = 'DUKAN962';
-  const cliqPhone = STORE_PHONE; // 0779254134
+  const cliqPhone = STORE_PHONE;
 
   const copyToClipboard = (text: string, field: 'alias' | 'phone') => {
     navigator.clipboard.writeText(text);
@@ -68,7 +62,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  // دالة تحديد المحافظة تلقائياً بناءً على المنطقة
   const handleRegionChange = (val: string) => {
     setRegion(val);
     const detected = detectGovernorateFromAddress(val);
@@ -99,7 +92,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // التحقق من الرقم الأول
+    const nameParts = name.trim().split(/\s+/);
+    if (nameParts.length < 4) {
+      setNameError('الرجاء إدخال الاسم الرباعي كاملاً (أربع مقاطع على الأقل).');
+      return;
+    }
+    setNameError(null);
+
     const phone1Validation = validateJordanPhone(phone1);
     if (!phone1Validation.isValid) {
       setPhone1Error(phone1Validation.error || 'رقم الهاتف الأساسي غير صالح.');
@@ -107,7 +106,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
     setPhone1Error(null);
 
-    // التحقق من الرقم الثاني (إذا تم إدخاله)
     if (phone2.trim() !== '') {
       const phone2Validation = validateJordanPhone(phone2);
       if (!phone2Validation.isValid) {
@@ -117,8 +115,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setPhone2Error(null);
     }
 
-    // التأكد من تعبئة الحقول الأساسية للعنوان
-    if (!name || !region || !street || !building) {
+    if (!region || !street || !building) {
       alert('يرجى تعبئة جميع بيانات العنوان (المنطقة، الشارع، رقم العمارة)');
       return;
     }
@@ -127,14 +124,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     const num = 'DUKAN-' + Math.floor(10000 + Math.random() * 90000);
     setOrderNumber(num);
 
-    // تجميع العنوان في نص واحد عشان يتعرض في لوحة التحكم بسهولة
     const fullAddress = `المنطقة: ${region} - الشارع: ${street} - العمارة: ${building}`;
 
     const orderPayload = {
       id: num,
       name: name.trim(),
-      phone: phone1Validation.cleaned, // الرقم الأساسي
-      phone2: phone2.trim() ? validateJordanPhone(phone2).cleaned : '', // الرقم الثاني
+      phone: phone1Validation.cleaned,
+      phone2: phone2.trim() ? validateJordanPhone(phone2).cleaned : '',
       governorate,
       address: fullAddress,
       region,
@@ -178,7 +174,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       ? 'الدفع كاش عند الاستلام بعد المعاينة'
       : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
 
-  // تعديل رسالة الواتساب عشان تشمل الرقم الثاني والعنوان المفصل
   const whatsAppOrderText = encodeURIComponent(
     `👑 *طلب جديد من متجر دكان 962 للأثاث*\n\n` +
       `*رقم الطلب:* ${orderNumber}\n` +
@@ -203,9 +198,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[#E9E1D4] overflow-hidden my-6">
-        {/* Header */}
-        <div className="p-6 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
+      {/* التعديل هنا: استخدمنا flex-col و max-h عشان النافذة يكون ليها سكرول داخلي والهيدر يثبت */}
+      <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[#E9E1D4] flex flex-col my-6 max-h-[90vh]">
+        
+        {/* Header - ثابت فوق */}
+        <div className="p-5 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5] rounded-t-3xl shrink-0">
           <div>
             <h3 className="text-base font-bold text-[#1C1917]">
               {orderConfirmed ? 'تم تأكيد طلبك في دكان 962' : 'إتمام الطلب وتحديد التوصيل'}
@@ -216,338 +213,195 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F2EDE4] transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-[#1C1917] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {orderConfirmed ? (
-          <div className="p-6 sm:p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-200">
-              <CheckCircle className="w-8 h-8" />
-            </div>
-            <span className="text-xs font-bold text-[#8C6D46] uppercase tracking-wider">
-              رقم تتبع الطلب
-            </span>
-            <h4 className="text-2xl font-black text-[#1C1917] font-mono mt-1 mb-2">
-              {orderNumber}
-            </h4>
-            <p className="text-xs text-[#57534E] leading-relaxed max-w-md mx-auto mb-5">
-              تم استلام طلبك وحفظه بنجاح! يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
-            </p>
-
-            <div className="mb-6">
-              <a
-                href={whatsAppUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 px-6 text-xs sm:text-sm font-bold text-white bg-[#2E5339] hover:bg-[#1E3826] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span>إرسال تفاصيل الطلب عبر واتساب</span>
-              </a>
-            </div>
-
-            <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EBE3D7] text-right mb-6 space-y-3 text-xs">
-              <div className="font-bold text-[#1C1917] border-b border-[#E5DDD0] pb-2">
-                تفاصيل القطع المطلوبة:
+        {/* Body - اللي بيعمل سكرول */}
+        <div className="overflow-y-auto flex-1 p-6 sm:p-8">
+          {orderConfirmed ? (
+            <div className="text-center">
+              {/* ... (نفس كود النجاح السابق) ... */}
+              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-200">
+                <CheckCircle className="w-8 h-8" />
               </div>
-              <div className="space-y-2">
-                {items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-[#44403C]">
+              <span className="text-xs font-bold text-[#8C6D46] uppercase tracking-wider">رقم تتبع الطلب</span>
+              <h4 className="text-2xl font-black text-[#1C1917] font-mono mt-1 mb-2">{orderNumber}</h4>
+              <p className="text-xs text-[#57534E] leading-relaxed max-w-md mx-auto mb-5">
+                تم استلام طلبك وحفظه بنجاح! يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
+              </p>
+
+              <div className="mb-6">
+                <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3.5 px-6 text-xs sm:text-sm font-bold text-white bg-[#2E5339] hover:bg-[#1E3826] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+                  <MessageCircle className="w-5 h-5" />
+                  <span>إرسال تفاصيل الطلب عبر واتساب</span>
+                </a>
+              </div>
+
+              <button onClick={onClose} className="py-2.5 px-8 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl transition-all cursor-pointer">
+                العودة إلى المعرض
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              {/* Payment Options */}
+              <div>
+                <label className="block text-xs font-bold text-[#1C1917] mb-2">اختر طريقة الدفع:</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button type="button" onClick={() => setPaymentMethod('cod')} className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 cursor-pointer ${paymentMethod === 'cod' ? 'border-[#1C1917] bg-[#FAF8F5] shadow-xs ring-1 ring-[#1C1917]' : 'border-[#E5DDD0] hover:border-[#C6BBAA]'}`}>
+                    <Truck className="w-5 h-5 text-[#8C6D46] shrink-0" />
                     <div>
-                      <span className="font-semibold text-[#1C1917]">{item.product.name}</span>
-                      <span className="text-[11px] text-[#8C6D46] block">
-                        اللون: {item.selectedColor.name} (الكمية: {item.quantity})
-                      </span>
+                      <p className="text-xs font-bold text-[#1C1917]">الدفع عند الاستلام</p>
+                      <p className="text-[10px] text-[#78716C]">كاش بعد المعاينة</p>
                     </div>
-                    <span className="font-mono font-bold">
-                      {(item.selectedColor.price * item.quantity).toFixed(2)} د.أ
-                    </span>
-                  </div>
-                ))}
+                  </button>
+
+                  <button type="button" onClick={() => setPaymentMethod('cliq')} className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 cursor-pointer ${paymentMethod === 'cliq' ? 'border-[#1C1917] bg-[#FAF8F5] shadow-xs ring-1 ring-[#1C1917]' : 'border-[#E5DDD0] hover:border-[#C6BBAA]'}`}>
+                    <Smartphone className="w-5 h-5 text-[#2E5339] shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-[#2E5339]">دفع كليك (CliQ)</p>
+                      <p className="text-[10px] text-[#78716C]">تحويل فوري</p>
+                    </div>
+                  </button>
+                </div>
               </div>
 
-              <div className="pt-2 border-t border-[#E5DDD0] space-y-1 text-[#78716C]">
-                <div className="flex justify-between">
-                  <span>المستلم:</span>
-                  <span className="font-semibold text-[#1C1917]">{name}</span>
+              {/* CliQ Details */}
+              {paymentMethod === 'cliq' && (
+                <div className="bg-[#EDF4EE] border border-[#C5DEC8] rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#2E5339]">
+                      <Smartphone className="w-4 h-4" />
+                      <span>بيانات التحويل:</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="bg-white p-2.5 rounded-xl border border-[#C5DEC8] flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-[#78716C] block">الاسم المستعار:</span>
+                        <strong className="text-[#1C1917] font-mono text-sm">{cliqAlias}</strong>
+                      </div>
+                      <button type="button" onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-[#EAE2D5] border cursor-pointer text-[10px] flex items-center gap-1">
+                        {copiedField === 'alias' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-[#C5DEC8] flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-[#78716C] block">رقم الهاتف:</span>
+                        <strong className="text-[#1C1917] font-mono text-sm">{cliqPhone}</strong>
+                      </div>
+                      <button type="button" onClick={() => copyToClipboard(cliqPhone, 'phone')} className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-[#EAE2D5] border cursor-pointer text-[10px] flex items-center gap-1">
+                        {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#2E5339] mb-1">رقم عملية التحويل أو اسم الحساب (اختياري):</label>
+                    <input type="text" value={cliqRef} onChange={(e) => setCliqRef(e.target.value)} placeholder="مثال: رقم العملية..." className="w-full text-xs py-2 px-3 bg-white border border-[#C5DEC8] rounded-xl" />
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>الهاتف:</span>
-                  <span className="font-semibold text-[#1C1917] font-mono">{phone1} {phone2 && ` / ${phone2}`}</span>
+              )}
+
+              {/* بيانات التواصل */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-[#1C1917] mb-1">الاسم الكامل (الرباعي) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
+                    placeholder="مثال: محمد أحمد علي محمود"
+                    className={`w-full text-xs py-2 px-3 bg-[#FAF8F5] border rounded-xl ${nameError ? 'border-rose-400 bg-rose-50' : 'border-[#DDD5C7]'}`}
+                  />
+                  {nameError && <p className="text-[10px] text-rose-600 mt-1 font-semibold">{nameError}</p>}
                 </div>
-                <div className="flex justify-between">
-                  <span>العنوان:</span>
-                  <span className="font-semibold text-[#1C1917]">
-                    {governorate} - {region} - {street} - عمارة {building}
-                  </span>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1C1917] mb-1">رقم الهاتف الأساسي *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={phone1}
+                    onChange={(e) => handlePhone1Change(e.target.value)}
+                    placeholder="07XXXXXXXX"
+                    className={`w-full text-xs py-2 px-3 bg-[#FAF8F5] border rounded-xl font-mono text-right ${phone1Error ? 'border-rose-400 bg-rose-50' : 'border-[#DDD5C7]'}`}
+                  />
+                  {phone1Error && <p className="text-[10px] text-rose-600 mt-1 font-semibold">{phone1Error}</p>}
                 </div>
-                <div className="flex justify-between">
-                  <span>طريقة الدفع:</span>
-                  <span className="font-semibold text-[#2E5339]">{paymentLabel}</span>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1C1917] mb-1">رقم هاتف إضافي (اختياري)</label>
+                  <input
+                    type="tel"
+                    value={phone2}
+                    onChange={(e) => handlePhone2Change(e.target.value)}
+                    placeholder="رقم بديل..."
+                    className={`w-full text-xs py-2 px-3 bg-[#FAF8F5] border rounded-xl font-mono text-right ${phone2Error ? 'border-rose-400 bg-rose-50' : 'border-[#DDD5C7]'}`}
+                  />
+                  {phone2Error && <p className="text-[10px] text-rose-600 mt-1 font-semibold">{phone2Error}</p>}
+                </div>
+              </div>
+
+              {/* تفاصيل العنوان */}
+              <div className="pt-2">
+                <label className="block text-xs font-bold text-[#1C1917] mb-2">3. عنوان التوصيل بالتفصيل</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-[#78716C] mb-1">المحافظة *</label>
+                    <select value={governorate} onChange={(e) => { setGovernorate(e.target.value); setAutoDetectedGov(null); }} className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl">
+                      {jordanGovernorates.map((gov) => <option key={gov} value={gov}>{gov}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-[#78716C] mb-1">المنطقة *</label>
+                    <input type="text" required value={region} onChange={(e) => handleRegionChange(e.target.value)} placeholder="مثال: جبل عمان" className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl" />
+                    {autoDetectedGov && <span className="text-[9px] text-[#2E5339] mt-1 block">تم تحديد المحافظة تلقائياً ✓</span>}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-[#78716C] mb-1">اسم الشارع *</label>
+                    <input type="text" required value={street} onChange={(e) => setStreet(e.target.value)} placeholder="مثال: شارع المدينة المنورة" className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl" />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="block text-[10px] font-semibold text-[#78716C] mb-1">رقم العمارة / البناية *</label>
+                    <input type="text" required value={building} onChange={(e) => setBuilding(e.target.value)} placeholder="مثال: عمارة رقم 14، الطابق 2" className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl" />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#1C1917] mb-1">ملاحظات إضافية للتوصيل (اختياري)</label>
+                <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-xs py-2 px-3 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl" />
+              </div>
+
+              {/* حساب التكلفة */}
+              <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EDE5D8] space-y-1.5 text-xs">
+                <div className="flex justify-between text-[#78716C]">
+                  <span>المجموع الفرعي</span>
+                  <span className="font-mono font-bold text-[#1C1917]">{subtotal.toFixed(2)} د.أ</span>
+                </div>
+                <div className="flex justify-between text-[#78716C]">
+                  <span>أجور التوصيل ({governorate})</span>
+                  <span className="font-semibold text-[#1C1917] font-mono">{deliveryFee.toFixed(2)} د.أ</span>
                 </div>
                 <div className="pt-2 border-t border-[#E5DDD0] flex justify-between font-black text-sm text-[#1C1917]">
-                  <span>الإجمالي النهائي:</span>
-                  <span className="font-mono text-base">{total.toFixed(2)} دينار أردني</span>
+                  <span>المبلغ الإجمالي:</span>
+                  <span className="font-mono text-base">{total.toFixed(2)} د.أ</span>
                 </div>
               </div>
-            </div>
 
-            <button
-              onClick={onClose}
-              className="py-2.5 px-8 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl transition-all cursor-pointer"
-            >
-              العودة إلى المعرض
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
-            
-            {/* Payment Options (COD, CliQ Only) */}
-            <div>
-              <label className="block text-xs font-bold text-[#1C1917] mb-2">
-                اختر طريقة الدفع:
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('cod')}
-                  className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 cursor-pointer ${
-                    paymentMethod === 'cod'
-                      ? 'border-[#1C1917] bg-[#FAF8F5] shadow-xs ring-1 ring-[#1C1917]'
-                      : 'border-[#E5DDD0] hover:border-[#C6BBAA]'
-                  }`}
-                >
-                  <Truck className="w-5 h-5 text-[#8C6D46] shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold text-[#1C1917]">الدفع عند الاستلام</p>
-                    <p className="text-[10px] text-[#78716C]">كاش بعد المعاينة</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('cliq')}
-                  className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 cursor-pointer ${
-                    paymentMethod === 'cliq'
-                      ? 'border-[#1C1917] bg-[#FAF8F5] shadow-xs ring-1 ring-[#1C1917]'
-                      : 'border-[#E5DDD0] hover:border-[#C6BBAA]'
-                  }`}
-                >
-                  <Smartphone className="w-5 h-5 text-[#2E5339] shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold text-[#2E5339]">دفع كليك (CliQ)</p>
-                    <p className="text-[10px] text-[#78716C]">تحويل فوري</p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* CliQ Details Box */}
-            {paymentMethod === 'cliq' && (
-              <div className="bg-[#EDF4EE] border border-[#C5DEC8] rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#2E5339]">
-                    <Smartphone className="w-4 h-4" />
-                    <span>بيانات التحويل:</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="bg-white p-2.5 rounded-xl border border-[#C5DEC8] flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-[#78716C] block">الاسم المستعار:</span>
-                      <strong className="text-[#1C1917] font-mono text-sm">{cliqAlias}</strong>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(cliqAlias, 'alias')}
-                      className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-[#EAE2D5] border cursor-pointer text-[10px] flex items-center gap-1"
-                    >
-                      {copiedField === 'alias' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-
-                  <div className="bg-white p-2.5 rounded-xl border border-[#C5DEC8] flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-[#78716C] block">رقم الهاتف:</span>
-                      <strong className="text-[#1C1917] font-mono text-sm">{cliqPhone}</strong>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(cliqPhone, 'phone')}
-                      className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-[#EAE2D5] border cursor-pointer text-[10px] flex items-center gap-1"
-                    >
-                      {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#2E5339] mb-1">
-                    رقم عملية التحويل أو اسم الحساب (اختياري):
-                  </label>
-                  <input
-                    type="text"
-                    value={cliqRef}
-                    onChange={(e) => setCliqRef(e.target.value)}
-                    placeholder="مثال: رقم العملية..."
-                    className="w-full text-xs py-2 px-3 bg-white border border-[#C5DEC8] rounded-xl"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* بيانات التواصل */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1C1917] mb-1">
-                  الاسم الكامل *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="مثال: أحمد الخالدي"
-                  className="w-full text-xs py-2 px-3 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#1C1917] mb-1">
-                  رقم الهاتف الأساسي *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={phone1}
-                  onChange={(e) => handlePhone1Change(e.target.value)}
-                  placeholder="مثال: 0791234567"
-                  className={`w-full text-xs py-2 px-3 bg-[#FAF8F5] border rounded-xl font-mono text-right ${
-                    phone1Error ? 'border-rose-400 bg-rose-50' : 'border-[#DDD5C7]'
-                  }`}
-                />
-                {phone1Error && <p className="text-[10px] text-rose-600 mt-1 font-semibold">{phone1Error}</p>}
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-[#1C1917] mb-1">
-                  رقم هاتف إضافي (اختياري)
-                </label>
-                <input
-                  type="tel"
-                  value={phone2}
-                  onChange={(e) => handlePhone2Change(e.target.value)}
-                  placeholder="رقم بديل للتواصل..."
-                  className={`w-full text-xs py-2 px-3 bg-[#FAF8F5] border rounded-xl font-mono text-right ${
-                    phone2Error ? 'border-rose-400 bg-rose-50' : 'border-[#DDD5C7]'
-                  }`}
-                />
-                {phone2Error && <p className="text-[10px] text-rose-600 mt-1 font-semibold">{phone2Error}</p>}
-              </div>
-            </div>
-
-            {/* تفاصيل العنوان (مقسمة لـ 3 خانات) */}
-            <div className="pt-2">
-              <label className="block text-xs font-bold text-[#1C1917] mb-2">
-                3. عنوان التوصيل بالتفصيل
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#78716C] mb-1">المحافظة *</label>
-                  <select
-                    value={governorate}
-                    onChange={(e) => {
-                      setGovernorate(e.target.value);
-                      setAutoDetectedGov(null);
-                    }}
-                    className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl"
-                  >
-                    {jordanGovernorates.map((gov) => (
-                      <option key={gov} value={gov}>{gov}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#78716C] mb-1">المنطقة *</label>
-                  <input
-                    type="text"
-                    required
-                    value={region}
-                    onChange={(e) => handleRegionChange(e.target.value)}
-                    placeholder="مثال: جبل عمان"
-                    className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl"
-                  />
-                  {autoDetectedGov && (
-                    <span className="text-[9px] text-[#2E5339] mt-1 block">تم تحديد المحافظة تلقائياً ✓</span>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#78716C] mb-1">اسم الشارع *</label>
-                  <input
-                    type="text"
-                    required
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    placeholder="مثال: شارع بغداد"
-                    className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl"
-                  />
-                </div>
-                <div className="sm:col-span-3">
-                  <label className="block text-[10px] font-semibold text-[#78716C] mb-1">رقم العمارة / البناية *</label>
-                  <input
-                    type="text"
-                    required
-                    value={building}
-                    onChange={(e) => setBuilding(e.target.value)}
-                    placeholder="مثال: عمارة رقم 14، الطابق 2"
-                    className="w-full text-xs py-2 px-2 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#1C1917] mb-1">
-                ملاحظات إضافية للتوصيل (اختياري)
-              </label>
-              <textarea
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..."
-                className="w-full text-xs py-2 px-3 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl"
-              />
-            </div>
-
-            {/* حساب التكلفة */}
-            <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EDE5D8] space-y-1.5 text-xs">
-              <div className="flex justify-between text-[#78716C]">
-                <span>المجموع الفرعي</span>
-                <span className="font-mono font-bold text-[#1C1917]">{subtotal.toFixed(2)} د.أ</span>
-              </div>
-              <div className="flex justify-between text-[#78716C]">
-                <span>أجور التوصيل ({governorate})</span>
-                <span className="font-semibold text-[#1C1917] font-mono">{deliveryFee.toFixed(2)} د.أ</span>
-              </div>
-              <div className="pt-2 border-t border-[#E5DDD0] flex justify-between font-black text-sm text-[#1C1917]">
-                <span>المبلغ الإجمالي:</span>
-                <span className="font-mono text-base">{total.toFixed(2)} د.أ</span>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 px-6 text-sm font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              <span>{isSubmitting ? 'جارٍ إرسال الطلب...' : 'تأكيد طلب الشراء الآن 🛒'}</span>
-            </button>
-          </form>
-        )}
+              <button type="submit" disabled={isSubmitting} className="w-full py-3.5 px-6 text-sm font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                <span>{isSubmitting ? 'جارٍ إرسال الطلب...' : 'تأكيد طلب الشراء الآن 🛒'}</span>
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
