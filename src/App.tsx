@@ -11,30 +11,46 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { Footer } from './components/Footer';
-import { Product, CartItem, ProductColor } from './types/furniture';
+import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Check, Sparkles } from 'lucide-react';
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, setDoc, doc } from 'firebase/firestore';
-import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts صحيح
+import { db } from './firebase';
 
 export default function App() {
-  // 1. حالة المنتجات تبدأ فاضية وتتحدث تلقائياً من السحابة
+  // 1. حالات المنتجات والأقسام
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  // 2. جلب المنتجات من السحابة (Live Sync)
+  // 2. جلب المنتجات والأقسام من السحابة (Live Sync)
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
+    // جلب المنتجات
+    const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
       snapshot.forEach((doc) => {
         prods.push({ id: doc.id, ...doc.data() } as Product);
       });
       setProducts(prods);
     });
-    return () => unsubscribe();
+
+    // جلب الأقسام
+    const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
+      const cats: Category[] = [];
+      snapshot.forEach((doc) => {
+        cats.push({ id: doc.id, ...doc.data() } as Category);
+      });
+      // بنعرض الأقسام المفعلة بس
+      setCategories(cats.filter(c => c.isActive).sort((a, b) => a.order - b.order));
+    });
+
+    return () => {
+      unsubscribeProducts();
+      unsubscribeCategories();
+    };
   }, []);
 
-  // 3. كود ترحيل المنتجات القديمة من المتصفح إلى السحابة (يعمل مرة واحدة فقط)
+  // 3. كود ترحيل المنتجات القديمة (لو لسه موجود)
   useEffect(() => {
     const migrateOldProducts = async () => {
       const savedOldProducts = localStorage.getItem('dukan962_products_v3');
@@ -63,7 +79,6 @@ export default function App() {
         }
       }
     };
-    // تأخير بسيط للتأكد من تحميل Firebase
     setTimeout(migrateOldProducts, 1500); 
   }, []);
 
@@ -88,7 +103,7 @@ export default function App() {
   // Filtering state
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([20, 160]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); // وسعنا النطاق عشان يناسب كل المنتجات
   const [selectedColor, setSelectedColor] = useState<string>('');
 
   // Modals & Drawers state
@@ -120,11 +135,11 @@ export default function App() {
 
   // Add to cart with color & quantity
   const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
-    const activeColor = chosenColor || product.colors[0] || {
+    const activeColor = chosenColor || product.colors?.[0] || {
       name: 'افتراضي',
       hex: '#3E2723',
       price: product.basePrice,
-      image: product.images[0] || '',
+      image: product.images?.[0] || '',
     };
 
     setCart((prev) => {
@@ -184,25 +199,27 @@ export default function App() {
   const handleResetFilters = () => {
     setSelectedCategory('all');
     setSearchQuery('');
-    setPriceRange([20, 160]);
+    setPriceRange([0, 1000]);
     setSelectedColor('');
   };
 
-  // Filtered Products logic
+  // Filtered Products logic (تم التعديل ليتوافق مع الأقسام الجديدة)
   const filteredProducts = products.filter((prod) => {
-    const matchesCategory = selectedCategory === 'all' || prod.category === selectedCategory;
+    // الفلترة بالقسم باستخدام categoryId
+    const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
+    
+    // البحث بالاسم أو الوصف (شلنا woodType عشان مش موجود في الأنواع الجديدة)
     const matchesSearch =
       searchQuery.trim() === '' ||
       prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prod.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prod.woodType.toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(prod.itemNumber).includes(searchQuery.trim());
 
     const matchesPrice = prod.basePrice >= priceRange[0] && prod.basePrice <= priceRange[1];
 
     const matchesColor =
       selectedColor === '' ||
-      prod.colors.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
+      prod.colors?.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
 
     return matchesCategory && matchesSearch && matchesPrice && matchesColor;
   });
@@ -231,9 +248,9 @@ export default function App() {
       {/* Top Banner Notice */}
       <aside aria-label="شريط العروض" className="bg-[#1C1917] text-[#EDE8E0] text-[11px] py-2 px-4 text-center border-b border-[#2C2825]">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-          <span className="text-[#D4AF37] font-bold">👑 دكان 962 (Dukan 962) للأثاث</span>
+          <span className="text-[#D4AF37] font-bold">👑 دكان 962 (Dukan 962)</span>
           <span aria-hidden="true" className="hidden sm:inline">·</span>
-          <span>خشب تايلندي ثقيل نخب أول</span>
+          <span>جودة نخب أول</span>
           <span aria-hidden="true" className="hidden sm:inline">·</span>
           <span className="text-[#A7F3D0] font-bold">✨ يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
           <span aria-hidden="true" className="hidden sm:inline">·</span>
@@ -245,6 +262,7 @@ export default function App() {
 
       {/* Navigation Header */}
       <Navbar
+        categories={categories} // 💡 تمرير الأقسام للـ Navbar
         cartCount={cartTotalCount}
         wishlistCount={wishlist.length}
         onOpenCart={() => setIsCartOpen(true)}
@@ -263,7 +281,7 @@ export default function App() {
 
       {/* Categories Visual Section */}
       <CategoryBoxes
-        products={products}
+        categories={categories} // 💡 تمرير الأقسام لصناديق الأقسام
         selectedCategory={selectedCategory}
         onSelectCategory={(cat) => {
           setSelectedCategory(cat);
@@ -277,13 +295,13 @@ export default function App() {
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>تشكيلات طاولات دكان 962 الحصرية</span>
+              <span>تشكيلات دكان 962 الحصرية</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight font-serif">
-              الأكثر مبيعاً وأحدث التشكيلات
+              تسوق أحدث التشكيلات
             </h2>
             <p className="text-xs text-[#78716C] mt-1">
-              مرّر الفأرة فوق أي طاولة لمشاهدة زاوية أخرى، واضغط على القطعة لتغيير الألوان ومطالعة الأسعار بدقة.
+              استكشف منتجاتنا، اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
             </p>
           </div>
 
@@ -293,6 +311,7 @@ export default function App() {
         </div>
 
         <FilterBar
+          categories={categories} // 💡 تمرير الأقسام للفلتر
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
           priceRange={priceRange}
@@ -305,7 +324,7 @@ export default function App() {
         {filteredProducts.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-3xl border border-[#ECE5D9] p-8">
             <p className="text-base font-bold text-[#1C1917] mb-2">
-              لا توجد طاولات مطابقة لمعايير البحث الحالية (أو لم يتم إضافة منتجات بعد)
+              لا توجد منتجات مطابقة لمعايير البحث الحالية (أو لم يتم إضافة منتجات بعد)
             </p>
             <p className="text-xs text-[#78716C] mb-6">
               جرّب توسيع نطاق السعر أو اختيار تصنيف آخر، أو قم بإضافة منتجات من لوحة التحكم.
@@ -314,7 +333,7 @@ export default function App() {
               onClick={handleResetFilters}
               className="py-2.5 px-6 text-xs font-bold text-white bg-[#1C1917] rounded-xl cursor-pointer"
             >
-              عرض جميع الطاولات
+              عرض جميع المنتجات
             </button>
           </div>
         ) : (
@@ -382,7 +401,6 @@ export default function App() {
         }}
       />
 
-      {/* لوحة التحكم - تم إزالة الـ Props القديمة لأنها تتصل بـ Firebase مباشرة */}
       <AdminDashboard
         isOpen={isAdminOpen}
         onClose={() => setIsAdminOpen(false)}
