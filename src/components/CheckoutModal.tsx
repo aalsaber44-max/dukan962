@@ -25,20 +25,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // إزالة خيار الفيزا
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'cliq'>('cod');
   const [name, setName] = useState('');
-  
-  // رقمين هاتف
   const [phone1, setPhone1] = useState('');
   const [phone2, setPhone2] = useState('');
-  
-  // تقسيم العنوان
   const [governorate, setGovernorate] = useState('عمان (العاصمة)');
   const [region, setRegion] = useState('');
   const [street, setStreet] = useState('');
   const [building, setBuilding] = useState('');
-  
   const [notes, setNotes] = useState('');
   const [cliqRef, setCliqRef] = useState('');
   const [copiedField, setCopiedField] = useState<'alias' | 'phone' | null>(null);
@@ -47,6 +41,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [orderNumber, setOrderNumber] = useState('');
   
   // أخطاء التحقق
+  const [nameError, setNameError] = useState<string | null>(null);
   const [phone1Error, setPhone1Error] = useState<string | null>(null);
   const [phone2Error, setPhone2Error] = useState<string | null>(null);
   const [autoDetectedGov, setAutoDetectedGov] = useState<string | null>(null);
@@ -60,7 +55,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const total = subtotal + deliveryFee;
 
   const cliqAlias = 'DUKAN962';
-  const cliqPhone = STORE_PHONE; // 0779254134
+  const cliqPhone = STORE_PHONE;
 
   const copyToClipboard = (text: string, field: 'alias' | 'phone') => {
     navigator.clipboard.writeText(text);
@@ -68,7 +63,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  // دالة تحديد المحافظة تلقائياً بناءً على المنطقة
   const handleRegionChange = (val: string) => {
     setRegion(val);
     const detected = detectGovernorateFromAddress(val);
@@ -99,7 +93,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // التحقق من الرقم الأول
+    // 1. التحقق من الاسم (4 كلمات على الأقل)
+    const nameParts = name.trim().split(/\s+/);
+    if (nameParts.length < 4) {
+      setNameError('الرجاء إدخال الاسم الرباعي كاملاً (أربع مقاطع على الأقل). مثال: أحمد محمد علي محمود');
+      return;
+    }
+    setNameError(null);
+
+    // 2. التحقق من الرقم الأول
     const phone1Validation = validateJordanPhone(phone1);
     if (!phone1Validation.isValid) {
       setPhone1Error(phone1Validation.error || 'رقم الهاتف الأساسي غير صالح.');
@@ -107,7 +109,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
     setPhone1Error(null);
 
-    // التحقق من الرقم الثاني (إذا تم إدخاله)
+    // 3. التحقق من الرقم الثاني
     if (phone2.trim() !== '') {
       const phone2Validation = validateJordanPhone(phone2);
       if (!phone2Validation.isValid) {
@@ -117,8 +119,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setPhone2Error(null);
     }
 
-    // التأكد من تعبئة الحقول الأساسية للعنوان
-    if (!name || !region || !street || !building) {
+    // 4. التأكد من تعبئة الحقول الأساسية للعنوان
+    if (!region || !street || !building) {
       alert('يرجى تعبئة جميع بيانات العنوان (المنطقة، الشارع، رقم العمارة)');
       return;
     }
@@ -127,14 +129,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     const num = 'DUKAN-' + Math.floor(10000 + Math.random() * 90000);
     setOrderNumber(num);
 
-    // تجميع العنوان في نص واحد عشان يتعرض في لوحة التحكم بسهولة
     const fullAddress = `المنطقة: ${region} - الشارع: ${street} - العمارة: ${building}`;
 
     const orderPayload = {
       id: num,
       name: name.trim(),
-      phone: phone1Validation.cleaned, // الرقم الأساسي
-      phone2: phone2.trim() ? validateJordanPhone(phone2).cleaned : '', // الرقم الثاني
+      phone: phone1Validation.cleaned,
+      phone2: phone2.trim() ? validateJordanPhone(phone2).cleaned : '',
       governorate,
       address: fullAddress,
       region,
@@ -178,7 +179,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       ? 'الدفع كاش عند الاستلام بعد المعاينة'
       : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
 
-  // تعديل رسالة الواتساب عشان تشمل الرقم الثاني والعنوان المفصل
   const whatsAppOrderText = encodeURIComponent(
     `👑 *طلب جديد من متجر دكان 962 للأثاث*\n\n` +
       `*رقم الطلب:* ${orderNumber}\n` +
@@ -305,7 +305,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         ) : (
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
             
-            {/* Payment Options (COD, CliQ Only) */}
+            {/* Payment Options */}
             <div>
               <label className="block text-xs font-bold text-[#1C1917] mb-2">
                 اختر طريقة الدفع:
@@ -402,18 +402,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             {/* بيانات التواصل */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-[#1C1917] mb-1">
-                  الاسم الكامل *
+                  الاسم الكامل (الرباعي) *
                 </label>
                 <input
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="مثال: أحمد الخالدي"
-                  className="w-full text-xs py-2 px-3 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl"
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) setNameError(null);
+                  }}
+                  placeholder="مثال: أحمد محمد علي محمود"
+                  className={`w-full text-xs py-2 px-3 bg-[#FAF8F5] border rounded-xl ${
+                    nameError ? 'border-rose-400 bg-rose-50' : 'border-[#DDD5C7]'
+                  }`}
                 />
+                {nameError && <p className="text-[10px] text-rose-600 mt-1 font-semibold">{nameError}</p>}
               </div>
 
               <div>
@@ -433,7 +439,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 {phone1Error && <p className="text-[10px] text-rose-600 mt-1 font-semibold">{phone1Error}</p>}
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <label className="block text-xs font-semibold text-[#1C1917] mb-1">
                   رقم هاتف إضافي (اختياري)
                 </label>
@@ -450,7 +456,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             </div>
 
-            {/* تفاصيل العنوان (مقسمة لـ 3 خانات) */}
+            {/* تفاصيل العنوان */}
             <div className="pt-2">
               <label className="block text-xs font-bold text-[#1C1917] mb-2">
                 3. عنوان التوصيل بالتفصيل
