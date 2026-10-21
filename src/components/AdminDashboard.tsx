@@ -40,10 +40,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isOpen,
   onClose,
 }) => {
-  // ✅ إضافة 'categories' إلى التبويبات
   const [activeTab, setActiveTab] = useState<'list' | 'orders' | 'add' | 'settings' | 'categories'>('list');
   const [successToast, setSuccessToast] = useState('');
-
+  
   // حالة المنتجات والأقسام من Firebase
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -80,7 +79,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986b88?w=800&auto=format&fit=crop&q=80',
     },
   ]);
-
+  
   // حالة لحفظ الروابط المؤقتة للزوايا الإضافية (للإضافة الجديدة)
   const [tempNewColorUrls, setTempNewColorUrls] = useState<Record<number, string>>({});
 
@@ -94,9 +93,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
-  // ============================================================
-  // 🔐 تعيين كلمة المرور الافتراضية عند أول تشغيل
-  // ============================================================
+  // تعيين كلمة المرور الافتراضية عند أول تشغيل
   useEffect(() => {
     if (!localStorage.getItem(PASSWORD_STORAGE_KEY)) {
       localStorage.setItem(PASSWORD_STORAGE_KEY, DEFAULT_ADMIN_PASSWORD);
@@ -106,7 +103,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // جلب المنتجات والأقسام من Firebase مباشرة
   useEffect(() => {
     if (!isOpen) return;
-
+    
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
       snapshot.forEach((doc) => {
@@ -183,7 +180,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         basePrice: updatedPrice,
         colors: nextColors
       });
-
+      
       setEditingPrices((prev) => {
         const copy = { ...prev };
         delete copy[id];
@@ -386,15 +383,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification(`تم تغيير حالة الطلب #${orderId} إلى "${newStatus}"`);
   };
 
-  // ✅ تم إصلاح الخطأ: كان في تعريفين مكررين لنفس الدالة، حذفنا القديم
+  // ✅ دالة حذف الطلب (تم إزالة التكرار)
   const handleDeleteOrder = async (orderId: string) => {
     try {
       await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
     } catch {}
 
     setOrders((prev) => prev.filter((o) => o.id !== orderId));
-
-    // 💡 مسح الطلب من الذاكرة المحلية عشان ميرجعش بعد التحديث
+    
     try {
       const local = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
       const updatedLocal = local.filter((o: any) => o.id !== orderId);
@@ -405,9 +401,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم حذف الطلب من السجل نهائياً.');
   };
 
-  // ============================================================
-  // 🔐 إصلاح الخطأ: إضافة دالة تغيير كلمة المرور الناقصة
-  // ============================================================
+  // 🔐 دالة تغيير كلمة المرور
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -433,7 +427,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-[#E8DFD3] overflow-hidden my-6 max-h-[92vh] flex flex-col">
-
+        
         {/* Header */}
         <div className="p-6 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
           <div className="flex items-center gap-3">
@@ -476,7 +470,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 : 'border-transparent text-[#78716C] hover:text-[#1C1917]'
             }`}
           >
-            جدول المنتجات والأسعار ({products.length})
+            {`جدول المنتجات والأسعار (${products.length})`}
           </button>
 
           <button
@@ -533,7 +527,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto p-6">
-
+          
           {/* TAB 1: PRODUCTS LIST */}
           {activeTab === 'list' && (
             <div className="space-y-4">
@@ -572,7 +566,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         return (
                           <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
-                            <td className="p-3.5 font-mono text-[#78716C]">#{p.itemNumber || '-'}</td>
+                            <td className="p-3.5 font-mono text-[#78716C]">{`#${p.itemNumber || '-'}`}</td>
                             <td className="p-3.5">
                               <img
                                 src={p.colors?.[0]?.image || p.images?.[0] || 'https://via.placeholder.com/150'}
@@ -778,7 +772,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {/* Customer info */}
                           <div className="md:col-span-5 space-y-2 text-xs">
                             <p className="font-bold text-[#1C1917] text-sm">
-                              الزبون: {order.name}
+                              {`الزبون: ${order.name}`}
                             </p>
                             <div className="flex items-center gap-2">
                               <span className="text-[#78716C]">الهاتف:</span>
@@ -805,7 +799,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             <p className="text-[#57534E] flex items-start gap-1">
                               <MapPin className="w-3.5 h-3.5 text-[#8C6D46] shrink-0 mt-0.5" />
-                              <span>{order.governorate} - {order.address}</span>
+                              <span>{`${order.governorate} - ${order.address}`}</span>
                             </p>
 
                             <div className="pt-1">
@@ -819,7 +813,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <span>تحويل كليك CliQ</span>
                                     {order.cliqRef && (
                                       <span className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-[#C5DEC8] font-mono">
-                                        مرجع: {order.cliqRef}
+                                        {`مرجع: ${order.cliqRef}`}
                                       </span>
                                     )}
                                   </>
@@ -854,12 +848,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <div>
                                       <p className="font-bold text-[#1C1917]">{it.product?.name || 'قطعة'}</p>
                                       <span className="text-[10px] text-[#8C6D46]">
-                                        اللون: {it.selectedColor?.name || 'افتراضي'} | الكمية: {it.quantity || 1}
+                                        {`اللون: ${it.selectedColor?.name || 'افتراضي'} | الكمية: ${it.quantity || 1}`}
                                       </span>
                                     </div>
                                   </div>
                                   <span className="font-mono font-bold text-[#1C1917]">
-                                    {((it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ
+                                    {`${((it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ`}
                                   </span>
                                 </div>
                               ))}
@@ -867,10 +861,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                             <div className="pt-2 border-t border-[#E5DDD0] flex justify-between items-center text-xs">
                               <span className="text-[#78716C]">
-                                المجموع (شامل التوصيل {order.deliveryFee === 0 ? 'مجاني' : (order.deliveryFee || 0) + ' د.أ'}):
+                                {`المجموع (شامل التوصيل ${order.deliveryFee === 0 ? 'مجاني' : (order.deliveryFee || 0) + ' د.أ'}):`}
                               </span>
                               <strong className="text-sm font-black text-[#1C1917] font-mono">
-                                {(order.total || 0).toFixed(2)} دينار أردني
+                                {`${(order.total || 0).toFixed(2)} دينار أردني`}
                               </strong>
                             </div>
                           </div>
@@ -988,7 +982,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-bold text-[#1C1917] uppercase tracking-wider">الخصائص الديناميكية</h3>
-                    <p className="text-[10px] text-gray-500">أضف خصائص تناسب هذا المنتج (مثال: المقاس إلى 40, 41, 42)</p>
+                    <p className="text-[10px] text-gray-500">
+                      {"أضف خصائص تناسب هذا المنتج (مثال: المقاس إلى 40, 41, 42)"}
+                    </p>
                   </div>
                   <button type="button" onClick={addAttribute} className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1"><Plus className="w-3 h-3" /> إضافة خاصية</button>
                 </div>
@@ -1017,7 +1013,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <span className="text-base shrink-0">💡</span>
                   <div>
                     <strong className="block text-[#6D532B] font-bold">تنبيه بخصوص حجم الصور:</strong>
-                    <span>الحد الأقصى لحجم الصورة هو 800 كيلوبايت لتعمل مع السحابة. إذا كانت الصورة أكبر، استخدم رابط URL مباشر.</span>
+                    <span>
+                      {"الحد الأقصى لحجم الصورة هو 800 كيلوبايت لتعمل مع السحابة. إذا كانت الصورة أكبر، استخدم رابط URL مباشر."}
+                    </span>
                   </div>
                 </div>
 
@@ -1058,13 +1056,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <div className="pt-2 border-t border-[#EAE3D7]/70">
                         <div className="flex flex-col gap-2 mb-2">
-                          <span className="text-[11px] text-[#78716C]">📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):</span>
+                          <span className="text-[11px] text-[#78716C]">
+                            {`📷 زوايا إضافية لهذا اللون (${color.additionalImages?.length || 0}):`}
+                          </span>
                           <div className="flex flex-col sm:flex-row gap-2 w-full">
-                            <input type="text" placeholder="ضع رابط الصورة الإضافية هنا (URL)..." value={tempNewColorUrls[idx] || ''} onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" dir="ltr" />
-                            <div className="flex gap-2">
-                              <button type="button" onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap">إضافة الرابط</button>
-                              <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap"><Upload className="w-3.5 h-3.5" /> رفع صورة<input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)} className="hidden" /></label>
-                            </div>
+                             <input type="text" placeholder="ضع رابط الصورة الإضافية هنا (URL)..." value={tempNewColorUrls[idx] || ''} onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" dir="ltr" />
+                             <div className="flex gap-2">
+                               <button type="button" onClick={() => handleAddAdditionalImageUrlToNewColor(idx)} className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap">إضافة الرابط</button>
+                               <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-[#FAF7F2] border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap"><Upload className="w-3.5 h-3.5" /> رفع صورة<input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImageToNewColor(idx, e)} className="hidden" /></label>
+                             </div>
                           </div>
                         </div>
                         {color.additionalImages && color.additionalImages.length > 0 && (
@@ -1282,7 +1282,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
         <div className="p-5 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
           <div>
             <h3 className="text-base font-bold text-[#1C1917]">
-              تعديل القطعة: {product.name}
+              {`تعديل القطعة: ${product.name}`}
             </h3>
             <p className="text-xs text-[#78716C]">
               تعديل الصور بالزوايا المختلفة، أسعار الألوان، والمواصفات (يُحفظ بشكل دائم لجميع الروابط والأجهزة)
@@ -1447,13 +1447,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                     <div className="sm:col-span-4 bg-white p-2 rounded-lg border border-[#DDD5C7]">
                       <label className="block text-[10px] font-bold text-[#1C1917] mb-1">الصورة الرئيسية للون:</label>
                       <div className="flex flex-col gap-2">
-                        <input
-                          type="text"
-                          value={color.image.startsWith('data:image') ? '' : color.image}
-                          onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)}
-                          placeholder={color.image.startsWith('data:image') ? 'تم الرفع ✓' : 'رابط الصورة...'}
-                          className="w-full text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg"
-                          dir="ltr"
+                        <input 
+                          type="text" 
+                          value={color.image.startsWith('data:image') ? '' : color.image} 
+                          onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)} 
+                          placeholder={color.image.startsWith('data:image') ? 'تم الرفع ✓' : 'رابط الصورة...'} 
+                          className="w-full text-xs py-1 px-2 border border-[#DDD5C7] rounded-lg" 
+                          dir="ltr" 
                         />
                         <label className="flex items-center justify-center gap-1 p-1 border border-[#DDD5C7] rounded-lg cursor-pointer text-[10px] font-bold text-[#8C6D46] hover:bg-[#F2EDE4]">
                           <Upload className="w-3 h-3" /> رفع من الجهاز
@@ -1461,7 +1461,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                         </label>
                       </div>
                     </div>
-
+                    
                     <div className="sm:col-span-1 text-center">
                       {colors.length > 1 && (
                         <button
@@ -1480,27 +1480,27 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                   <div className="pt-2 border-t border-[#EAE3D7]/70">
                     <div className="flex flex-col gap-2 mb-2">
                       <span className="text-[11px] text-[#78716C]">
-                        📷 زوايا إضافية لهذا اللون ({color.additionalImages?.length || 0}):
+                        {`📷 زوايا إضافية لهذا اللون (${color.additionalImages?.length || 0}):`}
                       </span>
-
+                      
                       <div className="flex flex-col sm:flex-row gap-2 w-full">
-                         <input
-                           type="text"
-                           placeholder="ضع رابط الصورة الإضافية هنا (URL)..."
-                           value={tempColorUrls[idx] || ''}
-                           onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))}
-                           className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white"
-                           dir="ltr"
+                         <input 
+                           type="text" 
+                           placeholder="ضع رابط الصورة الإضافية هنا (URL)..." 
+                           value={tempColorUrls[idx] || ''} 
+                           onChange={(e) => setTempColorUrls(prev => ({...prev, [idx]: e.target.value}))} 
+                           className="w-full text-xs py-1.5 px-2 border border-[#DDD5C7] rounded-lg bg-white" 
+                           dir="ltr" 
                          />
                          <div className="flex gap-2">
-                           <button
-                             type="button"
-                             onClick={() => handleAddAdditionalImageUrl(idx)}
+                           <button 
+                             type="button" 
+                             onClick={() => handleAddAdditionalImageUrl(idx)} 
                              className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#332E2B] whitespace-nowrap"
                            >
                              إضافة الرابط
                            </button>
-
+                           
                            <label className="flex items-center justify-center gap-1 text-xs font-bold text-[#8C6D46] bg-white border border-[#DDD5C7] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#F2EDE4] whitespace-nowrap">
                              <Upload className="w-3.5 h-3.5" /> رفع صورة
                              <input type="file" accept="image/*" onChange={(e) => handleAddAdditionalImage(idx, e)} className="hidden" />
