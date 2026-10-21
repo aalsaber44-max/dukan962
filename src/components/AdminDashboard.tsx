@@ -960,7 +960,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="flex items-center gap-2 mt-2">
                   <input type="checkbox" checked={newIsBestSeller} onChange={(e) => setNewIsBestSeller(e.target.checked)} className="w-4 h-4 accent-[#1C1917]" id="bestSeller" />
-                  <label htmlFor="bestSeller" className="text-xs font-bold cursor-pointer text-[#1C1917]">تمييز كـ "الأكثر مبيعاً"</label>
+                  <label htmlFor="bestSeller" className="text-xs font-bold cursor-pointer text-[#1C1917]">{"تمييز كـ 'الأكثر مبيعاً'"}</label>
                 </div>
 
                 <div>
