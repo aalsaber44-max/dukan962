@@ -982,8 +982,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-bold text-[#1C1917] uppercase tracking-wider">الخصائص الديناميكية</h3>
+                    {/* ✅ تم تغيير هذا السطر إلى اللغة الإنجليزية لتجنب خطأ السهم */}
                     <p className="text-[10px] text-gray-500">
-                      {"أضف خصائص تناسب هذا المنتج (مثال: المقاس من 40 إلى 45)"}
+                      Add attributes for this product (e.g., Size: 40, 41, 42)
                     </p>
                   </div>
                   <button type="button" onClick={addAttribute} className="bg-[#1C1917] text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1"><Plus className="w-3 h-3" /> إضافة خاصية</button>
