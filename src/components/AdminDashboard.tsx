@@ -383,18 +383,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم حذف الطلب من السجل.');
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPassMsg(null);
-    if (!currentPass || !newPass) return;
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
+    } catch {}
 
-    if (currentPass.trim() === '962' || currentPass.trim() === 'dukan962') {
-      setPassMsg({ text: 'تم تغيير كلمة المرور بنجاح!', error: false });
-      setCurrentPass('');
-      setNewPass('');
-    } else {
-      setPassMsg({ text: 'كلمة المرور الحالية غير صحيحة', error: true });
-    }
+    // تحديث الشاشة
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    
+    // 💡 التعديل هنا: مسح الطلب من الذاكرة المحلية عشان ميرجعش بعد التحديث
+    try {
+      const local = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
+      const updatedLocal = local.filter((o: any) => o.id !== orderId);
+      localStorage.setItem('dukan962_orders_local', JSON.stringify(updatedLocal));
+    } catch {}
+
+    setConfirmDeleteOrderId(null);
+    showNotification('تم حذف الطلب من السجل نهائياً.');
   };
 
   return (
