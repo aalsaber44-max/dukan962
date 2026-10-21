@@ -1,5 +1,5 @@
 import React from 'react';
-import { SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 
 interface FilterBarProps {
   selectedCategory: string;
@@ -39,11 +39,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E9E1D4] p-5 shadow-xs mb-8">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div className="bg-white rounded-2xl border border-[#E9E1D4] p-4 sm:p-5 shadow-xs mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
         
-        {/* Category Filter Pills / Segmented Controls */}
-        <div className="space-y-1.5">
+        {/* Category Filter */}
+        <div className="space-y-1.5 w-full lg:w-auto">
           <label className="text-xs font-bold text-[#1C1917] block">
             التصنيف:
           </label>
@@ -64,12 +64,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
         </div>
 
-        {/* Color Filter */}
-        <div className="space-y-1.5">
+        {/* Color Filter - تمت إضافة flex-wrap هنا */}
+        <div className="space-y-1.5 w-full lg:w-auto">
           <label className="text-xs font-bold text-[#1C1917] block">
             اللون المفضل:
           </label>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {colorOptions.map((c) => {
               const isSelected = selectedColor === c.name || (c.name === 'الكل' && selectedColor === '');
               return (
@@ -80,7 +80,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                   className={`flex items-center gap-1.5 py-1 px-2 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
                     isSelected
                       ? 'border-[#1C1917] bg-[#FAF8F5] shadow-xs'
-                      : 'border-transparent text-[#78716C] hover:border-[#DDD5C7]'
+                      : 'border-[#DDD5C7] text-[#78716C] hover:border-[#1C1917]'
                   }`}
                 >
                   {c.name !== 'الكل' && (
@@ -96,38 +96,40 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
         </div>
 
-        {/* Price Filter (من - إلى) بالدينار الأردني */}
-        <div className="space-y-1.5 min-w-[220px]">
-          <div className="flex justify-between items-center text-xs">
-            <label className="font-bold text-[#1C1917]">نطاق السعر:</label>
-            <span className="font-mono text-[11px] text-[#8C6D46] font-bold">
-              {priceRange[0]} د.أ - {priceRange[1]} د.أ
-            </span>
+        {/* Price Filter & Reset Button Group */}
+        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start xl:items-center gap-4 w-full lg:w-auto">
+          <div className="space-y-1.5 w-full sm:w-auto lg:w-full xl:w-auto lg:min-w-[200px]">
+            <div className="flex justify-between items-center text-xs">
+              <label className="font-bold text-[#1C1917]">نطاق السعر:</label>
+              <span className="font-mono text-[11px] text-[#8C6D46] font-bold">
+                {priceRange[0]} د.أ - {priceRange[1]} د.أ
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="range"
+                min="20"
+                max="160"
+                step="5"
+                value={priceRange[1]}
+                onChange={(e) => onPriceRangeChange([priceRange[0], Number(e.target.value)])}
+                className="w-full accent-[#1C1917] cursor-pointer h-1.5 bg-[#E5DDD0] rounded-lg"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min="20"
-              max="160"
-              step="5"
-              value={priceRange[1]}
-              onChange={(e) => onPriceRangeChange([priceRange[0], Number(e.target.value)])}
-              className="w-full accent-[#1C1917] cursor-pointer h-1.5 bg-[#E5DDD0] rounded-lg"
-            />
+          {/* Reset Filter Button - تم تعديل عرضه ليصبح كامل في الموبايل */}
+          <div className="w-full sm:w-auto flex items-end mt-2 sm:mt-0">
+            <button
+              onClick={onResetFilters}
+              className="py-2 px-4 w-full sm:w-auto text-xs text-[#78716C] hover:text-[#1C1917] flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-[#E5DDD0] hover:bg-[#FAF7F2] rounded-lg whitespace-nowrap font-bold"
+              title="إعادة ضبط الفلاتر"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>إعادة ضبط</span>
+            </button>
           </div>
-        </div>
-
-        {/* Reset Filter Button */}
-        <div className="flex items-end">
-          <button
-            onClick={onResetFilters}
-            className="py-1.5 px-3 text-xs text-[#78716C] hover:text-[#1C1917] flex items-center gap-1 transition-colors cursor-pointer border border-[#E5DDD0] hover:bg-[#FAF7F2] rounded-lg whitespace-nowrap"
-            title="إعادة ضبط الفلاتر"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>إعادة ضبط</span>
-          </button>
         </div>
 
       </div>
