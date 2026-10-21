@@ -383,7 +383,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification(`تم تغيير حالة الطلب #${orderId} إلى "${newStatus}"`);
   };
 
-  // ✅ دالة حذف الطلب (تم إزالة التكرار)
+  // ✅ دالة حذف الطلب
   const handleDeleteOrder = async (orderId: string) => {
     try {
       await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
