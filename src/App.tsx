@@ -15,8 +15,8 @@ import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Check, Sparkles } from 'lucide-react';
 
 // استيراد دوال Firebase
-import { collection, onSnapshot, setDoc, doc } from 'firebase/firestore';
-import { db } from './firebase';
+import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
+import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts صحيح
 
 export default function App() {
   // 1. حالات المنتجات والأقسام
@@ -40,8 +40,8 @@ export default function App() {
       snapshot.forEach((doc) => {
         cats.push({ id: doc.id, ...doc.data() } as Category);
       });
-      // بنعرض الأقسام المفعلة بس
-      setCategories(cats.filter(c => c.isActive).sort((a, b) => a.order - b.order));
+      // بنعرض الأقسام المفعلة بس وبنرتبها
+      setCategories(cats.filter(c => c.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)));
     });
 
     return () => {
@@ -50,7 +50,77 @@ export default function App() {
     };
   }, []);
 
-  // 3. كود ترحيل المنتجات القديمة (لو لسه موجود)
+  // 💡 3. كود زراعة الأقسام (Auto-Seeding) - يشتغل مرة واحدة بس لو السحابة فاضية
+  useEffect(() => {
+    const seedCategories = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'categories'));
+        if (snapshot.empty) {
+          const defaultCategories = [
+            {
+              id: 'tables',
+              name: 'طاولات',
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/2549192d-570f-4788-81d9-74d19d818376',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto/q_auto/e47b84f7-93b5-451c-9da9-82078325ae62.png',
+              title: 'أثاث يجمع بين الراحة والأناقة',
+              description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
+              buttonText: 'استكشف طاولات العرض الآن',
+              badgeText: '✨ يوجد معاينة عند وصول الطلب',
+              isActive: true,
+              order: 1
+            },
+            {
+              id: 'shoes',
+              name: 'أحذية',
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/0761e92f-66fa-4666-84b9-5a6240189d5c',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/0761e92f-66fa-4666-84b9-5a6240189d5c',
+              title: 'أحدث صيحات الأحذية',
+              description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
+              buttonText: 'استكشف الأحذية الآن',
+              badgeText: '👟 خامات أصلية',
+              isActive: true,
+              order: 2
+            },
+            {
+              id: 'perfumes',
+              name: 'عطور',
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/4935cfad-8815-4dcb-9577-1921d6a9ba95',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/4935cfad-8815-4dcb-9577-1921d6a9ba95',
+              title: 'عطور تدوم طويلاً',
+              description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
+              buttonText: 'استكشف العطور الآن',
+              badgeText: '🌟 عطور فاخرة',
+              isActive: true,
+              order: 3
+            },
+            {
+              id: 'ramadan',
+              name: 'زينة رمضان',
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/eabac072-5063-454a-b0c3-65419a6eb342',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/eabac072-5063-454a-b0c3-65419a6eb342',
+              title: 'زينة رمضان.. أضف البهجة لبيتك',
+              description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
+              buttonText: 'استكشف زينة رمضان',
+              badgeText: '🌙 أجواء رمضانية',
+              isActive: true,
+              order: 4
+            }
+          ];
+
+          for (const cat of defaultCategories) {
+            await setDoc(doc(db, 'categories', cat.id), cat);
+          }
+          console.log('✅ تمت إضافة الأقسام الافتراضية بنجاح!');
+        }
+      } catch (error) {
+        console.error('Error seeding categories:', error);
+      }
+    };
+
+    seedCategories();
+  }, []);
+
+  // 4. كود ترحيل المنتجات القديمة من المتصفح إلى السحابة (يعمل مرة واحدة فقط)
   useEffect(() => {
     const migrateOldProducts = async () => {
       const savedOldProducts = localStorage.getItem('dukan962_products_v3');
@@ -79,6 +149,7 @@ export default function App() {
         }
       }
     };
+    // تأخير بسيط للتأكد من تحميل Firebase
     setTimeout(migrateOldProducts, 1500); 
   }, []);
 
@@ -233,6 +304,9 @@ export default function App() {
     }
   };
 
+  // 💡 بنجيب بيانات القسم المختار عشان نبعتل الـ Hero
+  const currentCategoryData = categories.find(c => c.id === selectedCategory) || null;
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
       {/* Toast Notification */}
@@ -277,7 +351,8 @@ export default function App() {
       />
 
       {/* Hero Section */}
-      <Hero onExploreClick={scrollToCatalog} />
+      {/* 💡 بنبعت بيانات القسم للـ Hero عشان يتغير تلقائياً */}
+      <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
 
       {/* Categories Visual Section */}
       <CategoryBoxes
@@ -295,10 +370,10 @@ export default function App() {
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>تشكيلات دكان 962 الحصرية</span>
+              <span>{currentCategoryData ? `تشكيلة ${currentCategoryData.name}` : 'تشكيلات دكان 962 الحصرية'}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight font-serif">
-              تسوق أحدث التشكيلات
+              {currentCategoryData ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
             </h2>
             <p className="text-xs text-[#78716C] mt-1">
               استكشف منتجاتنا، اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
