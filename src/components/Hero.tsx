@@ -9,40 +9,47 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   
-  // 💡 البيانات الافتراضية لو الزبون في الصفحة الرئيسية (جميع الأقسام)
+  // 💡 بيانات احتياطية عامة جداً (في حال لم تصل أي بيانات من App.tsx)
   const defaultData = {
-    title: "أثاث يجمع بين الراحة والأناقة",
-    description: "أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.",
-    bannerImage: "https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Gemini_Generated_Image_tqd22ztqd22ztqd2", // 💡 صورة الواجهة الرئيسية الجديدة
+    title: "دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية",
+    description: "أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.",
+    bannerImage: "https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Gemini_Generated_Image_tqd22ztqd22ztqd2", 
     buttonText: "استكشف تشكيلاتنا الآن",
     badgeText: "✨ جودة تستحق الاقتناء",
     name: "دكـان 962"
   };
 
-  // 💡 لو في قسم مختار، بنستخدم بياناته. لو مفيش (يعني all)، بنستخدم الافتراضية
-  const displayData = categoryData && categoryData.id !== 'all' ? categoryData : defaultData;
+  // 💡 نستخدم بيانات القسم الممرر من App.tsx (سواء كان الرئيسية أو قسماً فرعياً)
+  const displayData = categoryData || defaultData;
 
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
         
         {/* Main Hero Visual Card */}
-        {/* 💡 ضفنا bg-[#1C1917] عشان لو الصورة مش مربعة، الخلفية تكون داكنة وشيك */}
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[400px] sm:min-h-[500px] bg-[#1C1917]">
           
-          {/* 💡 هنا التعديل: غيرنا object-cover لـ object-contain عشان الصورة تبان كاملة */}
+          {/* 💡 1. الخلفية المموهة: تملأ الفراغات في حال كانت الصورة لا تغطي الشاشة بالكامل */}
           <img
-            src={displayData.bannerImage || displayData.image} // لو مفيش بانر بياخد صورة الكارت
-            alt={displayData.title || displayData.name}
+            src={displayData.bannerImage || displayData.image}
+            alt=""
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-contain object-center transition-all duration-700 opacity-90"
+            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110"
           />
 
-          {/* Measured Contrast Scrim */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex items-end">
+          {/* 💡 2. الصورة الأساسية: object-contain تضمن ظهور الصورة كاملة بدون قص */}
+          <img
+            src={displayData.bannerImage || displayData.image} 
+            alt={displayData.title || displayData.name}
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 w-full h-full object-contain object-center transition-all duration-700 z-10"
+          />
+
+          {/* Measured Contrast Scrim (تدرج لوني لضمان قراءة النص) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex items-end z-20">
             <div className="p-4 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
               
-              {/* Olive Green Tag - خليتها تلف (flex-wrap) على الموبايل */}
+              {/* Olive Green Tag */}
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[#E2D5C4] mb-3 font-medium">
                 <span className="bg-[#2E5339] text-[#F0FDF4] px-2 py-0.5 rounded-md font-bold shadow-xs">
                   {displayData.name || 'دكـان 962'}
@@ -53,7 +60,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 <span>· توصيل لجميع المحافظات</span>
               </div>
 
-              {/* Exact Requested Headline */}
+              {/* Headline */}
               <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.3] mb-3 sm:mb-4 text-balance font-serif">
                 {displayData.title}
               </h1>
@@ -63,7 +70,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 {displayData.description}
               </p>
 
-              {/* Action Buttons - خليتها عمودية (flex-col) على الموبايل */}
+              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <button
                   onClick={onExploreClick}
@@ -84,7 +91,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
         </div>
 
         {/* Feature Strip under Hero */}
-        {/* 💡 خليت النصوص هنا عامة عشان تناسب كل الأقسام (مش بس الطاولات) */}
         <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 p-3 sm:p-4 bg-white rounded-2xl border border-[#E9E1D4] shadow-2xs">
           <div className="flex items-center gap-2 p-1">
             <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
