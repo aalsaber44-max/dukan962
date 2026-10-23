@@ -64,19 +64,19 @@ export default function App() {
     };
   }, []);
 
-  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري للصور
+  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور
   useEffect(() => {
     const seedCategories = async () => {
       try {
         const snapshot = await getDocs(collection(db, 'categories'));
         
-        // 💡 قائمة الأقسام بالصور الجديدة التي أرسلتها
+        // 💡 قائمة الأقسام بالروابط الجديدة من Cloudinary
         const defaultCategories = [
           {
             id: 'tables',
             name: 'طاولات',
-            image: 'https://h.uguu.se/HQFzrxZv.png',
-            bannerImage: 'https://h.uguu.se/HQFzrxZv.png',
+            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_3',
+            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_3',
             title: 'أثاث يجمع بين الراحة والأناقة',
             description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
             buttonText: 'استكشف طاولات العرض الآن',
@@ -87,8 +87,8 @@ export default function App() {
           {
             id: 'shoes',
             name: 'أحذية',
-            image: 'https://h.uguu.se/ZWCPdqgs.png',
-            bannerImage: 'https://h.uguu.se/ZWCPdqgs.png',
+            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_1',
+            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_1',
             title: 'أحدث صيحات الأحذية',
             description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
             buttonText: 'استكشف الأحذية الآن',
@@ -99,8 +99,8 @@ export default function App() {
           {
             id: 'perfumes',
             name: 'عطور',
-            image: 'https://d.uguu.se/VXlgsTvL.png',
-            bannerImage: 'https://d.uguu.se/VXlgsTvL.png',
+            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer',
+            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer',
             title: 'عطور تدوم طويلاً',
             description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
             buttonText: 'استكشف العطور الآن',
@@ -111,8 +111,8 @@ export default function App() {
           {
             id: 'ramadan',
             name: 'زينة رمضان',
-            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkx10o0_yzcl.png',
-            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkx10o0_yzcl.png',
+            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_2',
+            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_2',
             title: 'زينة رمضان.. أضف البهجة لبيتك',
             description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
             buttonText: 'استكشف زينة رمضان',
@@ -129,12 +129,11 @@ export default function App() {
           }
           console.log('✅ تمت إضافة الأقسام الافتراضية بنجاح!');
         } else {
-          // 💡 إذا كانت البيانات موجودة، نقوم بتحديث صور جميع الأقسام إجبارياً لتطابق الصور الجديدة
+          // 💡 التحديث الإجباري: نقوم بتحديث صور جميع الأقسام إذا كانت مختلفة
           for (const defaultCat of defaultCategories) {
             const existingDoc = snapshot.docs.find(d => d.id === defaultCat.id);
             if (existingDoc) {
               const currentData = existingDoc.data();
-              // إذا كانت الصورة مختلفة، نقوم بتحديثها
               if (currentData.image !== defaultCat.image || currentData.bannerImage !== defaultCat.bannerImage) {
                 await setDoc(doc(db, 'categories', defaultCat.id), {
                   ...currentData,
@@ -183,7 +182,6 @@ export default function App() {
         }
       }
     };
-    // تأخير بسيط للتأكد من تحميل Firebase
     setTimeout(migrateOldProducts, 1500); 
   }, []);
 
