@@ -12,8 +12,15 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
   selectedCategory,
   onSelectCategory,
 }) => {
-  // 💡 الحماية عشان الصفحة متضربش لو الأقسام لسه بتتحمل
   if (!categories || categories.length === 0) return null;
+
+  // 💡 دالة لتصغير حجم الصورة من Cloudinary لجعل التحميل فورياً للمربعات
+  const getThumbnail = (url: string) => {
+    if (url && url.includes('res.cloudinary.com')) {
+      return url.replace('/upload/', '/upload/w_600,c_fill,q_auto:good/');
+    }
+    return url;
+  };
 
   return (
     <section className="py-12 bg-[#FAF8F5]">
@@ -30,7 +37,6 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
           </div>
         </div>
 
-        {/* Category Cards Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat.id;
@@ -45,16 +51,15 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
                     : 'border-[#EAE1D3] hover:shadow-xl hover:border-[#8C6D46]'
                 }`}
               >
-                {/* 💡 الصورة الآن تملأ الكرت بالكامل */}
                 <div className="absolute inset-0">
                   <img
-                    src={cat.image}
+                    src={getThumbnail(cat.image)}
                     alt={cat.name}
+                    loading="lazy" /* 💡 هذه الخاصية تجعل المتصفح ينتظر حتى يصل الزبون للصور ليقوم بتحميلها */
                     className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
                     referrerPolicy="no-referrer"
                   />
                   
-                  {/* 💡 التدرج الداكن في الأسفل لكي يظهر النص الأبيض بوضوح */}
                   <div className={`absolute inset-0 bg-gradient-to-t transition-opacity duration-300 ${
                     isSelected 
                       ? 'from-[#1C1917]/95 via-[#1C1917]/40 to-transparent' 
@@ -62,7 +67,6 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
                   }`}></div>
                 </div>
 
-                {/* 💡 النصوص في الأسفل */}
                 <div className="relative z-10 p-4 sm:p-5 w-full mt-auto">
                   <h3 className="text-lg sm:text-xl font-bold leading-tight mb-2 text-white drop-shadow-md">
                     {cat.name}
