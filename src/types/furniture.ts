@@ -4,9 +4,16 @@
 export interface Category {
   id: string;
   name: string; // اسم القسم (طاولات، أحذية...)
-  image: string; // رابط صورة القسم
+  image: string; // رابط صورة القسم (الكارت الصغير)
   isActive: boolean; // هل القسم مفعل ولا مخفي (عشان زينة رمضان)
   order: number; // ترتيب ظهور القسم في الصفحة الرئيسية
+  
+  // 💡 الحقول الجديدة للبانر الرئيسي (Hero)
+  title?: string;           // عنوان البانر (مثل: "أحدث صيحات الأحذية")
+  description?: string;     // وصف البانر
+  bannerImage?: string;     // صورة البانر الكبيرة
+  buttonText?: string;      // نص الزر (مثل: "استكشف الأحذية الآن")
+  badgeText?: string;       // نص الشارة (مثل: "✨ يوجد معاينة عند وصول الطلب")
 }
 
 // 2. الخصائص الديناميكية (بديل لـ woodType و dimensions)
