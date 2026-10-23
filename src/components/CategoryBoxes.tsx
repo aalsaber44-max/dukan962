@@ -39,33 +39,40 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className={`group relative overflow-hidden rounded-2xl p-4 sm:p-5 text-right transition-all duration-300 border cursor-pointer flex flex-col justify-between min-h-[170px] ${
+                className={`group relative overflow-hidden rounded-2xl text-right transition-all duration-300 border cursor-pointer flex flex-col justify-end min-h-[180px] sm:min-h-[220px] ${
                   isSelected
-                    ? 'border-[#1C1917] bg-[#1C1917] text-white shadow-md'
-                    : 'border-[#EAE1D3] bg-white hover:border-[#8C6D46] hover:shadow-md text-[#1C1917]'
+                    ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50 shadow-lg'
+                    : 'border-[#EAE1D3] hover:shadow-xl hover:border-[#8C6D46]'
                 }`}
               >
-                {/* Background image */}
-                <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
+                {/* 💡 الصورة الآن تملأ الكرت بالكامل */}
+                <div className="absolute inset-0">
                   <img
                     src={cat.image}
-                    alt=""
-                    className="w-full h-full object-cover"
+                    alt={cat.name}
+                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/40 to-transparent"></div>
+                  
+                  {/* 💡 التدرج الداكن في الأسفل لكي يظهر النص الأبيض بوضوح */}
+                  <div className={`absolute inset-0 bg-gradient-to-t transition-opacity duration-300 ${
+                    isSelected 
+                      ? 'from-[#1C1917]/95 via-[#1C1917]/40 to-transparent' 
+                      : 'from-black/85 via-black/30 to-transparent group-hover:from-black/95'
+                  }`}></div>
                 </div>
 
-                <div className="relative z-10">
-                  <h3 className="text-base font-bold leading-tight mb-1 mt-10">
+                {/* 💡 النصوص في الأسفل */}
+                <div className="relative z-10 p-4 sm:p-5 w-full mt-auto">
+                  <h3 className="text-lg sm:text-xl font-bold leading-tight mb-2 text-white drop-shadow-md">
                     {cat.name}
                   </h3>
-                </div>
-
-                <div className="relative z-10 pt-2 border-t border-black/10 flex items-center justify-between text-[11px] font-bold">
-                  <span className={isSelected ? 'text-[#D4AF37]' : 'text-[#8C6D46]'}>
-                    {isSelected ? 'القسم المختار حالياً' : 'استعراض القطع ←'}
-                  </span>
+                  
+                  <div className="pt-2 border-t border-white/20 flex items-center justify-between text-[11px] font-bold">
+                    <span className={isSelected ? 'text-[#D4AF37]' : 'text-[#EAE1D3] group-hover:text-white transition-colors'}>
+                      {isSelected ? '✓ القسم المختار حالياً' : 'استعراض القطع ←'}
+                    </span>
+                  </div>
                 </div>
               </button>
             );
