@@ -61,7 +61,7 @@ export default function App() {
               id: 'tables',
               name: 'طاولات',
               image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/2549192d-570f-4788-81d9-74d19d818376',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto/q_auto/e47b84f7-93b5-451c-9da9-82078325ae62.png',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/2549192d-570f-4788-81d9-74d19d818376',
               title: 'أثاث يجمع بين الراحة والأناقة',
               description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
               buttonText: 'استكشف طاولات العرض الآن',
@@ -279,7 +279,7 @@ export default function App() {
     // الفلترة بالقسم باستخدام categoryId
     const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
     
-    // البحث بالاسم أو الوصف (شلنا woodType عشان مش موجود في الأنواع الجديدة)
+    // البحث بالاسم أو الوصف
     const matchesSearch =
       searchQuery.trim() === '' ||
       prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -304,7 +304,7 @@ export default function App() {
     }
   };
 
-  // 💡 بنجيب بيانات القسم المختار عشان نبعتل الـ Hero
+  // 💡 بنجيب بيانات القسم المختار عشان نبعتل الـ Hero والـ Footer
   const currentCategoryData = categories.find(c => c.id === selectedCategory) || null;
 
   return (
@@ -336,7 +336,7 @@ export default function App() {
 
       {/* Navigation Header */}
       <Navbar
-        categories={categories} // 💡 تمرير الأقسام للـ Navbar
+        categories={categories}
         cartCount={cartTotalCount}
         wishlistCount={wishlist.length}
         onOpenCart={() => setIsCartOpen(true)}
@@ -351,12 +351,11 @@ export default function App() {
       />
 
       {/* Hero Section */}
-      {/* 💡 بنبعت بيانات القسم للـ Hero عشان يتغير تلقائياً */}
       <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
 
       {/* Categories Visual Section */}
       <CategoryBoxes
-        categories={categories} // 💡 تمرير الأقسام لصناديق الأقسام
+        categories={categories}
         selectedCategory={selectedCategory}
         onSelectCategory={(cat) => {
           setSelectedCategory(cat);
@@ -386,7 +385,7 @@ export default function App() {
         </div>
 
         <FilterBar
-          categories={categories} // 💡 تمرير الأقسام للفلتر
+          categories={categories}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
           priceRange={priceRange}
@@ -427,7 +426,15 @@ export default function App() {
         )}
       </main>
 
-      <Footer onOpenAdmin={() => setIsAdminAuthOpen(true)} />
+      {/* Footer */}
+      <Footer
+        categories={categories}
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          scrollToCatalog();
+        }}
+        onOpenAdmin={() => setIsAdminAuthOpen(true)}
+      />
 
       <ProductDetailsPage
         product={selectedProductModal}
