@@ -7,9 +7,6 @@ interface HeroProps {
   categoryData?: Category | null;
 }
 
-/**
- * يبني رابط Cloudinary بتحويل جديد، ويشيل أي تحويلات قديمة من الرابط
- */
 export const buildCloudinary = (url: string, transform: string) => {
   if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
   const [base, rest] = url.split('/upload/');
@@ -19,7 +16,6 @@ export const buildCloudinary = (url: string, transform: string) => {
   return `${base}/upload/${transform}/${clean.join('/')}`;
 };
 
-// عروض الصور لكل نوع شاشة
 const MOBILE_WIDTHS = [480, 720, 960];
 const DESKTOP_WIDTHS = [1024, 1600, 2000, 2400];
 
@@ -38,18 +34,17 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const displayData: any = categoryData || defaultData;
   const rawBanner: string = displayData.bannerImage || displayData.image || '';
 
-  // 💡 التعديل هنا: استخدمنا c_scale بدلاً من c_fill لكي لا يتم قص الصورة، بل تصغيرها فقط
+  // 💡 السر هنا: استخدمنا c_fill مع g_auto (اقتصاص ذكي يبقي المنتج في المنتصف) و q_auto:best للجودة العالية
+  // استخدمنا ar_16:9 (مستطيل عريض) بدلاً من 21:9 لتقليل الزووم
   const mobileSrcSet = MOBILE_WIDTHS.map(
-    (w) => `${buildCloudinary(rawBanner, `c_scale,w_${w},f_auto,q_auto:good`)} ${w}w`
+    (w) => `${buildCloudinary(rawBanner, `c_fill,ar_4:3,w_${w},g_auto,f_auto,q_auto:best`)} ${w}w`
   ).join(', ');
 
   const desktopSrcSet = DESKTOP_WIDTHS.map(
-    (w) => `${buildCloudinary(rawBanner, `c_scale,w_${w},f_auto,q_auto:good`)} ${w}w`
+    (w) => `${buildCloudinary(rawBanner, `c_fill,ar_16:9,w_${w},g_auto,f_auto,q_auto:best`)} ${w}w`
   ).join(', ');
 
-  const fallbackSrc = buildCloudinary(rawBanner, 'c_scale,w_1600,f_auto,q_auto:good');
-
-  // نسخة صغيرة جداً تظهر فوراً وتُستخدم كخلفية مموهة أثناء تحميل الصورة الكبيرة
+  const fallbackSrc = buildCloudinary(rawBanner, 'c_fill,ar_16:9,w_1600,g_auto,f_auto,q_auto:best');
   const placeholderSrc = buildCloudinary(rawBanner, 'c_limit,w_60,q_30,f_auto');
 
   const [loaded, setLoaded] = useState(false);
@@ -64,7 +59,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
         
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[460px] sm:min-h-[460px] lg:min-h-[520px] flex items-center bg-[#1C1917]">
           
-          {/* الخلفية المموهة: تملأ الفراغات الجانبية بشكل فخم */}
+          {/* الخلفية المموهة (تظهر أثناء التحميل فقط) */}
           <img
             key={`bg-${rawBanner}`}
             src={placeholderSrc}
@@ -88,8 +83,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               fetchPriority="high"
               decoding="async"
               onLoad={() => setLoaded(true)}
-              /* 💡 التعديل هنا: استخدمنا object-contain لكي تظهر الصورة كاملة 100% */
-              className={`absolute inset-0 w-full h-full object-contain object-center z-10 transition-opacity duration-500 ${
+              /* 💡 رجعنا object-cover لتملأ المستطيل بالكامل */
+              className={`absolute inset-0 w-full h-full object-cover object-center z-10 transition-opacity duration-500 ${
                 loaded ? 'opacity-100' : 'opacity-0'
               }`}
             />
