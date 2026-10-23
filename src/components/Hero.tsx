@@ -20,31 +20,44 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
 
   const displayData = categoryData || defaultData;
 
+  // 💡 دالة ذكية: تقوم بتعديل رابط Cloudinary لضبط أبعاد البانر وتحديد مركز الصورة تلقائياً
+  const getOptimizedImage = (url: string) => {
+    if (!url) return '';
+    if (url.includes('res.cloudinary.com')) {
+      const baseUrl = url.split('/upload/')[0];
+      const imageId = url.split('/upload/')[1].split('/').pop(); 
+      // c_fill: لملء المساحة، w_1600 h_600: مقاس البانر، g_auto: تحديد أهم جزء في الصورة تلقائياً
+      return `${baseUrl}/upload/c_fill,w_1600,h_600,g_auto,q_auto:best/${imageId}`;
+    }
+    return url;
+  };
+
+  const optimizedBanner = getOptimizedImage(displayData.bannerImage || displayData.image);
+
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
         
         {/* Main Hero Visual Card */}
-        {/* 💡 شلنا اللون الأسود bg-[#1C1917] من هنا */}
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[400px] sm:min-h-[500px]">
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[400px] sm:min-h-[500px] flex items-center">
           
-          {/* 💡 الخلفية المموهة: تملأ أي فراغات وتغطي الجوانب */}
+          {/* 💡 الخلفية المموهة (احتياطية لتغطية أي فراغات) */}
           <img
-            src={displayData.bannerImage || displayData.image}
+            src={optimizedBanner}
             alt=""
             referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover blur-md opacity-50 scale-105"
           />
 
-          {/* 💡 الصورة الأساسية: استخدمنا object-cover لتملأ الشاشة بالكامل */}
+          {/* 💡 الصورة الأساسية: الآن ستكون بدقة عالية ومقاس مثالي ولن تبدو مبكسلة */}
           <img
-            src={displayData.bannerImage || displayData.image} 
+            src={optimizedBanner} 
             alt={displayData.title || displayData.name}
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-700 z-10"
+            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 z-10"
           />
 
-          {/* Measured Contrast Scrim */}
+          {/* Measured Contrast Scrim (تدرج لوني لضمان قراءة النص) */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex items-end z-20">
             <div className="p-4 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
               
