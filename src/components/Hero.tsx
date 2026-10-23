@@ -13,32 +13,33 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const defaultData = {
     title: "أثاث يجمع بين الراحة والأناقة",
     description: "أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.",
-    bannerImage: "https://res.cloudinary.com/pxn4yowl/image/upload/f_auto/q_auto/e47b84f7-93b5-451c-9da9-82078325ae62.png", 
+    bannerImage: "https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Gemini_Generated_Image_tqd22ztqd22ztqd2", // 💡 صورة الواجهة الرئيسية الجديدة
     buttonText: "استكشف تشكيلاتنا الآن",
     badgeText: "✨ جودة تستحق الاقتناء",
     name: "دكـان 962"
   };
 
-  // 💡 لو في قسم مختار، بنستخدم بياناته. لو مفيش، بنستخدم الافتراضية
+  // 💡 لو في قسم مختار، بنستخدم بياناته. لو مفيش (يعني all)، بنستخدم الافتراضية
   const displayData = categoryData && categoryData.id !== 'all' ? categoryData : defaultData;
 
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5]">
-      {/* قللنا الحواف (padding) على الموبايل عشان نكسب مساحة */}
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
         
         {/* Main Hero Visual Card */}
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl aspect-auto sm:aspect-16/9 lg:aspect-21/9 min-h-[500px] sm:min-h-[460px]">
+        {/* 💡 ضفنا bg-[#1C1917] عشان لو الصورة مش مربعة، الخلفية تكون داكنة وشيك */}
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[400px] sm:min-h-[500px] bg-[#1C1917]">
           
+          {/* 💡 هنا التعديل: غيرنا object-cover لـ object-contain عشان الصورة تبان كاملة */}
           <img
             src={displayData.bannerImage || displayData.image} // لو مفيش بانر بياخد صورة الكارت
             alt={displayData.title || displayData.name}
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-700"
+            className="absolute inset-0 w-full h-full object-contain object-center transition-all duration-700 opacity-90"
           />
 
           {/* Measured Contrast Scrim */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10 flex items-end">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex items-end">
             <div className="p-4 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
               
               {/* Olive Green Tag - خليتها تلف (flex-wrap) على الموبايل */}
@@ -83,6 +84,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
         </div>
 
         {/* Feature Strip under Hero */}
+        {/* 💡 خليت النصوص هنا عامة عشان تناسب كل الأقسام (مش بس الطاولات) */}
         <div className="mt-4 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 p-3 sm:p-4 bg-white rounded-2xl border border-[#E9E1D4] shadow-2xs">
           <div className="flex items-center gap-2 p-1">
             <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
