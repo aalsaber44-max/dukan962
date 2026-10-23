@@ -75,8 +75,8 @@ export default function App() {
               id: 'tables',
               name: 'طاولات',
               // تم تحديث الرابط هنا بالصورة الصحيحة وبجودة عالية
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/2549192d-570f-4788-81d9-74d19d818376',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/2549192d-570f-4788-81d9-74d19d818376',
+              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo6w_3vzo.png',
+              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo6w_3vzo.png',
               title: 'أثاث يجمع بين الراحة والأناقة',
               description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
               buttonText: 'استكشف طاولات العرض الآن',
@@ -87,8 +87,8 @@ export default function App() {
             {
               id: 'shoes',
               name: 'أحذية',
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/0761e92f-66fa-4666-84b9-5a6240189d5c',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/0761e92f-66fa-4666-84b9-5a6240189d5c',
+              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7v_mr44.png',
+              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7v_mr44.png',
               title: 'أحدث صيحات الأحذية',
               description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
               buttonText: 'استكشف الأحذية الآن',
@@ -99,8 +99,8 @@ export default function App() {
             {
               id: 'perfumes',
               name: 'عطور',
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/4935cfad-8815-4dcb-9577-1921d6a9ba95',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/4935cfad-8815-4dcb-9577-1921d6a9ba95',
+              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo85_kjtm.png',
+              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo85_kjtm.png',
               title: 'عطور تدوم طويلاً',
               description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
               buttonText: 'استكشف العطور الآن',
@@ -111,8 +111,8 @@ export default function App() {
             {
               id: 'ramadan',
               name: 'زينة رمضان',
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/eabac072-5063-454a-b0c3-65419a6eb342',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/eabac072-5063-454a-b0c3-65419a6eb342',
+              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7c_obi9.png',
+              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7c_obi9.png',
               title: 'زينة رمضان.. أضف البهجة لبيتك',
               description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
               buttonText: 'استكشف زينة رمضان',
@@ -131,7 +131,7 @@ export default function App() {
           const tablesSnapshot = snapshot.docs.find(d => d.id === 'tables');
           if (tablesSnapshot) {
             const currentData = tablesSnapshot.data();
-            const correctImage = 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/2549192d-570f-4788-81d9-74d19d818376';
+            const correctImage = 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo6w_3vzo.png';
             if (currentData.image !== correctImage) {
               await setDoc(doc(db, 'categories', 'tables'), {
                 ...currentData,
