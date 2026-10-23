@@ -12,6 +12,14 @@ export const CategoryManager: React.FC = () => {
   // فورم إضافة قسم جديد
   const [newName, setNewName] = useState('');
   const [newImage, setNewImage] = useState('');
+  
+  // 💡 حقول البانر الجديدة
+  const [newBannerImage, setNewBannerImage] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newButtonText, setNewButtonText] = useState('');
+  const [newBadge, setNewBadge] = useState('');
+  
   const [isAdding, setIsAdding] = useState(false);
 
   const showNotification = (msg: string) => {
@@ -36,18 +44,27 @@ export const CategoryManager: React.FC = () => {
   // إضافة قسم جديد
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName || !newImage) return alert('يرجى تعبئة اسم القسم ورابط الصورة');
+    if (!newName || !newImage) return alert('يرجى تعبئة اسم القسم ورابط صورة الكارت على الأقل');
 
     setIsAdding(true);
     try {
       await addDoc(collection(db, 'categories'), {
         name: newName,
         image: newImage,
+        // 💡 حفظ بيانات البانر (لو مفيش بانر بياخد صورة الكارت، ولو مفيش عنوان بياخد اسم القسم)
+        bannerImage: newBannerImage || newImage,
+        title: newTitle || newName,
+        description: newDesc || '',
+        buttonText: newButtonText || 'استكشف الآن',
+        badgeText: newBadge || '✨ جودة ممتازة',
         isActive: true, // يبدأ مفعل تلقائياً
         order: categories.length + 1,
       });
-      setNewName('');
-      setNewImage('');
+      
+      // تصفير الحقول
+      setNewName(''); setNewImage(''); setNewBannerImage(''); 
+      setNewTitle(''); setNewDesc(''); setNewButtonText(''); setNewBadge('');
+      
       showNotification('تمت إضافة القسم بنجاح! سيظهر فوراً في المتجر.');
     } catch (error) {
       alert('حدث خطأ أثناء إضافة القسم');
@@ -89,32 +106,102 @@ export const CategoryManager: React.FC = () => {
       {/* فورم إضافة قسم */}
       <div className="bg-[#FAF7F2] p-5 rounded-2xl border border-[#E9E1D4]">
         <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-[#8C6D46]" /> إضافة قسم جديد
+          <Plus className="w-5 h-5 text-[#8C6D46]" /> إضافة قسم جديد (وصفحة بانر خاصة به)
         </h3>
-        <form onSubmit={handleAddCategory} className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="اسم القسم (مثال: أحذية)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="w-full sm:w-1/3 text-sm py-2 px-3 border rounded-lg bg-white"
-            required
-          />
-          <input
-            type="text"
-            placeholder="رابط صورة القسم (URL)"
-            value={newImage}
-            onChange={(e) => setNewImage(e.target.value)}
-            className="w-full sm:w-1/2 text-sm py-2 px-3 border rounded-lg bg-white"
-            dir="ltr"
-            required
-          />
+        
+        <form onSubmit={handleAddCategory} className="space-y-4">
+          {/* الصف الأول: الاسم والصورة الأساسية */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-bold text-[#1C1917] mb-1">اسم القسم *</label>
+              <input
+                type="text"
+                placeholder="مثال: أحذية"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="w-full text-sm py-2 px-3 border rounded-lg bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#1C1917] mb-1">رابط صورة القسم (للكارت) *</label>
+              <input
+                type="text"
+                placeholder="https://example.com/image.jpg"
+                value={newImage}
+                onChange={(e) => setNewImage(e.target.value)}
+                className="w-full text-sm py-2 px-3 border rounded-lg bg-white"
+                dir="ltr"
+                required
+              />
+            </div>
+          </div>
+
+          {/* الصف الثاني: بيانات البانر */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-[#E9E1D4]">
+            <div className="md:col-span-2">
+              <h4 className="text-xs font-bold text-[#8C6D46] mb-3 border-b pb-2">بيانات البانر الرئيسي (يظهر في أعلى الصفحة)</h4>
+            </div>
+            
+            <div>
+              <label className="block text-[11px] font-bold text-[#1C1917] mb-1">رابط صورة البانر الكبيرة (اختياري)</label>
+              <input
+                type="text"
+                placeholder="اتركه فارغاً لاستخدام صورة الكارت"
+                value={newBannerImage}
+                onChange={(e) => setNewBannerImage(e.target.value)}
+                className="w-full text-sm py-2 px-3 border rounded-lg bg-[#FAF8F5]"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#1C1917] mb-1">عنوان البانر</label>
+              <input
+                type="text"
+                placeholder="مثال: أحدث صيحات الأحذية"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="w-full text-sm py-2 px-3 border rounded-lg bg-[#FAF8F5]"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-[11px] font-bold text-[#1C1917] mb-1">وصف البانر</label>
+              <textarea
+                placeholder="خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق..."
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                rows={2}
+                className="w-full text-sm py-2 px-3 border rounded-lg bg-[#FAF8F5]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#1C1917] mb-1">نص زر البانر</label>
+              <input
+                type="text"
+                placeholder="مثال: استكشف الأحذية الآن"
+                value={newButtonText}
+                onChange={(e) => setNewButtonText(e.target.value)}
+                className="w-full text-sm py-2 px-3 border rounded-lg bg-[#FAF8F5]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#1C1917] mb-1">نص الشارة (Badge)</label>
+              <input
+                type="text"
+                placeholder="مثال: ✨ خامات أصلية"
+                value={newBadge}
+                onChange={(e) => setNewBadge(e.target.value)}
+                className="w-full text-sm py-2 px-3 border rounded-lg bg-[#FAF8F5]"
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={isAdding}
-            className="bg-[#1C1917] text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#332E2B] disabled:opacity-50"
+            className="w-full bg-[#1C1917] text-white px-5 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#332E2B] disabled:opacity-50"
           >
-            {isAdding ? 'جاري الإضافة...' : 'إضافة القسم'}
+            {isAdding ? 'جاري الإضافة...' : 'حفظ وإضافة القسم'}
           </button>
         </form>
       </div>
@@ -125,7 +212,7 @@ export const CategoryManager: React.FC = () => {
           <thead className="bg-[#FAF7F2] text-[#78716C] border-b border-[#E5DDD0]">
             <tr>
               <th className="p-4">صورة القسم</th>
-              <th className="p-4">اسم القسم</th>
+              <th className="p-4">اسم القسم / البانر</th>
               <th className="p-4">الحالة</th>
               <th className="p-4 text-center">إجراءات</th>
             </tr>
@@ -141,7 +228,10 @@ export const CategoryManager: React.FC = () => {
                   <td className="p-4">
                     <img src={cat.image} alt={cat.name} className="w-20 h-14 object-cover rounded-lg border" />
                   </td>
-                  <td className="p-4 font-bold text-[#1C1917]">{cat.name}</td>
+                  <td className="p-4">
+                    <p className="font-bold text-[#1C1917] mb-1">{cat.name}</p>
+                    {cat.title && <p className="text-[11px] text-[#8C6D46]">عنوان البانر: {cat.title}</p>}
+                  </td>
                   <td className="p-4">
                     <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${cat.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                       {cat.isActive ? 'ظاهر في المتجر' : 'مخفي'}
