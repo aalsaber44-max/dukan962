@@ -456,9 +456,10 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
+        {/* Footer */}
       <Footer
         categories={categories}
+        currentCategoryData={currentCategoryData} // 💡 أضف هذا السطر
         onSelectCategory={(cat) => {
           setSelectedCategory(cat);
           scrollToCatalog();
