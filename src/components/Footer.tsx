@@ -4,12 +4,28 @@ import { DukanLogo } from './DukanLogo';
 import { Category } from '../types/furniture';
 
 interface FooterProps {
-  categories: Category[]; // 💡 استقبال الأقسام من App.tsx
+  categories: Category[]; 
+  currentCategoryData?: Category | null; // 💡 استقبال القسم الحالي لتغيير النصوص ديناميكياً
   onSelectCategory: (cat: string) => void;
   onOpenAdmin: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ categories, onSelectCategory, onOpenAdmin }) => {
+export const Footer: React.FC<FooterProps> = ({ 
+  categories, 
+  currentCategoryData, 
+  onSelectCategory, 
+  onOpenAdmin 
+}) => {
+  
+  // 💡 نص وصفي ديناميكي: إذا كان هناك قسم مختار يظهر اسمه، وإلا يظهر النص العام
+  const aboutText = currentCategoryData && currentCategoryData.id !== 'all' 
+    ? `تصفح الآن أرقى تشكيلات ${currentCategoryData.name} في دكان 962. نوفر لك منتجات بجودة عالية وأسعار منافسة.`
+    : "متخصصون في بيع أرقى تشكيلات الأثاث، الأحذية، العطور، وزينة رمضان. نوفر لك تجربة تسوق مميزة بأسعار منافسة وجودة عالية.";
+
+  const sectionTitle = currentCategoryData && currentCategoryData.id !== 'all'
+    ? `تصفح أقسام ${currentCategoryData.name}`
+    : "أقسام المتجر";
+
   return (
     <footer className="bg-[#1C1917] text-[#EDE8E0] pt-12 pb-6 border-t border-[#2C2825]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,7 +37,7 @@ export const Footer: React.FC<FooterProps> = ({ categories, onSelectCategory, on
               <DukanLogo variant="light" className="h-12" />
             </div>
             <p className="text-xs text-[#A8A29E] leading-relaxed mb-4">
-              متخصصون في بيع أرقى تشكيلات الأثاث، الأحذية، العطور، وزينة رمضان. نوفر لك تجربة تسوق مميزة بأسعار منافسة وجودة عالية.
+              {aboutText}
             </p>
             <div className="flex items-center gap-2 text-xs font-bold text-[#A7F3D0] bg-[#2E5339]/50 px-3 py-2 rounded-lg w-fit border border-[#C5DEC8]/20">
               <ShieldCheck className="w-4 h-4" />
@@ -31,9 +47,8 @@ export const Footer: React.FC<FooterProps> = ({ categories, onSelectCategory, on
 
           {/* Column 2: Dynamic Categories Links */}
           <div>
-            <h4 className="text-sm font-bold text-white mb-4">أقسام المتجر</h4>
+            <h4 className="text-sm font-bold text-white mb-4">{sectionTitle}</h4>
             <ul className="space-y-2">
-              {/* 💡 هنا السحر: بنقرأ الأقسام من السحابة ونعرضها كروابط */}
               {categories.map((cat) => (
                 <li key={cat.id}>
                   <button
@@ -41,7 +56,11 @@ export const Footer: React.FC<FooterProps> = ({ categories, onSelectCategory, on
                       onSelectCategory(cat.id);
                       document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="text-xs text-[#A8A29E] hover:text-[#D4AF37] transition-colors"
+                    className={`text-xs transition-colors ${
+                      currentCategoryData?.id === cat.id 
+                        ? 'text-[#D4AF37] font-bold' 
+                        : 'text-[#A8A29E] hover:text-[#D4AF37]'
+                    }`}
                   >
                     {cat.name}
                   </button>
@@ -58,7 +77,6 @@ export const Footer: React.FC<FooterProps> = ({ categories, onSelectCategory, on
                 <MapPin className="w-4 h-4 text-[#8C6D46]" />
                 <span>عمان - المملكة الأردنية الهاشمية</span>
               </p>
-              {/* 💡 الأرقام دي وهمية زي ما قلت، بغيرها لما العميل يعطيك الأرقام الحقيقية */}
               <p className="text-xs text-[#A8A29E] flex items-center gap-2 font-mono" dir="ltr">
                 <Phone className="w-4 h-4 text-[#8C6D46]" />
                 <span>+962 79 000 0000</span>
