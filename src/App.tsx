@@ -18,6 +18,20 @@ import { Check, Sparkles } from 'lucide-react';
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts صحيح
 
+// 💡 بيانات الصفحة الرئيسية الافتراضية (تظهر عند اختيار "الكل")
+const homeCategoryData: Category = {
+  id: 'all',
+  name: 'الرئيسية',
+  image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Gemini_Generated_Image_tqd22ztqd22ztqd2',
+  bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Gemini_Generated_Image_tqd22ztqd22ztqd2',
+  title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
+  description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
+  buttonText: 'استكشف تشكيلاتنا الآن',
+  badgeText: '✨ جودة تستحق الاقتناء',
+  isActive: true,
+  order: 0
+};
+
 export default function App() {
   // 1. حالات المنتجات والأقسام
   const [products, setProducts] = useState<Product[]>([]);
@@ -60,8 +74,9 @@ export default function App() {
             {
               id: 'tables',
               name: 'طاولات',
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/2549192d-570f-4788-81d9-74d19d818376',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/2549192d-570f-4788-81d9-74d19d818376',
+              // تم تحديث الرابط هنا بالصورة الصحيحة وبجودة عالية
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/2549192d-570f-4788-81d9-74d19d818376',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/2549192d-570f-4788-81d9-74d19d818376',
               title: 'أثاث يجمع بين الراحة والأناقة',
               description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
               buttonText: 'استكشف طاولات العرض الآن',
@@ -72,8 +87,8 @@ export default function App() {
             {
               id: 'shoes',
               name: 'أحذية',
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/0761e92f-66fa-4666-84b9-5a6240189d5c',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/0761e92f-66fa-4666-84b9-5a6240189d5c',
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/0761e92f-66fa-4666-84b9-5a6240189d5c',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/0761e92f-66fa-4666-84b9-5a6240189d5c',
               title: 'أحدث صيحات الأحذية',
               description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
               buttonText: 'استكشف الأحذية الآن',
@@ -84,8 +99,8 @@ export default function App() {
             {
               id: 'perfumes',
               name: 'عطور',
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/4935cfad-8815-4dcb-9577-1921d6a9ba95',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/4935cfad-8815-4dcb-9577-1921d6a9ba95',
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/4935cfad-8815-4dcb-9577-1921d6a9ba95',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/4935cfad-8815-4dcb-9577-1921d6a9ba95',
               title: 'عطور تدوم طويلاً',
               description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
               buttonText: 'استكشف العطور الآن',
@@ -96,8 +111,8 @@ export default function App() {
             {
               id: 'ramadan',
               name: 'زينة رمضان',
-              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/eabac072-5063-454a-b0c3-65419a6eb342',
-              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/eabac072-5063-454a-b0c3-65419a6eb342',
+              image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/eabac072-5063-454a-b0c3-65419a6eb342',
+              bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/eabac072-5063-454a-b0c3-65419a6eb342',
               title: 'زينة رمضان.. أضف البهجة لبيتك',
               description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
               buttonText: 'استكشف زينة رمضان',
@@ -111,6 +126,21 @@ export default function App() {
             await setDoc(doc(db, 'categories', cat.id), cat);
           }
           console.log('✅ تمت إضافة الأقسام الافتراضية بنجاح!');
+        } else {
+          // 💡 تحديث إجباري لصورة قسم الطاولات إذا كانت البيانات موجودة مسبقاً
+          const tablesSnapshot = snapshot.docs.find(d => d.id === 'tables');
+          if (tablesSnapshot) {
+            const currentData = tablesSnapshot.data();
+            const correctImage = 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/2549192d-570f-4788-81d9-74d19d818376';
+            if (currentData.image !== correctImage) {
+              await setDoc(doc(db, 'categories', 'tables'), {
+                ...currentData,
+                image: correctImage,
+                bannerImage: correctImage
+              });
+              console.log('✅ تم تحديث صورة قسم الطاولات بنجاح!');
+            }
+          }
         }
       } catch (error) {
         console.error('Error seeding categories:', error);
@@ -274,12 +304,10 @@ export default function App() {
     setSelectedColor('');
   };
 
-  // Filtered Products logic (تم التعديل ليتوافق مع الأقسام الجديدة)
+  // Filtered Products logic
   const filteredProducts = products.filter((prod) => {
-    // الفلترة بالقسم باستخدام categoryId
     const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
     
-    // البحث بالاسم أو الوصف
     const matchesSearch =
       searchQuery.trim() === '' ||
       prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -304,8 +332,10 @@ export default function App() {
     }
   };
 
-  // 💡 بنجيب بيانات القسم المختار عشان نبعتل الـ Hero والـ Footer
-  const currentCategoryData = categories.find(c => c.id === selectedCategory) || null;
+  // 💡 بنجيب بيانات القسم المختار، وإذا كان "الكل" بنجيب بيانات الصفحة الرئيسية
+  const currentCategoryData = selectedCategory === 'all' 
+    ? homeCategoryData 
+    : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
@@ -369,10 +399,10 @@ export default function App() {
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{currentCategoryData ? `تشكيلة ${currentCategoryData.name}` : 'تشكيلات دكان 962 الحصرية'}</span>
+              <span>{selectedCategory !== 'all' ? `تشكيلة ${currentCategoryData.name}` : 'تشكيلات دكان 962 الحصرية'}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight font-serif">
-              {currentCategoryData ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
+              {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
             </h2>
             <p className="text-xs text-[#78716C] mt-1">
               استكشف منتجاتنا، اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
