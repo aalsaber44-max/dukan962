@@ -364,9 +364,10 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Navigation Header */}
+           {/* Navigation Header */}
       <Navbar
         categories={categories}
+        currentCategoryData={currentCategoryData} // 💡 أضف هذا السطر هنا
         cartCount={cartTotalCount}
         wishlistCount={wishlist.length}
         onOpenCart={() => setIsCartOpen(true)}
