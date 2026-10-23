@@ -3,9 +3,14 @@ import React from 'react';
 interface DukanLogoProps {
   className?: string;
   variant?: 'light' | 'dark';
+  subtitle?: string; // 💡 خاصية جديدة لاستقبال اسم القسم
 }
 
-export const DukanLogo: React.FC<DukanLogoProps> = ({ className = 'h-11', variant = 'dark' }) => {
+export const DukanLogo: React.FC<DukanLogoProps> = ({ 
+  className = 'h-11', 
+  variant = 'dark',
+  subtitle = 'متجرك الشامل · الأردن' // 💡 النص الافتراضي للصفحة الرئيسية
+}) => {
   const isDark = variant === 'dark';
 
   return (
@@ -32,7 +37,6 @@ export const DukanLogo: React.FC<DukanLogoProps> = ({ className = 'h-11', varian
           fill="url(#goldCrown)"
           filter="url(#crownGlow)"
         />
-        {/* Crown peaks */}
         <path
           d="M12 62 L18 26 L38 46 L50 14 L62 46 L82 26 L88 62 Z"
           fill="url(#goldCrown)"
@@ -40,11 +44,9 @@ export const DukanLogo: React.FC<DukanLogoProps> = ({ className = 'h-11', varian
           strokeWidth="1.5"
           filter="url(#crownGlow)"
         />
-        {/* Jewels on crown tips */}
         <circle cx="18" cy="24" r="3.5" fill="#FFF2A3" stroke="#8A6410" strokeWidth="1" />
         <circle cx="50" cy="12" r="4.5" fill="#FFF2A3" stroke="#8A6410" strokeWidth="1" />
         <circle cx="82" cy="24" r="3.5" fill="#FFF2A3" stroke="#8A6410" strokeWidth="1" />
-        {/* Lower band jewels */}
         <circle cx="28" cy="70" r="2" fill="#D32F2F" />
         <circle cx="50" cy="70" r="2.5" fill="#1976D2" />
         <circle cx="72" cy="70" r="2" fill="#D32F2F" />
@@ -64,12 +66,13 @@ export const DukanLogo: React.FC<DukanLogoProps> = ({ className = 'h-11', varian
             962
           </span>
         </div>
+        {/* 💡 هنا يتم عرض النص المتغير */}
         <span
           className={`text-[10px] tracking-widest font-medium ${
             isDark ? 'text-[#78716C]' : 'text-[#D6D0C7]'
           }`}
         >
-          طاولات وأثاث فاخر · الأردن
+          {subtitle}
         </span>
       </div>
     </div>
