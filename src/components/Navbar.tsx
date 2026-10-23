@@ -4,7 +4,8 @@ import { DukanLogo } from './DukanLogo';
 import { Category } from '../types/furniture';
 
 interface NavbarProps {
-  categories: Category[]; // 💡 استقبال الأقسام
+  categories: Category[]; 
+  currentCategoryData?: Category | null; // 💡 أضفنا هذا السطر لاستقبال القسم الحالي
   cartCount: number;
   wishlistCount: number;
   onOpenCart: () => void;
@@ -17,6 +18,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   categories,
+  currentCategoryData,
   cartCount,
   wishlistCount,
   onOpenCart,
@@ -26,6 +28,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSearchChange,
   onSelectCategory,
 }) => {
+  
+  // 💡 تحديد النص الذي سيظهر تحت اللوجو
+  const logoSubtitle = currentCategoryData && currentCategoryData.id !== 'all'
+    ? `${currentCategoryData.name} · الأردن`
+    : 'متجرك الشامل · الأردن';
+
   return (
     <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E8E2D8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4 sm:gap-8">
@@ -37,14 +45,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="shrink-0 flex items-center cursor-pointer hover:opacity-90 transition-opacity text-right"
           title="شعار دكان 962 (اضغط للدخول للوحة الإدارة)"
         >
-          <DukanLogo variant="dark" className="h-10 sm:h-12" />
+          {/* 💡 تمرير النص الديناميكي إلى اللوجو */}
+          <DukanLogo 
+            variant="dark" 
+            className="h-10 sm:h-12" 
+            subtitle={logoSubtitle} 
+          />
         </button>
 
         {/* Zone 2: Navigation Links (Dynamic Categories) */}
         <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-[#57534E]">
           <button
             onClick={() => onSelectCategory('all')}
-            className="hover:text-[#1C1917] transition-colors whitespace-nowrap cursor-pointer hover:underline underline-offset-8"
+            className={`transition-colors whitespace-nowrap cursor-pointer hover:underline underline-offset-8 ${
+              currentCategoryData?.id === 'all' ? 'text-[#1C1917] font-bold' : 'hover:text-[#1C1917]'
+            }`}
           >
             جميع الأقسام
           </button>
@@ -53,7 +68,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
-              className="hover:text-[#1C1917] transition-colors whitespace-nowrap cursor-pointer hover:underline underline-offset-8"
+              className={`transition-colors whitespace-nowrap cursor-pointer hover:underline underline-offset-8 ${
+                currentCategoryData?.id === cat.id ? 'text-[#1C1917] font-bold' : 'hover:text-[#1C1917]'
+              }`}
             >
               {cat.name}
             </button>
