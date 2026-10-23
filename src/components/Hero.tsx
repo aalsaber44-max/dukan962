@@ -9,7 +9,6 @@ interface HeroProps {
 
 /**
  * يبني رابط Cloudinary بتحويل جديد، ويشيل أي تحويلات قديمة من الرابط
- * (مثل f_auto,q_auto:best) مع الحفاظ على الـ version والمجلدات.
  */
 export const buildCloudinary = (url: string, transform: string) => {
   if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
@@ -39,29 +38,22 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const displayData: any = categoryData || defaultData;
   const rawBanner: string = displayData.bannerImage || displayData.image || '';
 
-  // 💡 الموبايل: قص عمودي تقريباً (4:5) مع g_auto ليبقى الجزء المهم من الصورة ظاهراً
+  // 💡 التعديل هنا: استخدمنا c_scale بدلاً من c_fill لكي لا يتم قص الصورة، بل تصغيرها فقط
   const mobileSrcSet = MOBILE_WIDTHS.map(
-    (w) =>
-      `${buildCloudinary(rawBanner, `c_fill,ar_4:5,w_${w},g_auto,f_auto,q_auto:good`)} ${w}w`
+    (w) => `${buildCloudinary(rawBanner, `c_scale,w_${w},f_auto,q_auto:good`)} ${w}w`
   ).join(', ');
 
-  // 💡 اللابتوب: قص عريض (21:9) بدقة عالية. الأقصى 2400 لتفادي البكسلة على الشاشات الكبيرة
   const desktopSrcSet = DESKTOP_WIDTHS.map(
-    (w) =>
-      `${buildCloudinary(rawBanner, `c_fill,ar_21:9,w_${w},g_auto,f_auto,q_auto:good`)} ${w}w`
+    (w) => `${buildCloudinary(rawBanner, `c_scale,w_${w},f_auto,q_auto:good`)} ${w}w`
   ).join(', ');
 
-  const fallbackSrc = buildCloudinary(
-    rawBanner,
-    'c_fill,ar_21:9,w_1600,g_auto,f_auto,q_auto:good'
-  );
+  const fallbackSrc = buildCloudinary(rawBanner, 'c_scale,w_1600,f_auto,q_auto:good');
 
   // نسخة صغيرة جداً تظهر فوراً وتُستخدم كخلفية مموهة أثناء تحميل الصورة الكبيرة
   const placeholderSrc = buildCloudinary(rawBanner, 'c_limit,w_60,q_30,f_auto');
 
   const [loaded, setLoaded] = useState(false);
 
-  // عند تغيير القسم: ارجع للـ placeholder فوراً بدل ما تبقى الصورة القديمة
   useEffect(() => {
     setLoaded(false);
   }, [rawBanner]);
@@ -69,30 +61,23 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
-        {/* Main Hero Visual Card */}
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[460px] sm:min-h-[460px] lg:min-h-[520px] flex items-center bg-[#2a2622]">
-          {/* الخلفية المموهة: صورة صغيرة تُحمّل فوراً */}
+        
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[460px] sm:min-h-[460px] lg:min-h-[520px] flex items-center bg-[#1C1917]">
+          
+          {/* الخلفية المموهة: تملأ الفراغات الجانبية بشكل فخم */}
           <img
             key={`bg-${rawBanner}`}
             src={placeholderSrc}
             alt=""
             aria-hidden="true"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-70"
+            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
           />
 
-          {/* الصورة الأساسية: نسخة مخصصة للموبايل ونسخة للابتوب */}
+          {/* الصورة الأساسية */}
           <picture key={rawBanner}>
-            <source
-              media="(max-width: 639px)"
-              srcSet={mobileSrcSet}
-              sizes="100vw"
-            />
-            <source
-              media="(min-width: 640px)"
-              srcSet={desktopSrcSet}
-              sizes="(min-width: 1280px) 1280px, 100vw"
-            />
+            <source media="(max-width: 639px)" srcSet={mobileSrcSet} sizes="100vw" />
+            <source media="(min-width: 640px)" srcSet={desktopSrcSet} sizes="(min-width: 1280px) 1280px, 100vw" />
             <img
               ref={(el) => {
                 if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
@@ -103,15 +88,17 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               fetchPriority="high"
               decoding="async"
               onLoad={() => setLoaded(true)}
-              className={`absolute inset-0 w-full h-full object-cover object-center z-10 transition-opacity duration-500 ${
+              /* 💡 التعديل هنا: استخدمنا object-contain لكي تظهر الصورة كاملة 100% */
+              className={`absolute inset-0 w-full h-full object-contain object-center z-10 transition-opacity duration-500 ${
                 loaded ? 'opacity-100' : 'opacity-0'
               }`}
             />
           </picture>
 
           {/* Scrim: تدرج لوني لضمان قراءة النص */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex items-end z-20">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end z-20">
             <div className="p-4 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
+              
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[#E2D5C4] mb-3 font-medium">
                 <span className="bg-[#2E5339] text-[#F0FDF4] px-2 py-0.5 rounded-md font-bold shadow-xs">
                   {displayData.name || 'دكـان 962'}
