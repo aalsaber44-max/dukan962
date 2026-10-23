@@ -64,81 +64,85 @@ export default function App() {
     };
   }, []);
 
-  // 💡 3. كود زراعة الأقسام (Auto-Seeding) - يشتغل مرة واحدة بس لو السحابة فاضية
+  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري للصور
   useEffect(() => {
     const seedCategories = async () => {
       try {
         const snapshot = await getDocs(collection(db, 'categories'));
-        if (snapshot.empty) {
-          const defaultCategories = [
-            {
-              id: 'tables',
-              name: 'طاولات',
-              // تم تحديث الرابط هنا بالصورة الصحيحة وبجودة عالية
-              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo6w_3vzo.png',
-              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo6w_3vzo.png',
-              title: 'أثاث يجمع بين الراحة والأناقة',
-              description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
-              buttonText: 'استكشف طاولات العرض الآن',
-              badgeText: '✨ يوجد معاينة عند وصول الطلب',
-              isActive: true,
-              order: 1
-            },
-            {
-              id: 'shoes',
-              name: 'أحذية',
-              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7v_mr44.png',
-              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7v_mr44.png',
-              title: 'أحدث صيحات الأحذية',
-              description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
-              buttonText: 'استكشف الأحذية الآن',
-              badgeText: '👟 خامات أصلية',
-              isActive: true,
-              order: 2
-            },
-            {
-              id: 'perfumes',
-              name: 'عطور',
-              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo85_kjtm.png',
-              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo85_kjtm.png',
-              title: 'عطور تدوم طويلاً',
-              description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
-              buttonText: 'استكشف العطور الآن',
-              badgeText: '🌟 عطور فاخرة',
-              isActive: true,
-              order: 3
-            },
-            {
-              id: 'ramadan',
-              name: 'زينة رمضان',
-              image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7c_obi9.png',
-              bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo7c_obi9.png',
-              title: 'زينة رمضان.. أضف البهجة لبيتك',
-              description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
-              buttonText: 'استكشف زينة رمضان',
-              badgeText: '🌙 أجواء رمضانية',
-              isActive: true,
-              order: 4
-            }
-          ];
+        
+        // 💡 قائمة الأقسام بالصور الجديدة التي أرسلتها
+        const defaultCategories = [
+          {
+            id: 'tables',
+            name: 'طاولات',
+            image: 'https://h.uguu.se/HQFzrxZv.png',
+            bannerImage: 'https://h.uguu.se/HQFzrxZv.png',
+            title: 'أثاث يجمع بين الراحة والأناقة',
+            description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
+            buttonText: 'استكشف طاولات العرض الآن',
+            badgeText: '✨ يوجد معاينة عند وصول الطلب',
+            isActive: true,
+            order: 1
+          },
+          {
+            id: 'shoes',
+            name: 'أحذية',
+            image: 'https://h.uguu.se/ZWCPdqgs.png',
+            bannerImage: 'https://h.uguu.se/ZWCPdqgs.png',
+            title: 'أحدث صيحات الأحذية',
+            description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
+            buttonText: 'استكشف الأحذية الآن',
+            badgeText: '👟 خامات أصلية',
+            isActive: true,
+            order: 2
+          },
+          {
+            id: 'perfumes',
+            name: 'عطور',
+            image: 'https://d.uguu.se/VXlgsTvL.png',
+            bannerImage: 'https://d.uguu.se/VXlgsTvL.png',
+            title: 'عطور تدوم طويلاً',
+            description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
+            buttonText: 'استكشف العطور الآن',
+            badgeText: '🌟 عطور فاخرة',
+            isActive: true,
+            order: 3
+          },
+          {
+            id: 'ramadan',
+            name: 'زينة رمضان',
+            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkx10o0_yzcl.png',
+            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkx10o0_yzcl.png',
+            title: 'زينة رمضان.. أضف البهجة لبيتك',
+            description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
+            buttonText: 'استكشف زينة رمضان',
+            badgeText: '🌙 أجواء رمضانية',
+            isActive: true,
+            order: 4
+          }
+        ];
 
+        if (snapshot.empty) {
+          // إذا كانت قاعدة البيانات فاضية، نقوم بإنشاء الأقسام
           for (const cat of defaultCategories) {
             await setDoc(doc(db, 'categories', cat.id), cat);
           }
           console.log('✅ تمت إضافة الأقسام الافتراضية بنجاح!');
         } else {
-          // 💡 تحديث إجباري لصورة قسم الطاولات إذا كانت البيانات موجودة مسبقاً
-          const tablesSnapshot = snapshot.docs.find(d => d.id === 'tables');
-          if (tablesSnapshot) {
-            const currentData = tablesSnapshot.data();
-            const correctImage = 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvkwbo6w_3vzo.png';
-            if (currentData.image !== correctImage) {
-              await setDoc(doc(db, 'categories', 'tables'), {
-                ...currentData,
-                image: correctImage,
-                bannerImage: correctImage
-              });
-              console.log('✅ تم تحديث صورة قسم الطاولات بنجاح!');
+          // 💡 إذا كانت البيانات موجودة، نقوم بتحديث صور جميع الأقسام إجبارياً لتطابق الصور الجديدة
+          for (const defaultCat of defaultCategories) {
+            const existingDoc = snapshot.docs.find(d => d.id === defaultCat.id);
+            if (existingDoc) {
+              const currentData = existingDoc.data();
+              // إذا كانت الصورة مختلفة، نقوم بتحديثها
+              if (currentData.image !== defaultCat.image || currentData.bannerImage !== defaultCat.bannerImage) {
+                await setDoc(doc(db, 'categories', defaultCat.id), {
+                  ...currentData,
+                  image: defaultCat.image,
+                  bannerImage: defaultCat.bannerImage
+                });
+                console.log(`✅ تم تحديث صورة قسم ${defaultCat.name} بنجاح!`);
+              }
             }
           }
         }
@@ -204,7 +208,7 @@ export default function App() {
   // Filtering state
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); // وسعنا النطاق عشان يناسب كل المنتجات
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); 
   const [selectedColor, setSelectedColor] = useState<string>('');
 
   // Modals & Drawers state
@@ -364,10 +368,10 @@ export default function App() {
         </div>
       </aside>
 
-           {/* Navigation Header */}
+      {/* Navigation Header */}
       <Navbar
         categories={categories}
-        currentCategoryData={currentCategoryData} // 💡 أضف هذا السطر هنا
+        currentCategoryData={currentCategoryData}
         cartCount={cartTotalCount}
         wishlistCount={wishlist.length}
         onOpenCart={() => setIsCartOpen(true)}
@@ -457,10 +461,10 @@ export default function App() {
         )}
       </main>
 
-        {/* Footer */}
+      {/* Footer */}
       <Footer
         categories={categories}
-        currentCategoryData={currentCategoryData} // 💡 أضف هذا السطر
+        currentCategoryData={currentCategoryData}
         onSelectCategory={(cat) => {
           setSelectedCategory(cat);
           scrollToCatalog();
