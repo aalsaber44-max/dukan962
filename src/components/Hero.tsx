@@ -1,11 +1,27 @@
 import React from 'react';
 import { ArrowLeft, Sparkles, ShieldCheck, Truck, Clock } from 'lucide-react';
+import { Category } from '../types/furniture';
 
 interface HeroProps {
   onExploreClick: () => void;
+  categoryData?: Category | null; // 💡 استقبال بيانات القسم المختار
 }
 
-export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
+export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
+  
+  // 💡 البيانات الافتراضية لو الزبون في الصفحة الرئيسية (جميع الأقسام)
+  const defaultData = {
+    title: "أثاث يجمع بين الراحة والأناقة",
+    description: "أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.",
+    bannerImage: "https://res.cloudinary.com/pxn4yowl/image/upload/f_auto/q_auto/e47b84f7-93b5-451c-9da9-82078325ae62.png", 
+    buttonText: "استكشف تشكيلاتنا الآن",
+    badgeText: "✨ جودة تستحق الاقتناء",
+    name: "دكـان 962"
+  };
+
+  // 💡 لو في قسم مختار، بنستخدم بياناته. لو مفيش، بنستخدم الافتراضية
+  const displayData = categoryData && categoryData.id !== 'all' ? categoryData : defaultData;
+
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       {/* قللنا الحواف (padding) على الموبايل عشان نكسب مساحة */}
@@ -13,11 +29,12 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
         
         {/* Main Hero Visual Card */}
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl aspect-auto sm:aspect-16/9 lg:aspect-21/9 min-h-[500px] sm:min-h-[460px]">
+          
           <img
-            src="https://images.pexels.com/photos/32177962/pexels-photo-32177962.png"
-            alt="صالة معيشة فاخرة مع طاولات دكان 962"
+            src={displayData.bannerImage || displayData.image} // لو مفيش بانر بياخد صورة الكارت
+            alt={displayData.title || displayData.name}
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover object-center"
+            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-700"
           />
 
           {/* Measured Contrast Scrim */}
@@ -27,23 +44,22 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
               {/* Olive Green Tag - خليتها تلف (flex-wrap) على الموبايل */}
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[#E2D5C4] mb-3 font-medium">
                 <span className="bg-[#2E5339] text-[#F0FDF4] px-2 py-0.5 rounded-md font-bold shadow-xs">
-                  دكـان 962
+                  {displayData.name || 'دكـان 962'}
                 </span>
                 <span className="text-[#A7F3D0] font-bold">
-                  ✨ يوجد معاينة
+                  {displayData.badgeText || "✨ يوجد معاينة"}
                 </span>
-                <span>· خشب تايلندي ثقيل</span>
                 <span>· توصيل لجميع المحافظات</span>
               </div>
 
               {/* Exact Requested Headline */}
               <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.3] mb-3 sm:mb-4 text-balance font-serif">
-                أثاث يجمع بين الراحة والأناقة
+                {displayData.title}
               </h1>
 
               {/* Short Elegant Copy */}
               <p className="text-[11px] sm:text-base text-[#EAE4DC] leading-relaxed mb-5 sm:mb-7 max-w-2xl font-light">
-                أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.
+                {displayData.description}
               </p>
 
               {/* Action Buttons - خليتها عمودية (flex-col) على الموبايل */}
@@ -52,7 +68,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                   onClick={onExploreClick}
                   className="py-3 px-5 text-xs sm:text-sm font-bold text-[#1C1917] bg-[#EAE2D5] hover:bg-white rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl active:scale-95 w-full sm:w-auto"
                 >
-                  <span>استكشف طاولات العرض الآن</span>
+                  <span>{displayData.buttonText || "استكشف الآن"}</span>
                   <ArrowLeft className="w-4 h-4" />
                 </button>
 
@@ -73,8 +89,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
               <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <p className="text-[10px] sm:text-xs font-bold text-[#1C1917]">خشب تايلندي</p>
-              <p className="text-[9px] sm:text-[10px] text-[#78716C]">مقاوم للرطوبة</p>
+              <p className="text-[10px] sm:text-xs font-bold text-[#1C1917]">جودة مضمونة</p>
+              <p className="text-[9px] sm:text-[10px] text-[#78716C]">خامات نخب أول</p>
             </div>
           </div>
 
@@ -104,7 +120,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
             </div>
             <div>
               <p className="text-[10px] sm:text-xs font-bold text-[#1C1917]">ألوان حصرية</p>
-              <p className="text-[9px] sm:text-[10px] text-[#78716C]">أبيض، جوزي، رخامي</p>
+              <p className="text-[9px] sm:text-[10px] text-[#78716C]">تشكيلات متنوعة</p>
             </div>
           </div>
         </div>
