@@ -342,24 +342,7 @@ export default function App() {
 
     return matchesCategory && matchesSearch && matchesPrice && matchesColor;
   });
-  // Filtered Products logic
-  const filteredProducts = products.filter((prod) => {
-    const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
-    
-    const matchesSearch =
-      searchQuery.trim() === '' ||
-      prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prod.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(prod.itemNumber).includes(searchQuery.trim());
 
-    const matchesPrice = prod.basePrice >= priceRange[0] && prod.basePrice <= priceRange[1];
-
-    const matchesColor =
-      selectedColor === '' ||
-      prod.colors?.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
-
-    return matchesCategory && matchesSearch && matchesPrice && matchesColor;
-  });
   // 💡 السطر السحري: ترتيب المنتجات بحيث تظهر المنتجات المميزة (الأكثر مبيعاً) أولاً
   filteredProducts.sort((a, b) => Number(b.isBestSeller || false) - Number(a.isBestSeller || false));
 
