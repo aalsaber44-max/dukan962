@@ -40,7 +40,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   
-  // 💡 حالة لحفظ رابط الواتساب قبل أن تفرغ السلة
   const [finalWhatsAppUrl, setFinalWhatsAppUrl] = useState('');
 
   const [nameError, setNameError] = useState<string | null>(null);
@@ -169,7 +168,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       `*تفاصيل المنتجات المطلوبة:*\n` +
       items.map((it, i) => {
         const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
-        return `${i + 1}. *${it.product.name}*\n- اللون: ${it.selectedColor.name}\n- الكمية: ${it.quantity}\n- السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgUrl}`;
+        // 💡 الفحص الذكي: إذا كانت الصورة Base64، لا نضعها لتجنب انهيار الرابط
+        const isBase64 = imgUrl.startsWith('data:image');
+        const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)' : imgUrl;
+        
+        return `${i + 1}. *${it.product.name}*\n- اللون: ${it.selectedColor.name}\n- الكمية: ${it.quantity}\n- السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgText}`;
       }).join('\n\n') +
       `\n\n------------------------\n` +
       `*المجموع الفرعي:* ${subtotal.toFixed(2)} د.أ\n` +
@@ -178,7 +181,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       `يرجى تأكيد استلام الطلب وتحديد موعد التوصيل.`
     );
 
-    setFinalWhatsAppUrl(`https://wa.me/${STORE_PHONE_INTL}?text=${whatsAppText}`);
+    // 💡 استخدام api.whatsapp.com بدلاً من wa.me ليتحمل النصوص الطويلة
+    setFinalWhatsAppUrl(`https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${whatsAppText}`);
 
     try {
       await fetch('/api/orders', {
@@ -237,7 +241,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </p>
 
               <div className="mb-6">
-                {/* 💡 نستخدم الرابط المحفوظ في الذاكرة هنا */}
                 <a href={finalWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3.5 px-6 text-xs sm:text-sm font-bold text-white bg-[#2E5339] hover:bg-[#1E3826] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
                   <MessageCircle className="w-5 h-5" />
                   <span>إرسال تفاصيل الطلب عبر واتساب</span>
