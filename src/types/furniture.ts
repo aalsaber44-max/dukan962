@@ -3,10 +3,17 @@
 // 1. شكل القسم (Category) - عشان نقدر نضيف أقسام جديدة
 export interface Category {
   id: string;
-  name: string; // اسم القسم (طاولات، أحذية...)
-  image: string; // رابط صورة القسم (الكارت الصغير)
-  isActive: boolean; // هل القسم مفعل ولا مخفي (عشان زينة رمضان)
-  order: number; // ترتيب ظهور القسم في الصفحة الرئيسية
+  name: string;
+  image: string; 
+  bannerImage: string; 
+  mobileBannerImage?: string; // 💡 أضف هذا السطر الجديد
+  title: string;
+  description: string;
+  buttonText: string;
+  badgeText: string;
+  isActive: boolean;
+  order: number;
+}ترتيب ظهور القسم في الصفحة الرئيسية
   
   // 💡 الحقول الجديدة للبانر الرئيسي (Hero)
   title?: string;           // عنوان البانر (مثل: "أحدث صيحات الأحذية")
