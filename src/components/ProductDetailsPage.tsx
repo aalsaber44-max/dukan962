@@ -76,9 +76,9 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
     ].filter(Boolean))
   );
 
-  // Active price: depends on the selected color! Changes automatically when flipping images!
-  const currentPrice = selectedColor.price || product.basePrice;
-  const currentOriginalPrice = selectedColor.originalPrice || product.originalPrice;
+  // 💡 التعديل هنا: تحويل الأسعار إلى أرقام إجبارياً لمنع انهيار الموقع (toFixed)
+  const currentPrice = Number(selectedColor.price || product.basePrice || 0);
+  const currentOriginalPrice = Number(selectedColor.originalPrice || product.originalPrice || 0);
 
   const handleAdd = () => {
     onAddToCart(product, selectedColor, quantity);
@@ -90,7 +90,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
   };
 
   const whatsAppUrl = `https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
-    `مرحباً دكان 962 (Dukan 962)،\nأود الاستفسار وتأكيد طلب القطعة التالية:\n\n*القطعة:* ${product.name}\n*اللون المختار:* ${selectedColor.name}\n*السعر:* ${currentPrice.toFixed(2)} دينار أردني\n*الكمية:* ${quantity}\n*الأبعاد:* ${product.dimensions}\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
+    `مرحباً دكان 962 (Dukan 962)،\nأود الاستفسار وتأكيد طلب القطعة التالية:\n\n*القطعة:* ${product.name}\n*اللون المختار:* ${selectedColor.name}\n*السعر:* ${currentPrice.toFixed(2)} دينار أردني\n*الكمية:* ${quantity}\n*الأبعاد:* ${product.dimensions || '-'}\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
   )}`;
 
   return (
@@ -133,7 +133,6 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
             <div>
               {/* Large Main Showcase Image */}
               <div className="relative aspect-4/3 sm:aspect-1/1 w-full rounded-2xl overflow-hidden bg-white border border-[#E5DDD0] shadow-xs mb-4 group/carousel">
-                {/* 💡 التعديل هنا: أضفنا object-contain و p-4 لعرض الصورة كاملة دون زووم */}
                 <img
                   src={activeImage}
                   alt={`${product.name} - ${selectedColor.name}`}
@@ -221,7 +220,6 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                         }`}
                         title={`اضغط لرؤية هذه الزاوية وتحديث السعر تلقائياً (${idx + 1})`}
                       >
-                        {/* 💡 التعديل هنا: أضفنا object-contain للصور المصغرة أيضاً */}
                         <img
                           src={thumbUrl}
                           alt={`زاوية ${idx + 1}`}
@@ -260,7 +258,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                 </div>
                 <div className="flex items-center gap-2 bg-[#FAF7F2] p-2 rounded-lg border border-[#EDE5D8]">
                   <Shield className="w-3.5 h-3.5 text-[#8C6D46] shrink-0" />
-                  <span>{product.warranty}</span>
+                  <span>{product.warranty || 'ضمان سنتين'}</span>
                 </div>
               </div>
             </div>
@@ -273,7 +271,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
               <div className="flex items-center gap-2 text-xs text-[#8C827A] mb-2 font-medium">
                 <span className="text-[#8C6D46] font-bold">{product.categoryLabel || 'منتج'}</span>
                 <span aria-hidden="true">·</span>
-                <span>القطعة رقم #{product.itemNumber}</span>
+                <span>القطعة رقم #{product.itemNumber || '-'}</span>
                 {product.woodType && (
                   <>
                     <span aria-hidden="true">·</span>
@@ -295,12 +293,13 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                 <span className="text-base font-bold text-[#78716C]">
                   دينار أردني (د.أ)
                 </span>
-                {currentOriginalPrice && (
+                {/* 💡 تم تأمين السعر القديم هنا */}
+                {currentOriginalPrice > 0 && (
                   <span className="text-sm text-[#A8A29E] line-through tabular-nums font-mono">
                     {currentOriginalPrice.toFixed(2)} د.أ
                   </span>
                 )}
-                {selectedColor.price !== product.basePrice && (
+                {Number(selectedColor.price) !== Number(product.basePrice) && (
                   <span className="text-[11px] bg-[#FAF4E8] text-[#8C6D46] font-bold px-2 py-0.5 rounded-md border border-[#E6D4B8] mr-auto">
                     سعر هذا اللون
                   </span>
@@ -378,9 +377,10 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                             style={{ backgroundColor: color.hex }}
                           />
                           <span>{color.name}</span>
-                          {color.price !== product.basePrice && (
+                          {/* 💡 تم تأمين سعر اللون هنا */}
+                          {Number(color.price) !== Number(product.basePrice) && (
                             <span className="text-[10px] text-[#8C6D46] font-mono">
-                              ({color.price.toFixed(2)} د.أ)
+                              ({Number(color.price).toFixed(2)} د.أ)
                             </span>
                           )}
                         </button>
