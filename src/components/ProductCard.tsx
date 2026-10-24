@@ -42,6 +42,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onToggleWishlist(product);
   };
 
+  // 💡 حماية: قراءة نوع الخشب بأمان حتى لا ينهار الموقع للمنتجات الجديدة
+  const woodTypeText = product.woodType ? product.woodType.split(' - ')[0] : '';
+
   return (
     <article
       onClick={() => onQuickView(product)}
@@ -55,7 +58,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           src={currentDisplayImage}
           alt={product.name}
           referrerPolicy="no-referrer"
-          /* هنا التعديل: غيرنا object-cover لـ object-contain وضفنا p-2 */
           className="w-full h-full object-contain object-center p-2 group-hover:scale-105 transition-all duration-700 ease-out"
         />
 
@@ -101,8 +103,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div>
           {/* Metadata */}
           <div className="flex items-center justify-between text-xs text-[#8C827A] mb-1.5 font-medium">
-            <span>{product.categoryLabel}</span>
-            <span className="text-[#8C6D46]">{product.woodType.split(' - ')[0]}</span>
+            <span>{product.categoryLabel || 'منتج'}</span>
+            {/* 💡 هنا تم وضع النص الآمن بدلاً من الكود الذي كان يسبب الانهيار */}
+            <span className="text-[#8C6D46]">{woodTypeText}</span>
           </div>
 
           {/* Product Name */}
@@ -119,9 +122,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className="flex items-center gap-1.5 mb-3">
               <span className="text-[11px] text-[#A8A29E]">الألوان:</span>
               <div className="flex items-center gap-1">
-                {product.colors.map((c) => (
+                {product.colors.map((c, idx) => (
                   <span
-                    key={c.name}
+                    key={idx}
                     title={`${c.name} - ${c.price} د.أ`}
                     className="w-3.5 h-3.5 rounded-full border border-black/15 shadow-2xs"
                     style={{ backgroundColor: c.hex }}
