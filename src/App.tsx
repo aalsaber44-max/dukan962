@@ -123,9 +123,9 @@ export default function App() {
           {
             id: 'ramadan',
             name: 'زينة رمضان',
-            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvm9zg00_vegh.png',
-            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvm9zg00_vegh.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvma8qzk_q48t.png', // 💡 هاتف
+            image: 'https://d.uguu.se/NkxVlnjk.png', // 💡 صورة الكمبيوتر (تستخدم كصورة احتياطية)
+            bannerImage: 'https://d.uguu.se/NkxVlnjk.png', // 💡 صورة بانر الكمبيوتر
+            mobileBannerImage: 'https://i.ibb.co/xSh7kX1w/Designer-2-png.png', // 💡 صورة بانر الهاتف
             title: 'زينة رمضان.. أضف البهجة لبيتك',
             description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
             buttonText: 'استكشف زينة رمضان',
