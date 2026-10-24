@@ -1,11 +1,12 @@
 import React from 'react';
-import { Phone, MessageCircle, MapPin, ShieldCheck } from 'lucide-react';
+import { MessageCircle, MapPin, ShieldCheck } from 'lucide-react';
 import { DukanLogo } from './DukanLogo';
 import { Category } from '../types/furniture';
+import { STORE_PHONE_INTL, STORE_WHATSAPP_HANDLE } from '../utils/jordanLocations';
 
 interface FooterProps {
   categories: Category[]; 
-  currentCategoryData?: Category | null; // 💡 استقبال القسم الحالي لتغيير النصوص ديناميكياً
+  currentCategoryData?: Category | null; 
   onSelectCategory: (cat: string) => void;
   onOpenAdmin: () => void;
 }
@@ -17,7 +18,6 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAdmin 
 }) => {
   
-  // 💡 نص وصفي ديناميكي: إذا كان هناك قسم مختار يظهر اسمه، وإلا يظهر النص العام
   const aboutText = currentCategoryData && currentCategoryData.id !== 'all' 
     ? `تصفح الآن أرقى تشكيلات ${currentCategoryData.name} في دكان 962. نوفر لك منتجات بجودة عالية وأسعار منافسة.`
     : "متخصصون في بيع أرقى تشكيلات الأثاث، الأحذية، العطور، وزينة رمضان. نوفر لك تجربة تسوق مميزة بأسعار منافسة وجودة عالية.";
@@ -77,19 +77,17 @@ export const Footer: React.FC<FooterProps> = ({
                 <MapPin className="w-4 h-4 text-[#8C6D46]" />
                 <span>عمان - المملكة الأردنية الهاشمية</span>
               </p>
-              <p className="text-xs text-[#A8A29E] flex items-center gap-2 font-mono" dir="ltr">
-                <Phone className="w-4 h-4 text-[#8C6D46]" />
-                <span>+962 79 000 0000</span>
-              </p>
+              
+              {/* 💡 تم إزالة رقم الهاتف هنا واستبداله بحساب الواتساب فقط */}
               <div className="pt-2">
                 <a 
-                  href="https://wa.me/962790000000" 
+                  href={`https://wa.me/${STORE_PHONE_INTL}`} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="inline-flex items-center gap-2 bg-[#2E5339] hover:bg-[#1E3826] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>محادثة واتساب للطلب والاستفسار</span>
+                  <span>تواصل عبر واتساب: {STORE_WHATSAPP_HANDLE}</span>
                 </a>
               </div>
               <div className="mt-4 pt-4 border-t border-[#2C2825]">
