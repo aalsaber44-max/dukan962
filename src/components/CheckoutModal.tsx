@@ -40,6 +40,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   
+  // 💡 حالة لحفظ رابط الواتساب قبل أن تفرغ السلة
+  const [finalWhatsAppUrl, setFinalWhatsAppUrl] = useState('');
+
   const [nameError, setNameError] = useState<string | null>(null);
   const [phone1Error, setPhone1Error] = useState<string | null>(null);
   const [phone2Error, setPhone2Error] = useState<string | null>(null);
@@ -53,7 +56,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const deliveryFee = calculateDeliveryFee(governorate);
   const total = subtotal + deliveryFee;
 
-  // 💡 تحديث اسم الكليك بناءً على طلبك
   const cliqAlias = 'Mohammad Alkhatib';
   const cliqPhone = STORE_PHONE;
 
@@ -100,7 +102,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
     setNameError(null);
 
-    // 💡 تطبيق قواعد التحقق الصارمة للهاتف الأساسي
     const phone1Validation = validateJordanPhone(phone1);
     if (!phone1Validation.isValid) {
       setPhone1Error(phone1Validation.error || 'رقم الهاتف الأساسي غير صالح.');
@@ -108,7 +109,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
     setPhone1Error(null);
 
-    // 💡 التحقق من الهاتف الإضافي (إن وجد)
     if (phone2.trim() !== '') {
       const phone2Validation = validateJordanPhone(phone2);
       if (!phone2Validation.isValid) {
@@ -116,7 +116,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         return;
       }
       
-      // 💡 منع تكرار نفس الرقم
       if (phone1Validation.cleaned === phone2Validation.cleaned) {
         setPhone2Error('رقم الهاتف الإضافي يجب أن يكون مختلفاً عن الرقم الأساسي');
         return;
@@ -155,6 +154,32 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       createdAt: new Date().toISOString(),
     };
 
+    // 💡 بناء رابط الواتساب هنا (قبل مسح السلة) لضمان وجود المنتجات والأسعار
+    const paymentLabel = paymentMethod === 'cod' ? 'الدفع كاش عند الاستلام بعد المعاينة' : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
+    
+    const whatsAppText = encodeURIComponent(
+      `*طلب جديد من متجر دكان 962 للأثاث*\n\n` +
+      `*رقم الطلب:* ${num}\n` +
+      `*الاسم:* ${name.trim()}\n` +
+      `*رقم الهاتف 1:* ${phone1Validation.cleaned}\n` +
+      (phone2 ? `*رقم الهاتف 2:* ${validateJordanPhone(phone2).cleaned}\n` : '') +
+      `*العنوان:* ${governorate} - ${region} - ${street} - عمارة ${building}\n` +
+      (notes.trim() ? `*ملاحظات:* ${notes.trim()}\n` : '') +
+      `*طريقة الدفع:* ${paymentLabel}\n\n` +
+      `*تفاصيل المنتجات المطلوبة:*\n` +
+      items.map((it, i) => {
+        const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
+        return `${i + 1}. *${it.product.name}*\n- اللون: ${it.selectedColor.name}\n- الكمية: ${it.quantity}\n- السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgUrl}`;
+      }).join('\n\n') +
+      `\n\n------------------------\n` +
+      `*المجموع الفرعي:* ${subtotal.toFixed(2)} د.أ\n` +
+      `*أجور التوصيل (${governorate}):* ${deliveryFee.toFixed(2)} د.أ\n` +
+      `*المبلغ الإجمالي النهائي:* ${total.toFixed(2)} دينار أردني\n\n` +
+      `يرجى تأكيد استلام الطلب وتحديد موعد التوصيل.`
+    );
+
+    setFinalWhatsAppUrl(`https://wa.me/${STORE_PHONE_INTL}?text=${whatsAppText}`);
+
     try {
       await fetch('/api/orders', {
         method: 'POST',
@@ -173,39 +198,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     setIsSubmitting(false);
     setOrderConfirmed(true);
-    onSuccessOrder(orderPayload);
+    onSuccessOrder(orderPayload); // هذا السطر هو الذي يمسح السلة
   };
 
   const jordanGovernorates = JORDAN_GOVERNORATES;
-
-  const paymentLabel =
-    paymentMethod === 'cod'
-      ? 'الدفع كاش عند الاستلام بعد المعاينة'
-      : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
-
-  // 💡 إضافة رابط الصورة داخل رسالة الواتساب
-  const whatsAppOrderText = encodeURIComponent(
-    `👑 *طلب جديد من متجر دكان 962 للأثاث*\n\n` +
-      `*رقم الطلب:* ${orderNumber}\n` +
-      `*الاسم:* ${name}\n` +
-      `*رقم الهاتف 1:* ${phone1}\n` +
-      (phone2 ? `*رقم الهاتف 2:* ${phone2}\n` : '') +
-      `*العنوان:* ${governorate} - ${region} - ${street} - عمارة ${building}\n` +
-      (notes ? `*ملاحظات إضافية:* ${notes}\n` : '') +
-      `*طريقة الدفع:* ${paymentLabel}\n\n` +
-      `📦 *تفاصيل المنتجات المطلوبة:*\n` +
-      items.map((it, i) => {
-        const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
-        return `${i + 1}. ${it.product.name}\n   - اللون: *${it.selectedColor.name}*\n   - الكمية: ${it.quantity}\n   - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n   - صورة المنتج: ${imgUrl}`;
-      }).join('\n\n') +
-      `\n\n------------------------\n` +
-      `*المجموع الفرعي:* ${subtotal.toFixed(2)} د.أ\n` +
-      `*أجور التوصيل (${governorate}):* ${deliveryFee.toFixed(2)} د.أ\n` +
-      `*المبلغ الإجمالي النهائي:* ${total.toFixed(2)} دينار أردني\n\n` +
-      `يرجى تأكيد استلام الطلب وتحديد موعد التوصيل.`
-  );
-
-  const whatsAppUrl = `https://wa.me/${STORE_PHONE_INTL}?text=${whatsAppOrderText}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
@@ -241,7 +237,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </p>
 
               <div className="mb-6">
-                <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3.5 px-6 text-xs sm:text-sm font-bold text-white bg-[#2E5339] hover:bg-[#1E3826] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+                {/* 💡 نستخدم الرابط المحفوظ في الذاكرة هنا */}
+                <a href={finalWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3.5 px-6 text-xs sm:text-sm font-bold text-white bg-[#2E5339] hover:bg-[#1E3826] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
                   <MessageCircle className="w-5 h-5" />
                   <span>إرسال تفاصيل الطلب عبر واتساب</span>
                 </a>
@@ -354,7 +351,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
 
               <div className="pt-2">
-                <label className="block text-xs font-bold text-[#1C1917] mb-2">3. عنوان التوصيل بالتفصيل</label>
+                <label className="block text-xs font-bold text-[#1C1917] mb-2">عنوان التوصيل بالتفصيل</label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[10px] font-semibold text-[#78716C] mb-1">المحافظة *</label>
