@@ -33,16 +33,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const deliveryFee = subtotal >= freeThreshold ? 0 : 5;
   const grandTotal = subtotal + (items.length > 0 ? deliveryFee : 0);
 
-  // 💡 إضافة رابط صورة المنتج إلى رسالة الواتساب
+  // 💡 بناء رابط الواتساب مع الفحص الذكي للصور واستخدام api.whatsapp.com
   const whatsAppUrl =
     items.length > 0
-      ? `https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
+      ? `https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${encodeURIComponent(
           `مرحباً دكان 962 (Dukan 962)،\nأود تأكيد طلبي للأثاث التالي:\n\n` +
             items
               .map(
                 (it, idx) => {
                   const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
-                  return `${idx + 1}. *${it.product.name}*\n   - اللون: ${it.selectedColor.name}\n   - الكمية: ${it.quantity}\n   - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n   - صورة المنتج: ${imgUrl}`;
+                  const isBase64 = imgUrl.startsWith('data:image');
+                  const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)' : imgUrl;
+
+                  return `${idx + 1}. *${it.product.name}*\n   - اللون: ${it.selectedColor.name}\n   - الكمية: ${it.quantity}\n   - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n   - صورة المنتج: ${imgText}`;
                 }
               )
               .join('\n\n') +
