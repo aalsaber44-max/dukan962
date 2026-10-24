@@ -20,7 +20,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
 
   const displayData: any = categoryData || defaultData;
   
-  // 💡 نستخدم صورة الهاتف إذا كنا على الهاتف، وصورة الكمبيوتر إذا كنا على الكمبيوتر
   const desktopBanner = displayData.bannerImage || displayData.image || defaultData.bannerImage;
   const mobileBanner = displayData.mobileBannerImage || desktopBanner;
 
@@ -34,10 +33,9 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
         
-        {/* 💡 استخدمنا aspect-video للكمبيوتر و aspect-[4/3] للموبايل لضمان عدم وجود زووم */}
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] flex items-center bg-[#1C1917]">
+        {/* 💡 التعديل هنا: غيرنا lg:aspect-[21/9] إلى lg:aspect-[16/9] لتقليل الزووم */}
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[16/9] flex items-center bg-[#1C1917]">
           
-          {/* الخلفية المموهة (تظهر أثناء التحميل فقط) */}
           <img
             src={mobileBanner}
             alt=""
@@ -53,12 +51,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
             className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60 hidden sm:block"
           />
 
-          {/* الصورة الأساسية */}
           <picture key={desktopBanner}>
-            {/* صورة الهاتف */}
             <source media="(max-width: 639px)" srcSet={mobileBanner} />
-            
-            {/* صورة الكمبيوتر */}
             <source media="(min-width: 640px)" srcSet={desktopBanner} />
             
             <img
@@ -77,10 +71,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
             />
           </picture>
 
-          {/* Scrim: تدرج لوني لضمان قراءة النص */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end z-20">
             <div className="p-4 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
-              
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[#E2D5C4] mb-3 font-medium">
                 <span className="bg-[#2E5339] text-[#F0FDF4] px-2 py-0.5 rounded-md font-bold shadow-xs">
                   {displayData.name || 'دكـان 962'}
@@ -159,7 +151,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
             </div>
           </div>
         </div>
-
       </div>
     </section>
   );
