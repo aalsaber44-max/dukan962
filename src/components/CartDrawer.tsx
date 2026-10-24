@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Trash2, ShoppingBag, ArrowLeft, MessageCircle, ShieldCheck } from 'lucide-react';
 import { CartItem } from '../types/furniture';
+import { STORE_PHONE_INTL } from '../utils/jordanLocations';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -32,16 +33,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const deliveryFee = subtotal >= freeThreshold ? 0 : 5;
   const grandTotal = subtotal + (items.length > 0 ? deliveryFee : 0);
 
+  // 💡 إضافة رابط صورة المنتج إلى رسالة الواتساب
   const whatsAppUrl =
     items.length > 0
-      ? `https://wa.me/962790000000?text=${encodeURIComponent(
+      ? `https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
           `مرحباً دكان 962 (Dukan 962)،\nأود تأكيد طلبي للأثاث التالي:\n\n` +
             items
               .map(
-                (it, idx) =>
-                  `${idx + 1}. *${it.product.name}* (اللون: ${it.selectedColor.name}) - الكمية: ${it.quantity} - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ`
+                (it, idx) => {
+                  const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
+                  return `${idx + 1}. *${it.product.name}*\n   - اللون: ${it.selectedColor.name}\n   - الكمية: ${it.quantity}\n   - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n   - صورة المنتج: ${imgUrl}`;
+                }
               )
-              .join('\n') +
+              .join('\n\n') +
             `\n\n*المجموع الفرعي:* ${subtotal.toFixed(2)} دينار أردني\n*التوصيل:* ${deliveryFee === 0 ? 'مجاني' : '5.00 د.أ'}\n*المجموع الإجمالي:* ${grandTotal.toFixed(2)} دينار أردني\n*طريقة الدفع:* الدفع عند الاستلام كاش أو بطاقة\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
         )}`
       : '#';
@@ -117,7 +121,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             ) : (
               items.map((item) => {
-                // 💡 تأمين الحسابات
                 const itemPrice = Number(item.selectedColor.price) || Number(item.product.basePrice) || 0;
                 const itemTotal = itemPrice * item.quantity;
                 const itemImage = item.selectedColor.image || item.product.images[0];
