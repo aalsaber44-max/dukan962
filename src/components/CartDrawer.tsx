@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trash2, ShoppingBag, ArrowLeft, MessageCircle, ShieldCheck, Truck } from 'lucide-react';
+import { X, Trash2, ShoppingBag, ArrowLeft, MessageCircle, ShieldCheck } from 'lucide-react';
 import { CartItem } from '../types/furniture';
 
 interface CartDrawerProps {
@@ -21,12 +21,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  // 💡 تأمين حساب الأسعار
   const subtotal = items.reduce(
-    (acc, item) => acc + (item.selectedColor.price || item.product.basePrice) * item.quantity,
+    (acc, item) => acc + (Number(item.selectedColor.price) || Number(item.product.basePrice) || 0) * item.quantity,
     0
   );
 
-  // Delivery: Free for orders over 150 JOD, otherwise 5 JOD inside Jordan
   const freeThreshold = 150;
   const progressPercent = Math.min(100, (subtotal / freeThreshold) * 100);
   const deliveryFee = subtotal >= freeThreshold ? 0 : 5;
@@ -39,7 +39,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             items
               .map(
                 (it, idx) =>
-                  `${idx + 1}. *${it.product.name}* (اللون: ${it.selectedColor.name}) - الكمية: ${it.quantity} - السعر: ${(it.selectedColor.price * it.quantity).toFixed(2)} د.أ`
+                  `${idx + 1}. *${it.product.name}* (اللون: ${it.selectedColor.name}) - الكمية: ${it.quantity} - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ`
               )
               .join('\n') +
             `\n\n*المجموع الفرعي:* ${subtotal.toFixed(2)} دينار أردني\n*التوصيل:* ${deliveryFee === 0 ? 'مجاني' : '5.00 د.أ'}\n*المجموع الإجمالي:* ${grandTotal.toFixed(2)} دينار أردني\n*طريقة الدفع:* الدفع عند الاستلام كاش أو بطاقة\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
@@ -48,7 +48,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/55 backdrop-blur-xs transition-opacity"
         onClick={onClose}
@@ -57,7 +56,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       <div className="fixed inset-y-0 left-0 max-w-full flex pl-0 sm:pl-10">
         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between border-r border-[#EAE3D7]">
           
-          {/* Header */}
           <div className="p-6 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-[#8C6D46]" />
@@ -69,13 +67,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F4EFE6] transition-colors cursor-pointer"
-              aria-label="إغلاق السلة"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Jordan Delivery Progress */}
           <div className="bg-[#FAF7F2] p-4 border-b border-[#EAE3D7]">
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-[#57534E]">
@@ -102,7 +98,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </div>
           </div>
 
-          {/* Items List */}
           <div className="flex-1 overflow-y-auto p-6 divide-y divide-[#F2EDE4]">
             {items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-[#78716C]">
@@ -111,18 +106,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
                 <h3 className="text-sm font-bold text-[#1C1917] mb-1">السلة فارغة حالياً</h3>
                 <p className="text-xs text-[#8C827A] mb-6 max-w-xs">
-                  اختر من بين تشكيلات طاولات الوسط، طاولات الشاشات والمدافئ الديكورية.
+                  اختر من بين تشكيلاتنا المتنوعة.
                 </p>
                 <button
                   onClick={onClose}
                   className="py-2.5 px-6 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl transition-all cursor-pointer"
                 >
-                  استكشف طاولات دكان 962
+                  استكشف دكان 962
                 </button>
               </div>
             ) : (
               items.map((item) => {
-                const itemPrice = item.selectedColor.price || item.product.basePrice;
+                // 💡 تأمين الحسابات
+                const itemPrice = Number(item.selectedColor.price) || Number(item.product.basePrice) || 0;
                 const itemTotal = itemPrice * item.quantity;
                 const itemImage = item.selectedColor.image || item.product.images[0];
 
@@ -131,7 +127,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     key={`${item.product.id}-${item.selectedColor.name}`}
                     className="py-4 flex gap-4 items-start"
                   >
-                    {/* Selected Color Image */}
                     <img
                       src={itemImage}
                       alt={`${item.product.name} - ${item.selectedColor.name}`}
@@ -145,7 +140,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <h4 className="text-xs font-bold text-[#1C1917] leading-snug line-clamp-1">
                             {item.product.name}
                           </h4>
-                          {/* Explicit Selected Color Name as requested */}
                           <p className="text-[11px] text-[#8C6D46] font-semibold mt-1 flex items-center gap-1.5">
                             <span
                               className="w-3 h-3 rounded-full border border-black/15 inline-block"
@@ -157,14 +151,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           onClick={() => onRemoveItem(item.product.id, item.selectedColor.name)}
                           className="text-[#A8A29E] hover:text-rose-600 transition-colors p-1 cursor-pointer"
-                          aria-label="حذف"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
                       <div className="flex items-center justify-between mt-3">
-                        {/* Quantity Counter */}
                         <div className="flex items-center border border-[#DDD5C7] rounded-lg overflow-hidden bg-white">
                           <button
                             onClick={() => onUpdateQuantity(item.product.id, item.selectedColor.name, -1)}
@@ -183,7 +175,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </button>
                         </div>
 
-                        {/* Price per item / total in JOD */}
                         <span className="text-xs font-black text-[#1C1917] font-mono">
                           {itemTotal.toFixed(2)} د.أ
                         </span>
@@ -195,7 +186,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             )}
           </div>
 
-          {/* Footer Checkout Panel */}
           {items.length > 0 && (
             <div className="p-6 border-t border-[#EAE3D7] bg-[#FAF8F5] space-y-4">
               <div className="space-y-2 text-xs">
@@ -219,7 +209,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="space-y-2 pt-1">
                 <button
                   onClick={onProceedToCheckout}
@@ -246,7 +235,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             </div>
           )}
-
         </div>
       </div>
     </div>
