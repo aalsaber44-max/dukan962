@@ -33,8 +33,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
         
-        {/* 💡 التعديل هنا: غيرنا lg:aspect-[21/9] إلى lg:aspect-[16/9] لتقليل الزووم */}
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[16/9] flex items-center bg-[#1C1917]">
+        {/* 💡 التعديل هنا: غيرنا lg:aspect-[16/9] إلى lg:aspect-[21/9] لتقصير المستطيل */}
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[21/9] lg:aspect-[21/9] flex items-center bg-[#1C1917]">
           
           <img
             src={mobileBanner}
@@ -83,24 +83,24 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 <span>· توصيل لجميع المحافظات</span>
               </div>
 
-              <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.3] mb-3 sm:mb-4 text-balance font-serif">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.3] mb-3 sm:mb-4 text-balance font-serif">
                 {displayData.title}
               </h1>
 
-              <p className="text-[11px] sm:text-base text-[#EAE4DC] leading-relaxed mb-5 sm:mb-7 max-w-2xl font-light line-clamp-2 sm:line-clamp-none">
+              <p className="text-[11px] sm:text-sm text-[#EAE4DC] leading-relaxed mb-5 sm:mb-7 max-w-2xl font-light line-clamp-2 sm:line-clamp-none">
                 {displayData.description}
               </p>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <button
                   onClick={onExploreClick}
-                  className="py-3 px-5 text-xs sm:text-sm font-bold text-[#1C1917] bg-[#EAE2D5] hover:bg-white rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl active:scale-95 w-full sm:w-auto"
+                  className="py-2.5 px-5 text-xs sm:text-sm font-bold text-[#1C1917] bg-[#EAE2D5] hover:bg-white rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl active:scale-95 w-full sm:w-auto"
                 >
                   <span>{displayData.buttonText || 'استكشف الآن'}</span>
                   <ArrowLeft className="w-4 h-4" />
                 </button>
 
-                <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs text-white/95 bg-[#2E5339]/90 backdrop-blur-md py-3 px-4 rounded-xl border border-[#A7F3D0]/30 font-semibold w-full sm:w-auto">
+                <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs text-white/95 bg-[#2E5339]/90 backdrop-blur-md py-2.5 px-4 rounded-xl border border-[#A7F3D0]/30 font-semibold w-full sm:w-auto">
                   <ShieldCheck className="w-4 h-4 text-[#A7F3D0]" />
                   <span>يوجد معاينة عند وصول الطلب قبل الدفع</span>
                 </div>
