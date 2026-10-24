@@ -7,83 +7,70 @@ interface HeroProps {
   categoryData?: Category | null;
 }
 
-export const buildCloudinary = (url: string, transform: string) => {
-  if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
-  const [base, rest] = url.split('/upload/');
-  const parts = rest.split('/');
-  const vIdx = parts.findIndex((p) => /^v\d+$/.test(p));
-  const clean = vIdx >= 0 ? parts.slice(vIdx) : parts.filter((p) => !p.includes(','));
-  return `${base}/upload/${transform}/${clean.join('/')}`;
-};
-
-const MOBILE_WIDTHS = [480, 720, 960];
-const DESKTOP_WIDTHS = [1024, 1600, 2000, 2400];
-
 export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const defaultData = {
     title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
-    description:
-      'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
-    bannerImage:
-      'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Gemini_Generated_Image_tqd22ztqd22ztqd2',
+    description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
+    bannerImage: 'https://d.uguu.se/ZWBQdmQX.png',
+    mobileBannerImage: 'https://i.ibb.co/Z1RLzQrG/Designer1-png.png',
     buttonText: 'استكشف تشكيلاتنا الآن',
     badgeText: '✨ جودة تستحق الاقتناء',
     name: 'دكـان 962',
   };
 
   const displayData: any = categoryData || defaultData;
-  const rawBanner: string = displayData.bannerImage || displayData.image || '';
-
-  // 💡 الحل السحري: استخدام c_fill مع ar_16:9 لجعل الصورة عريضة تلقائياً، و g_auto لاختيار أفضل جزء للقص
-  const mobileSrcSet = MOBILE_WIDTHS.map(
-    (w) => `${buildCloudinary(rawBanner, `c_fill,ar_4:3,w_${w},g_auto,f_auto,q_auto:best`)} ${w}w`
-  ).join(', ');
-
-  const desktopSrcSet = DESKTOP_WIDTHS.map(
-    (w) => `${buildCloudinary(rawBanner, `c_fill,ar_16:9,w_${w},g_auto,f_auto,q_auto:best`)} ${w}w`
-  ).join(', ');
-
-  const fallbackSrc = buildCloudinary(rawBanner, 'c_fill,ar_16:9,w_1600,g_auto,f_auto,q_auto:best');
-  const placeholderSrc = buildCloudinary(rawBanner, 'c_limit,w_60,q_30,f_auto');
+  
+  // 💡 نستخدم صورة الهاتف إذا كنا على الهاتف، وصورة الكمبيوتر إذا كنا على الكمبيوتر
+  const desktopBanner = displayData.bannerImage || displayData.image || defaultData.bannerImage;
+  const mobileBanner = displayData.mobileBannerImage || desktopBanner;
 
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     setLoaded(false);
-  }, [rawBanner]);
+  }, [desktopBanner, mobileBanner]);
 
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
         
-        {/* 💡 التعديل هنا: استخدمنا aspect-video لضبط أبعاد المستطيل لتكون 16:9 دائماً، مما يمنع الزووم الزائد */}
+        {/* 💡 استخدمنا aspect-video للكمبيوتر و aspect-[4/3] للموبايل لضمان عدم وجود زووم */}
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] flex items-center bg-[#1C1917]">
           
-          {/* الخلفية المموهة */}
+          {/* الخلفية المموهة (تظهر أثناء التحميل فقط) */}
           <img
-            key={`bg-${rawBanner}`}
-            src={placeholderSrc}
+            src={mobileBanner}
             alt=""
             aria-hidden="true"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
+            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60 sm:hidden"
+          />
+          <img
+            src={desktopBanner}
+            alt=""
+            aria-hidden="true"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60 hidden sm:block"
           />
 
           {/* الصورة الأساسية */}
-          <picture key={rawBanner}>
-            <source media="(max-width: 639px)" srcSet={mobileSrcSet} sizes="100vw" />
-            <source media="(min-width: 640px)" srcSet={desktopSrcSet} sizes="(min-width: 1280px) 1280px, 100vw" />
+          <picture key={desktopBanner}>
+            {/* صورة الهاتف */}
+            <source media="(max-width: 639px)" srcSet={mobileBanner} />
+            
+            {/* صورة الكمبيوتر */}
+            <source media="(min-width: 640px)" srcSet={desktopBanner} />
+            
             <img
               ref={(el) => {
                 if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
               }}
-              src={fallbackSrc}
+              src={desktopBanner}
               alt={displayData.title || displayData.name}
               referrerPolicy="no-referrer"
               fetchPriority="high"
               decoding="async"
               onLoad={() => setLoaded(true)}
-              /* 💡 object-cover تملأ المستطيل بالكامل، والزووم تم تقليله لأن الصورة أصبحت عريضة من Cloudinary */
               className={`absolute inset-0 w-full h-full object-cover object-center z-10 transition-opacity duration-500 ${
                 loaded ? 'opacity-100' : 'opacity-0'
               }`}
