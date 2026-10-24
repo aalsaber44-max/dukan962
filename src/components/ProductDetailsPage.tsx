@@ -133,11 +133,12 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
             <div>
               {/* Large Main Showcase Image */}
               <div className="relative aspect-4/3 sm:aspect-1/1 w-full rounded-2xl overflow-hidden bg-white border border-[#E5DDD0] shadow-xs mb-4 group/carousel">
+                {/* 💡 التعديل هنا: أضفنا object-contain و p-4 لعرض الصورة كاملة دون زووم */}
                 <img
                   src={activeImage}
                   alt={`${product.name} - ${selectedColor.name}`}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-center transition-all duration-300"
+                  className="w-full h-full object-contain object-center p-4 transition-all duration-300"
                 />
 
                 {/* Olive Green Badge */}
@@ -202,7 +203,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[11px] font-bold text-[#8C6D46] flex items-center gap-1.5">
-                      <span>📷 صور وزوايا الطاولة (يتغير السعر مع تقليب الصور):</span>
+                      <span>📷 صور وزوايا المنتج (يتغير السعر مع تقليب الصور):</span>
                     </p>
                     <span className="text-[10px] bg-[#EAE2D5] text-[#1C1917] px-2 py-0.5 rounded-md font-mono font-bold">
                       {availableThumbnails.length} صور متاحة
@@ -215,16 +216,17 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                         onClick={() => handleSwitchImage(thumbUrl)}
                         className={`relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
                           activeImage === thumbUrl
-                            ? 'border-[#1C1917] shadow-sm scale-102 ring-2 ring-[#8C6D46]/30'
-                            : 'border-transparent opacity-70 hover:opacity-100 hover:border-[#8C6D46]'
+                            ? 'border-[#1C1917] shadow-sm scale-102 ring-2 ring-[#8C6D46]/30 bg-white'
+                            : 'border-transparent opacity-70 hover:opacity-100 hover:border-[#8C6D46] bg-white'
                         }`}
                         title={`اضغط لرؤية هذه الزاوية وتحديث السعر تلقائياً (${idx + 1})`}
                       >
+                        {/* 💡 التعديل هنا: أضفنا object-contain للصور المصغرة أيضاً */}
                         <img
                           src={thumbUrl}
                           alt={`زاوية ${idx + 1}`}
                           referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain p-1"
                         />
                       </button>
                     ))}
@@ -246,7 +248,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                     ✨ يوجد معاينة عند وصول الطلب
                   </strong>
                   <span>
-                    يحق لك فحص ومعاينة الطاولة وتفاصيل الخشب واللون بالكامل عند وصول مندوب التوصيل لباب بيتك قبل الاستلام والدفع كاش أو عبر كليك.
+                    يحق لك فحص ومعاينة المنتج وتفاصيل الخشب واللون بالكامل عند وصول مندوب التوصيل لباب بيتك قبل الاستلام والدفع كاش أو عبر كليك.
                   </span>
                 </div>
               </div>
@@ -269,11 +271,15 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
             <div>
               {/* Category & Item Number */}
               <div className="flex items-center gap-2 text-xs text-[#8C827A] mb-2 font-medium">
-                <span className="text-[#8C6D46] font-bold">{product.categoryLabel}</span>
+                <span className="text-[#8C6D46] font-bold">{product.categoryLabel || 'منتج'}</span>
                 <span aria-hidden="true">·</span>
                 <span>القطعة رقم #{product.itemNumber}</span>
-                <span aria-hidden="true">·</span>
-                <span className="text-[#2E5339] font-bold">خشب تايلندي ثقيل</span>
+                {product.woodType && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="text-[#2E5339] font-bold">{product.woodType}</span>
+                  </>
+                )}
               </div>
 
               {/* Title */}
@@ -317,23 +323,29 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
               </div>
 
               {/* Specifications Block */}
-              <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EDE5D8] mb-6 space-y-2.5">
-                <div className="flex items-start gap-2.5 text-xs">
-                  <Ruler className="w-4 h-4 text-[#8C6D46] shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-[#1C1917]">المقاسات والأبعاد:</strong>{' '}
-                    <span className="text-[#66605B]">{product.dimensions}</span>
-                  </div>
-                </div>
+              {(product.dimensions || product.woodType) && (
+                <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EDE5D8] mb-6 space-y-2.5">
+                  {product.dimensions && (
+                    <div className="flex items-start gap-2.5 text-xs">
+                      <Ruler className="w-4 h-4 text-[#8C6D46] shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-[#1C1917]">المقاسات والأبعاد:</strong>{' '}
+                        <span className="text-[#66605B]">{product.dimensions}</span>
+                      </div>
+                    </div>
+                  )}
 
-                <div className="flex items-start gap-2.5 text-xs">
-                  <Shield className="w-4 h-4 text-[#8C6D46] shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-[#1C1917]">نوعية الخشب:</strong>{' '}
-                    <span className="text-[#66605B]">{product.woodType}</span>
-                  </div>
+                  {product.woodType && (
+                    <div className="flex items-start gap-2.5 text-xs">
+                      <Shield className="w-4 h-4 text-[#8C6D46] shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-[#1C1917]">نوعية الخشب:</strong>{' '}
+                        <span className="text-[#66605B]">{product.woodType}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
               {/* محدد الألوان (Color Selector) */}
               {product.colors.length > 0 && (
