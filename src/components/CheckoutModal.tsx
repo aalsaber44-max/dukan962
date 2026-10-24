@@ -46,14 +46,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [autoDetectedGov, setAutoDetectedGov] = useState<string | null>(null);
 
   const subtotal = items.reduce(
-    (acc, item) => acc + (item.selectedColor.price || item.product.basePrice) * item.quantity,
+    (acc, item) => acc + (Number(item.selectedColor.price) || Number(item.product.basePrice) || 0) * item.quantity,
     0
   );
 
   const deliveryFee = calculateDeliveryFee(governorate);
   const total = subtotal + deliveryFee;
 
-  const cliqAlias = 'DUKAN962';
+  // 💡 تحديث اسم الكليك بناءً على طلبك
+  const cliqAlias = 'Mohammad Alkhatib';
   const cliqPhone = STORE_PHONE;
 
   const copyToClipboard = (text: string, field: 'alias' | 'phone') => {
@@ -99,6 +100,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
     setNameError(null);
 
+    // 💡 تطبيق قواعد التحقق الصارمة للهاتف الأساسي
     const phone1Validation = validateJordanPhone(phone1);
     if (!phone1Validation.isValid) {
       setPhone1Error(phone1Validation.error || 'رقم الهاتف الأساسي غير صالح.');
@@ -106,10 +108,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
     setPhone1Error(null);
 
+    // 💡 التحقق من الهاتف الإضافي (إن وجد)
     if (phone2.trim() !== '') {
       const phone2Validation = validateJordanPhone(phone2);
       if (!phone2Validation.isValid) {
         setPhone2Error(phone2Validation.error || 'رقم الهاتف الإضافي غير صالح.');
+        return;
+      }
+      
+      // 💡 منع تكرار نفس الرقم
+      if (phone1Validation.cleaned === phone2Validation.cleaned) {
+        setPhone2Error('رقم الهاتف الإضافي يجب أن يكون مختلفاً عن الرقم الأساسي');
         return;
       }
       setPhone2Error(null);
@@ -174,6 +183,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       ? 'الدفع كاش عند الاستلام بعد المعاينة'
       : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
 
+  // 💡 إضافة رابط الصورة داخل رسالة الواتساب
   const whatsAppOrderText = encodeURIComponent(
     `👑 *طلب جديد من متجر دكان 962 للأثاث*\n\n` +
       `*رقم الطلب:* ${orderNumber}\n` +
@@ -183,10 +193,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       `*العنوان:* ${governorate} - ${region} - ${street} - عمارة ${building}\n` +
       (notes ? `*ملاحظات إضافية:* ${notes}\n` : '') +
       `*طريقة الدفع:* ${paymentLabel}\n\n` +
-      `📦 *تفاصيل الطاولات المطلوبة:*\n` +
-      items.map((it, i) =>
-          `${i + 1}. ${it.product.name}\n   - اللون: *${it.selectedColor.name}*\n   - الكمية: ${it.quantity}\n   - السعر: ${(it.selectedColor.price * it.quantity).toFixed(2)} د.أ`
-        ).join('\n\n') +
+      `📦 *تفاصيل المنتجات المطلوبة:*\n` +
+      items.map((it, i) => {
+        const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
+        return `${i + 1}. ${it.product.name}\n   - اللون: *${it.selectedColor.name}*\n   - الكمية: ${it.quantity}\n   - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n   - صورة المنتج: ${imgUrl}`;
+      }).join('\n\n') +
       `\n\n------------------------\n` +
       `*المجموع الفرعي:* ${subtotal.toFixed(2)} د.أ\n` +
       `*أجور التوصيل (${governorate}):* ${deliveryFee.toFixed(2)} د.أ\n` +
@@ -198,10 +209,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
-      {/* التعديل هنا: استخدمنا flex-col و max-h عشان النافذة يكون ليها سكرول داخلي والهيدر يثبت */}
       <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[#E9E1D4] flex flex-col my-6 max-h-[90vh]">
         
-        {/* Header - ثابت فوق */}
         <div className="p-5 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5] rounded-t-3xl shrink-0">
           <div>
             <h3 className="text-base font-bold text-[#1C1917]">
@@ -219,11 +228,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           </button>
         </div>
 
-        {/* Body - اللي بيعمل سكرول */}
         <div className="overflow-y-auto flex-1 p-6 sm:p-8">
           {orderConfirmed ? (
             <div className="text-center">
-              {/* ... (نفس كود النجاح السابق) ... */}
               <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-200">
                 <CheckCircle className="w-8 h-8" />
               </div>
@@ -247,7 +254,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               
-              {/* Payment Options */}
               <div>
                 <label className="block text-xs font-bold text-[#1C1917] mb-2">اختر طريقة الدفع:</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -269,7 +275,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* CliQ Details */}
               {paymentMethod === 'cliq' && (
                 <div className="bg-[#EDF4EE] border border-[#C5DEC8] rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
@@ -282,7 +287,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div className="bg-white p-2.5 rounded-xl border border-[#C5DEC8] flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-[#78716C] block">الاسم المستعار:</span>
+                        <span className="text-[10px] text-[#78716C] block">اسم الحساب:</span>
                         <strong className="text-[#1C1917] font-mono text-sm">{cliqAlias}</strong>
                       </div>
                       <button type="button" onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-1.5 rounded-lg bg-[#FAF8F5] hover:bg-[#EAE2D5] border cursor-pointer text-[10px] flex items-center gap-1">
@@ -308,7 +313,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
               )}
 
-              {/* بيانات التواصل */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-[#1C1917] mb-1">الاسم الكامل (الرباعي) *</label>
@@ -349,7 +353,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* تفاصيل العنوان */}
               <div className="pt-2">
                 <label className="block text-xs font-bold text-[#1C1917] mb-2">3. عنوان التوصيل بالتفصيل</label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -380,7 +383,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-xs py-2 px-3 bg-[#FAF8F5] border border-[#DDD5C7] rounded-xl" />
               </div>
 
-              {/* حساب التكلفة */}
               <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EDE5D8] space-y-1.5 text-xs">
                 <div className="flex justify-between text-[#78716C]">
                   <span>المجموع الفرعي</span>
