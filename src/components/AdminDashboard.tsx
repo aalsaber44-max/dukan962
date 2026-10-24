@@ -75,7 +75,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [loadingOrders, setLoadingOrders] = useState(false);
 
   // Inline price editing state: { [productId]: newPrice }
-  // 💡 تم تعديل النوع ليقبل النص الفارغ
   const [editingPrices, setEditingPrices] = useState<Record<string, number | string>>({});
 
   // Confirm delete state (no window.confirm)
@@ -88,7 +87,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // New product form state
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState<string>('');
-  // 💡 تم تعديل النوع ليقبل النص الفارغ
   const [newBasePrice, setNewBasePrice] = useState<number | string>('');
   const [newOriginalPrice, setNewOriginalPrice] = useState<number | string>('');
   const [newDesc, setNewDesc] = useState('');
@@ -251,7 +249,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const updateAttributeOptions = (index: number, optionsString: string) => {
-    // 💡 تأمين الدالة لمنع الانهيار إذا كانت القيمة فارغة
     const options = (optionsString || '').split(',').map(o => o.trim()).filter(Boolean);
     setNewAttributes(prev => prev.map((attr, i) => i === index ? { ...attr, options } : attr));
   };
@@ -287,7 +284,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleColorImageUpload = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 💡 استخدام دالة الضغط بدلاً من الحفظ المباشر
       compressImage(file, (compressedBase64) => {
         handleColorUpdate(idx, 'image', compressedBase64);
       });
@@ -348,9 +344,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       ].filter(Boolean))
     );
 
-    // 💡 تأمين الصور: إذا لم تكن هناك صور، نضع صورة افتراضية لمنع انهيار الموقع (الشاشة البيضاء)
     const finalImages = allImages.length > 0 ? allImages : [PLACEHOLDER_IMAGE];
-    const safeColors = newColors.map(c => ({ ...c, image: c.image || PLACEHOLDER_IMAGE }));
+    
+    // 💡 التعديل هنا: تحويل السعر إلى رقم إجبارياً
+    const safeColors = newColors.map(c => ({ 
+      ...c, 
+      image: c.image || PLACEHOLDER_IMAGE,
+      price: Number(c.price) || 0 
+    }));
 
     const newProd: Omit<Product, 'id'> = {
       itemNumber: products.length + 1,
@@ -400,7 +401,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification(`تم تغيير حالة الطلب #${orderId} إلى "${newStatus}"`);
   };
 
-  // ✅ دالة حذف الطلب
   const handleDeleteOrder = async (orderId: string) => {
     try {
       await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
@@ -418,7 +418,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم حذف الطلب من السجل نهائياً.');
   };
 
-  // 🔐 دالة تغيير كلمة المرور
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -870,7 +869,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                   </div>
                                   <span className="font-mono font-bold text-[#1C1917]">
-                                    {`${((it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ`}
+                                    {`${(Number(it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ`}
                                   </span>
                                 </div>
                               ))}
@@ -881,7 +880,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 {`المجموع (شامل التوصيل ${order.deliveryFee === 0 ? 'مجاني' : (order.deliveryFee || 0) + ' د.أ'}):`}
                               </span>
                               <strong className="text-sm font-black text-[#1C1917] font-mono">
-                                {`${(order.total || 0).toFixed(2)} دينار أردني`}
+                                {`${Number(order.total || 0).toFixed(2)} دينار أردني`}
                               </strong>
                             </div>
                           </div>
@@ -1061,7 +1060,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="sm:col-span-4 bg-[#FAF7F2] p-2 rounded-lg border border-[#DDD5C7]">
                           <div className="flex justify-between items-center mb-1">
                             <label className="block text-[10px] font-bold text-[#1C1917]">الصورة الرئيسية:</label>
-                            {/* 💡 زر حذف الصورة */}
                             {color.image && (
                               <button type="button" onClick={() => handleColorUpdate(idx, 'image', '')} className="text-rose-600 text-[10px] font-bold hover:underline">حذف</button>
                             )}
@@ -1106,7 +1104,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setActiveTab('list')} className="py-2.5 px-5 text-xs font-semibold text-[#57534E] hover:text-[#1C1917] cursor-pointer">إلغاء</button>
                 <button type="submit" className="py-3 px-8 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl shadow-md transition-all cursor-pointer">نشر القطعة في متجر دكان 962</button>
@@ -1276,9 +1273,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
       ].filter(Boolean))
     );
 
-    // 💡 تأمين الصور
     const finalImages = allImages.length > 0 ? allImages : [PLACEHOLDER_IMAGE];
-    const safeColors = colors.map(c => ({ ...c, image: c.image || PLACEHOLDER_IMAGE }));
+    
+    // 💡 التعديل هنا: تحويل السعر إلى رقم إجبارياً
+    const safeColors = colors.map(c => ({ 
+      ...c, 
+      image: c.image || PLACEHOLDER_IMAGE,
+      price: Number(c.price) || 0 
+    }));
 
     const updated: Product = {
       ...product,
@@ -1468,7 +1470,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                     <div className="sm:col-span-4 bg-white p-2 rounded-lg border border-[#DDD5C7]">
                       <div className="flex justify-between items-center mb-1">
                         <label className="block text-[10px] font-bold text-[#1C1917]">الصورة الرئيسية للون:</label>
-                        {/* 💡 زر حذف الصورة */}
                         {color.image && (
                           <button type="button" onClick={() => handleColorUpdate(idx, 'image', '')} className="text-rose-600 text-[10px] font-bold hover:underline">حذف</button>
                         )}
