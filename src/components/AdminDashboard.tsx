@@ -18,6 +18,7 @@ import {
   Clock,
   MapPin,
   Star,
+  Search,
 } from 'lucide-react';
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
 // استيراد Firebase
@@ -73,6 +74,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Orders State
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  // 💡 حالة البحث في الطلبات
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
   // Inline price editing state: { [productId]: newPrice }
   const [editingPrices, setEditingPrices] = useState<Record<string, number | string>>({});
@@ -346,7 +349,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     const finalImages = allImages.length > 0 ? allImages : [PLACEHOLDER_IMAGE];
     
-    // 💡 التعديل هنا: تحويل السعر إلى رقم إجبارياً
     const safeColors = newColors.map(c => ({ 
       ...c, 
       image: c.image || PLACEHOLDER_IMAGE,
@@ -439,6 +441,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setNewPass('');
     showNotification('تم تحديث كلمة المرور بنجاح!');
   };
+
+  // 💡 تصفية الطلبات بناءً على البحث
+  const filteredOrders = orders.filter(order => {
+    const query = orderSearchQuery.toLowerCase();
+    return (
+      order.name?.toLowerCase().includes(query) ||
+      order.phone?.includes(query) ||
+      order.id?.toLowerCase().includes(query)
+    );
+  });
+
+  // 💡 ترتيب الطلبات من الأحدث للأقدم
+  const sortedOrders = [...filteredOrders].sort((a, b) => 
+    new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime()
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
@@ -669,26 +686,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB 2: INCOMING ORDERS */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-bold text-[#1C1917]">
                     سجل طلبات الزبائن (يصلك هنا كل طلب يقوم به أي زبون)
                   </h3>
                   <p className="text-xs text-[#78716C]">
-                    يعرض كافة تفاصيل الطلبات، أرقام الهواتف للتواصل، الألوان المطلوبة، وحالة الدفع والتوصيل.
+                    الطلبات الأحدث تظهر في الأعلى. اضغط على صورة المنتج لتكبيرها.
                   </p>
                 </div>
-                <button
-                  onClick={fetchOrders}
-                  disabled={loadingOrders}
-                  className="py-1.5 px-3 bg-[#FAF7F2] border border-[#DDD5C7] rounded-xl text-xs font-bold text-[#1C1917] hover:bg-[#F2EDE4] flex items-center gap-1.5 cursor-pointer"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingOrders ? 'animate-spin' : ''}`} />
-                  <span>تحديث السجل</span>
-                </button>
+                
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* 💡 مربع البحث الجديد */}
+                  <div className="relative w-full sm:w-64">
+                    <input
+                      type="text"
+                      placeholder="ابحث باسم الزبون أو رقمه..."
+                      value={orderSearchQuery}
+                      onChange={(e) => setOrderSearchQuery(e.target.value)}
+                      className="w-full text-xs py-2 pr-8 pl-3 bg-white border border-[#DDD5C7] rounded-xl focus:outline-hidden focus:border-[#8C6D46]"
+                    />
+                    <Search className="w-4 h-4 text-[#A8A29E] absolute right-2.5 top-2.5 pointer-events-none" />
+                  </div>
+
+                  <button
+                    onClick={fetchOrders}
+                    disabled={loadingOrders}
+                    className="py-2 px-3 bg-[#FAF7F2] border border-[#DDD5C7] rounded-xl text-xs font-bold text-[#1C1917] hover:bg-[#F2EDE4] flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingOrders ? 'animate-spin' : ''}`} />
+                    <span>تحديث</span>
+                  </button>
+                </div>
               </div>
 
-              {orders.length === 0 ? (
+              {sortedOrders.length === 0 ? (
                 <div className="py-16 text-center bg-white rounded-2xl border border-[#EDE5D8] p-8">
                   <div className="w-12 h-12 rounded-full bg-[#FAF7F2] text-[#8C6D46] flex items-center justify-center mx-auto mb-3">
                     <ShoppingBag className="w-6 h-6" />
@@ -702,7 +734,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {orders.map((order) => {
+                  {sortedOrders.map((order) => {
                     const statusColors: Record<string, string> = {
                       'جديد': 'bg-emerald-50 text-emerald-800 border-emerald-200',
                       'جاري التجهيز': 'bg-amber-50 text-amber-800 border-amber-200',
@@ -847,29 +879,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {/* Items ordered list */}
                           <div className="md:col-span-7 bg-[#FAF7F2] p-3 rounded-xl border border-[#EDE5D8] space-y-2">
                             <span className="text-[11px] font-bold text-[#8C6D46] block">
-                              القطع المطلوبة:
+                              القطع المطلوبة (اضغط على الصورة لتكبيرها):
                             </span>
-                            <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                               {order.items?.map((it, idx) => (
                                 <div
                                   key={idx}
                                   className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-[#E9E1D4]"
                                 >
-                                  <div className="flex items-center gap-2">
-                                    <img
-                                      src={it.selectedColor?.image || it.product?.images?.[0] || 'https://via.placeholder.com/150'}
-                                      alt=""
-                                      className="w-8 h-8 rounded-md object-cover"
-                                    />
+                                  <div className="flex items-center gap-3">
+                                    {/* 💡 هنا التعديل: الصورة أصبحت أكبر وقابلة للضغط للتكبير */}
+                                    <a 
+                                      href={it.selectedColor?.image || it.product?.images?.[0] || 'https://via.placeholder.com/150'} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      title="اضغط لفتح الصورة بحجم كامل"
+                                    >
+                                      <img
+                                        src={it.selectedColor?.image || it.product?.images?.[0] || 'https://via.placeholder.com/150'}
+                                        alt=""
+                                        className="w-14 h-14 rounded-lg object-contain bg-[#FAF7F2] border border-[#E9E1D4] hover:scale-105 transition-transform"
+                                      />
+                                    </a>
                                     <div>
-                                      <p className="font-bold text-[#1C1917]">{it.product?.name || 'قطعة'}</p>
-                                      <span className="text-[10px] text-[#8C6D46]">
+                                      <p className="font-bold text-[#1C1917] text-sm">{it.product?.name || 'قطعة'}</p>
+                                      <span className="text-[11px] text-[#8C6D46] block mt-0.5">
                                         {`اللون: ${it.selectedColor?.name || 'افتراضي'} | الكمية: ${it.quantity || 1}`}
                                       </span>
                                     </div>
                                   </div>
                                   <span className="font-mono font-bold text-[#1C1917]">
-                                    {`${(Number(it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ`}
+                                    {`${((it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ`}
                                   </span>
                                 </div>
                               ))}
@@ -880,7 +920,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 {`المجموع (شامل التوصيل ${order.deliveryFee === 0 ? 'مجاني' : (order.deliveryFee || 0) + ' د.أ'}):`}
                               </span>
                               <strong className="text-sm font-black text-[#1C1917] font-mono">
-                                {`${Number(order.total || 0).toFixed(2)} دينار أردني`}
+                                {`${(order.total || 0).toFixed(2)} دينار أردني`}
                               </strong>
                             </div>
                           </div>
@@ -1104,6 +1144,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
+              {/* Submit Button */}
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setActiveTab('list')} className="py-2.5 px-5 text-xs font-semibold text-[#57534E] hover:text-[#1C1917] cursor-pointer">إلغاء</button>
                 <button type="submit" className="py-3 px-8 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl shadow-md transition-all cursor-pointer">نشر القطعة في متجر دكان 962</button>
@@ -1275,7 +1316,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
 
     const finalImages = allImages.length > 0 ? allImages : [PLACEHOLDER_IMAGE];
     
-    // 💡 التعديل هنا: تحويل السعر إلى رقم إجبارياً
     const safeColors = colors.map(c => ({ 
       ...c, 
       image: c.image || PLACEHOLDER_IMAGE,
