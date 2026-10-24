@@ -1,6 +1,6 @@
 /**
  * Jordan Locations, Phone Validation & Delivery Rules for Dukan 962
- * Phone: 0779254134 (wa.me/962779254134)
+ * Phone: 0780981214 (wa.me/962780981214)
  * Delivery:
  * - Amman (العاصمة عمان): 5 JOD
  * - Outside Amman (المحافظات): 8 JOD
@@ -8,8 +8,9 @@
  * (لا يوجد توصيل مجاني)
  */
 
-export const STORE_PHONE = '0779254134';
-export const STORE_PHONE_INTL = '962779254134';
+export const STORE_PHONE = '0780981214';
+export const STORE_PHONE_INTL = '962780981214';
+export const STORE_WHATSAPP_HANDLE = 'mohammadkh.99';
 
 export const JORDAN_GOVERNORATES = [
   'عمان (العاصمة)',
@@ -84,14 +85,28 @@ export const validateJordanPhone = (
   }
 
   // Must strictly be 10 digits starting with 079, 077, or 078
-  const jordanMobileRegex = /^(079|077|078)\d{7}$/;
+  const jordanMobileRegex = /^07[789]\d{7}$/;
 
   if (!jordanMobileRegex.test(cleaned)) {
     return {
       isValid: false,
       cleaned,
-      error:
-        'رقم الهاتف غير صالح. يجب أن يتكون من 10 أرقام ويبدأ بـ 079 أو 077 أو 078 (مثال: 0779254134)',
+      error: 'يرجى إدخال رقم هاتف إردني صحيح وخاص بك',
+    };
+  }
+
+  // 💡 فحص الأرقام الوهمية والمكررة
+  const dummyNumbers = [
+    '0791234567', '0780000000', '0799999999', '0771234567', 
+    '0770000000', '0781234567', '0790000000', '0789999999',
+    '0777777777', '0788888888', '0796666666'
+  ];
+
+  if (dummyNumbers.includes(cleaned)) {
+    return {
+      isValid: false,
+      cleaned,
+      error: 'يرجى إدخال رقم هاتف إردني صحيح وخاص بك',
     };
   }
 
@@ -103,7 +118,6 @@ export const validateJordanPhone = (
 
 /**
  * Detect governorate automatically from address input.
- * e.g., typing "جبل التاج", "دابوق", "خلدا", etc. immediately switches governorate to "عمان (العاصمة)".
  */
 export const detectGovernorateFromAddress = (address: string): JordanGovernorate | null => {
   const text = address.trim().toLowerCase();
