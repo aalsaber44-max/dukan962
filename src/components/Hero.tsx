@@ -34,8 +34,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const displayData: any = categoryData || defaultData;
   const rawBanner: string = displayData.bannerImage || displayData.image || '';
 
-  // 💡 السر هنا: استخدمنا c_fill مع g_auto (اقتصاص ذكي يبقي المنتج في المنتصف) و q_auto:best للجودة العالية
-  // استخدمنا ar_16:9 (مستطيل عريض) بدلاً من 21:9 لتقليل الزووم
+  // 💡 الحل السحري: استخدام c_fill مع ar_16:9 لجعل الصورة عريضة تلقائياً، و g_auto لاختيار أفضل جزء للقص
   const mobileSrcSet = MOBILE_WIDTHS.map(
     (w) => `${buildCloudinary(rawBanner, `c_fill,ar_4:3,w_${w},g_auto,f_auto,q_auto:best`)} ${w}w`
   ).join(', ');
@@ -57,9 +56,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-4 pb-8">
         
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl min-h-[460px] sm:min-h-[460px] lg:min-h-[520px] flex items-center bg-[#1C1917]">
+        {/* 💡 التعديل هنا: استخدمنا aspect-video لضبط أبعاد المستطيل لتكون 16:9 دائماً، مما يمنع الزووم الزائد */}
+        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] flex items-center bg-[#1C1917]">
           
-          {/* الخلفية المموهة (تظهر أثناء التحميل فقط) */}
+          {/* الخلفية المموهة */}
           <img
             key={`bg-${rawBanner}`}
             src={placeholderSrc}
@@ -83,7 +83,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               fetchPriority="high"
               decoding="async"
               onLoad={() => setLoaded(true)}
-              /* 💡 رجعنا object-cover لتملأ المستطيل بالكامل */
+              /* 💡 object-cover تملأ المستطيل بالكامل، والزووم تم تقليله لأن الصورة أصبحت عريضة من Cloudinary */
               className={`absolute inset-0 w-full h-full object-cover object-center z-10 transition-opacity duration-500 ${
                 loaded ? 'opacity-100' : 'opacity-0'
               }`}
@@ -108,7 +108,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 {displayData.title}
               </h1>
 
-              <p className="text-[11px] sm:text-base text-[#EAE4DC] leading-relaxed mb-5 sm:mb-7 max-w-2xl font-light">
+              <p className="text-[11px] sm:text-base text-[#EAE4DC] leading-relaxed mb-5 sm:mb-7 max-w-2xl font-light line-clamp-2 sm:line-clamp-none">
                 {displayData.description}
               </p>
 
@@ -172,6 +172,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
             </div>
           </div>
         </div>
+
       </div>
     </section>
   );
