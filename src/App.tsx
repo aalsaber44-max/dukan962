@@ -22,8 +22,9 @@ import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts ص
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
-  image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Gemini_Generated_Image_tqd22ztqd22ztqd2',
-  bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Gemini_Generated_Image_tqd22ztqd22ztqd2',
+  image: 'https://d.uguu.se/ZWBQdmQX.png', 
+  bannerImage: 'https://d.uguu.se/ZWBQdmQX.png', // 💡 صورة الكمبيوتر
+  mobileBannerImage: 'https://i.ibb.co/Z1RLzQrG/Designer1-png.png', // 💡 صورة الهاتف
   title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
   description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
@@ -43,7 +44,15 @@ export default function App() {
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
       snapshot.forEach((doc) => {
-        prods.push({ id: doc.id, ...doc.data() } as Product);
+        const data = doc.data();
+        prods.push({ 
+          id: doc.id, 
+          name: data.name || 'منتج بدون اسم',
+          description: data.description || 'لا يوجد وصف',
+          basePrice: Number(data.basePrice) || 0,
+          originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+          ...data 
+        } as Product);
       });
       setProducts(prods);
     });
@@ -64,19 +73,20 @@ export default function App() {
     };
   }, []);
 
-  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور
+  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور (كمبيوتر + هاتف)
   useEffect(() => {
     const seedCategories = async () => {
       try {
         const snapshot = await getDocs(collection(db, 'categories'));
         
-        // 💡 قائمة الأقسام بالروابط الجديدة من Cloudinary
+        // 💡 قائمة الأقسام بالروابط الجديدة
         const defaultCategories = [
           {
             id: 'tables',
             name: 'طاولات',
-            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_3',
-            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_3',
+            image: 'https://i.ibb.co/dsQH8qg5/Designer-3-png.png',
+            bannerImage: 'https://i.ibb.co/dsQH8qg5/Designer-3-png.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvma8r09_saqg.png', // 💡 هاتف
             title: 'أثاث يجمع بين الراحة والأناقة',
             description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
             buttonText: 'استكشف طاولات العرض الآن',
@@ -87,8 +97,9 @@ export default function App() {
           {
             id: 'shoes',
             name: 'أحذية',
-            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_1',
-            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_1',
+            image: 'https://d.uguu.se/HHGCUBnz.png',
+            bannerImage: 'https://d.uguu.se/HHGCUBnz.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://d.uguu.se/PLUviaqL.png', // 💡 هاتف
             title: 'أحدث صيحات الأحذية',
             description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
             buttonText: 'استكشف الأحذية الآن',
@@ -99,8 +110,9 @@ export default function App() {
           {
             id: 'perfumes',
             name: 'عطور',
-            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer',
-            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer',
+            image: 'https://n.uguu.se/CWHDWKCd.png',
+            bannerImage: 'https://n.uguu.se/CWHDWKCd.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvma8r0q_vyff.png', // 💡 هاتف
             title: 'عطور تدوم طويلاً',
             description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
             buttonText: 'استكشف العطور الآن',
@@ -111,8 +123,9 @@ export default function App() {
           {
             id: 'ramadan',
             name: 'زينة رمضان',
-            image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_2',
-            bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto:best/Designer_2',
+            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvm9zg00_vegh.png',
+            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvm9zg00_vegh.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvma8qzk_q48t.png', // 💡 هاتف
             title: 'زينة رمضان.. أضف البهجة لبيتك',
             description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
             buttonText: 'استكشف زينة رمضان',
@@ -129,16 +142,21 @@ export default function App() {
           }
           console.log('✅ تمت إضافة الأقسام الافتراضية بنجاح!');
         } else {
-          // 💡 التحديث الإجباري: نقوم بتحديث صور جميع الأقسام إذا كانت مختلفة
+          // 💡 التحديث الإجباري: نقوم بتحديث صور جميع الأقسام (الكمبيوتر والهاتف) إذا كانت مختلفة
           for (const defaultCat of defaultCategories) {
             const existingDoc = snapshot.docs.find(d => d.id === defaultCat.id);
             if (existingDoc) {
               const currentData = existingDoc.data();
-              if (currentData.image !== defaultCat.image || currentData.bannerImage !== defaultCat.bannerImage) {
+              if (
+                currentData.image !== defaultCat.image || 
+                currentData.bannerImage !== defaultCat.bannerImage || 
+                currentData.mobileBannerImage !== defaultCat.mobileBannerImage
+              ) {
                 await setDoc(doc(db, 'categories', defaultCat.id), {
                   ...currentData,
                   image: defaultCat.image,
-                  bannerImage: defaultCat.bannerImage
+                  bannerImage: defaultCat.bannerImage,
+                  mobileBannerImage: defaultCat.mobileBannerImage
                 });
                 console.log(`✅ تم تحديث صورة قسم ${defaultCat.name} بنجاح!`);
               }
