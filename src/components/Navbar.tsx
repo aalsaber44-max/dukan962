@@ -5,7 +5,7 @@ import { Category } from '../types/furniture';
 
 interface NavbarProps {
   categories: Category[]; 
-  currentCategoryData?: Category | null; // 💡 أضفنا هذا السطر لاستقبال القسم الحالي
+  currentCategoryData?: Category | null;
   cartCount: number;
   wishlistCount: number;
   onOpenCart: () => void;
@@ -29,31 +29,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectCategory,
 }) => {
   
-  // 💡 تحديد النص الذي سيظهر تحت اللوجو
   const logoSubtitle = currentCategoryData && currentCategoryData.id !== 'all'
     ? `${currentCategoryData.name} · الأردن`
     : 'متجرك الشامل · الأردن';
 
   return (
     <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E8E2D8]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4 sm:gap-8">
+      {/* الصف العلوي: الشعار والأدوات */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
         
-        {/* Zone 1: Brand Logo */}
         <button
           type="button"
           onClick={onOpenAdmin}
           className="shrink-0 flex items-center cursor-pointer hover:opacity-90 transition-opacity text-right"
-          title="شعار دكان 962 (اضغط للدخول للوحة الإدارة)"
+          title="شعار دكان 962"
         >
-          {/* 💡 تمرير النص الديناميكي إلى اللوجو */}
-          <DukanLogo 
-            variant="dark" 
-            className="h-10 sm:h-12" 
-            subtitle={logoSubtitle} 
-          />
+          <DukanLogo variant="dark" className="h-9 sm:h-12" subtitle={logoSubtitle} />
         </button>
 
-        {/* Zone 2: Navigation Links (Dynamic Categories) */}
+        {/* روابط الكمبيوتر (تختفي في الموبايل) */}
         <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-[#57534E]">
           <button
             onClick={() => onSelectCategory('all')}
@@ -63,7 +57,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             جميع الأقسام
           </button>
-          {/* 💡 عرض الأقسام الديناميكية */}
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -77,26 +70,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           ))}
         </nav>
 
-        {/* Zone 3: Search, Wishlist & Cart */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          
-          {/* Real-time Search Input */}
+        {/* أدوات البحث والسلة */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="relative hidden md:block">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="ابحث عن منتج..."
-              className="text-xs w-44 lg:w-56 py-2 pr-8 pl-3 bg-[#F2EDE4] border border-[#DDD5C7] rounded-xl text-[#1C1917] placeholder-[#8C827A] focus:outline-hidden focus:border-[#8C6D46] transition-all"
+              placeholder="ابحث..."
+              className="text-xs w-36 lg:w-56 py-2 pr-8 pl-3 bg-[#F2EDE4] border border-[#DDD5C7] rounded-xl text-[#1C1917] placeholder-[#8C827A] focus:outline-hidden focus:border-[#8C6D46] transition-all"
             />
             <Search className="w-3.5 h-3.5 text-[#8C827A] absolute right-2.5 top-2.5 pointer-events-none" />
           </div>
 
-          {/* Wishlist Button with Counter */}
           <button
             onClick={onOpenWishlist}
-            aria-label="المفضلة"
-            className="relative p-2.5 rounded-xl bg-[#F2EDE4] hover:bg-[#EAE2D5] text-[#1C1917] border border-[#DDD5C7] transition-all cursor-pointer shadow-2xs"
+            className="relative p-2 sm:p-2.5 rounded-xl bg-[#F2EDE4] hover:bg-[#EAE2D5] text-[#1C1917] border border-[#DDD5C7] transition-all cursor-pointer shadow-2xs"
           >
             <Heart className="w-4 h-4 text-[#57534E]" />
             {wishlistCount > 0 && (
@@ -106,23 +95,48 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
-          {/* Shopping Cart Button with Counter */}
           <button
             onClick={onOpenCart}
-            aria-label="سلة الشراء"
-            className="flex items-center gap-2 py-2 px-3.5 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl transition-all shadow-xs cursor-pointer whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 sm:gap-2 py-1.5 px-2.5 sm:py-2 sm:px-3.5 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
           >
             <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
             <span className="hidden sm:inline">السلة</span>
             {cartCount > 0 && (
-              <span className="bg-[#2E5339] text-white text-[11px] font-bold px-1.5 py-0.2 rounded-full font-mono">
+              <span className="bg-[#2E5339] text-white text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-full font-mono">
                 {cartCount}
               </span>
             )}
           </button>
-
         </div>
+      </div>
 
+      {/* 💡 شريط الأقسام الأفقي للموبايل فقط */}
+      <div className="lg:hidden overflow-x-auto border-t border-[#E8E2D8] bg-[#FAF8F5]">
+        <div className="flex items-center gap-2 px-4 py-2.5 whitespace-nowrap">
+          <button
+            onClick={() => onSelectCategory('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+              currentCategoryData?.id === 'all' 
+                ? 'bg-[#1C1917] text-white border-[#1C1917]' 
+                : 'bg-white text-[#57534E] border-[#DDD5C7]'
+            }`}
+          >
+            جميع الأقسام
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => onSelectCategory(cat.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                currentCategoryData?.id === cat.id 
+                  ? 'bg-[#1C1917] text-white border-[#1C1917]' 
+                  : 'bg-white text-[#57534E] border-[#DDD5C7]'
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
     </header>
   );
