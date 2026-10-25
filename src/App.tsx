@@ -22,9 +22,9 @@ import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts ص
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
-  image: 'https://h.uguu.se/wgrNpeNi.png', // صورة الكمبيوتر
-  bannerImage: 'https://h.uguu.se/wgrNpeNi.png', // 💡 صورة الكمبيوتر
-  mobileBannerImage: 'https://n.uguu.se/dRESjksn.png', // 💡 صورة الهاتف
+  image: 'https://h.uguu.se/wgrNpeNi.png',
+  bannerImage: 'https://h.uguu.se/wgrNpeNi.png', 
+  mobileBannerImage: 'https://n.uguu.se/dRESjksn.png', 
   title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
   description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
@@ -79,7 +79,7 @@ export default function App() {
       try {
         const snapshot = await getDocs(collection(db, 'categories'));
         
-        // 💡 قائمة الأقسام بالروابط الجديدة
+        // 💡 قائمة الأقسام بالروابط المباشرة الجديدة من ImgBB
         const defaultCategories = [
           {
             id: 'tables',
@@ -110,9 +110,10 @@ export default function App() {
           {
             id: 'perfumes',
             name: 'عطور',
-            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mr1l_at4r.png',
-            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mr1l_at4r.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1pv9h_m2cl.png', // 💡 هاتف
+            // ✅ تم استخدام الروابط المباشرة من ImgBB
+            image: 'https://i.ibb.co/JDf95Zn/Designer.png',
+            bannerImage: 'https://i.ibb.co/JDf95Zn/Designer.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://i.ibb.co/Xf5vk4tq/Designer.png', // 💡 هاتف
             title: 'عطور تدوم طويلاً',
             description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
             buttonText: 'استكشف العطور الآن',
@@ -123,9 +124,10 @@ export default function App() {
           {
             id: 'ramadan',
             name: 'زينة رمضان',
-            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mqzx_hc33.png',
-            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mqzx_hc33.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://i.ibb.co/xKk9Jnp8/Designer-2-png.png', // 💡 هاتف
+            // ✅ تم استخدام الروابط المباشرة من ImgBB
+            image: 'https://i.ibb.co/Xfynd3V2/Designer-2.png',
+            bannerImage: 'https://i.ibb.co/Xfynd3V2/Designer-2.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://i.ibb.co/bg4S0DwG/Designer-2.png', // 💡 هاتف
             title: 'زينة رمضان.. أضف البهجة لبيتك',
             description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
             buttonText: 'استكشف زينة رمضان',
