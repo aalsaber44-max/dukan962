@@ -326,8 +326,10 @@ export default function App() {
     setSelectedColor('');
   };
 
-  // Filtered Products logic
   const filteredProducts = products.filter((prod) => {
+    // 💡 إخفاء المنتجات غير النشطة
+    if (prod.isActive === false) return false; 
+    
     const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
     
     const matchesSearch =
