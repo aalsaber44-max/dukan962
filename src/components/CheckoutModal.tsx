@@ -153,7 +153,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       createdAt: new Date().toISOString(),
     };
 
-    // 💡 بناء رابط الواتساب هنا (قبل مسح السلة) لضمان وجود المنتجات والأسعار
+    // 💡 بناء رابط الواتساب
     const paymentLabel = paymentMethod === 'cod' ? 'الدفع كاش عند الاستلام بعد المعاينة' : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
     
     const whatsAppText = encodeURIComponent(
@@ -168,10 +168,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       `*تفاصيل المنتجات المطلوبة:*\n` +
       items.map((it, i) => {
         const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
-        // 💡 الفحص الذكي: إذا كانت الصورة Base64، لا نضعها لتجنب انهيار الرابط
         const isBase64 = imgUrl.startsWith('data:image');
         const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)' : imgUrl;
-        
         return `${i + 1}. *${it.product.name}*\n- اللون: ${it.selectedColor.name}\n- الكمية: ${it.quantity}\n- السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgText}`;
       }).join('\n\n') +
       `\n\n------------------------\n` +
@@ -181,28 +179,44 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       `يرجى تأكيد استلام الطلب وتحديد موعد التوصيل.`
     );
 
-    // 💡 استخدام api.whatsapp.com بدلاً من wa.me ليتحمل النصوص الطويلة
     setFinalWhatsAppUrl(`https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${whatsAppText}`);
 
+    // 💡 التعديل الجديد: التحقق الفعلي من نجاح الحفظ
+    let isSaved = false;
+
+    // 1. محاولة الحفظ في السيرفر
     try {
-      await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload),
       });
+      if (res.ok) isSaved = true;
     } catch (err) {
       console.warn('Backend order save error, fallback to local:', err);
     }
 
-    try {
-      const existing = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
-      existing.unshift(orderPayload);
-      localStorage.setItem('dukan962_orders_local', JSON.stringify(existing));
-    } catch {}
+    // 2. إذا فشل السيرفر، نحاول الحفظ في ذاكرة المتصفح
+    if (!isSaved) {
+      try {
+        const existing = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
+        existing.unshift(orderPayload);
+        localStorage.setItem('dukan962_orders_local', JSON.stringify(existing));
+        isSaved = true;
+      } catch (err) {
+        console.error('Local save error:', err);
+      }
+    }
 
     setIsSubmitting(false);
-    setOrderConfirmed(true);
-    onSuccessOrder(orderPayload); // هذا السطر هو الذي يمسح السلة
+
+    // 3. إظهار شاشة النجاح فقط إذا تم الحفظ فعلياً
+    if (isSaved) {
+      setOrderConfirmed(true);
+      onSuccessOrder(orderPayload); // هذا السطر يمسح السلة
+    } else {
+      alert('عذراً، حدث خطأ في الشبكة أثناء حفظ طلبك. يرجى المحاولة مرة أخرى أو إرسال الطلب مباشرة عبر الواتساب.');
+    }
   };
 
   const jordanGovernorates = JORDAN_GOVERNORATES;
