@@ -11,8 +11,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const defaultData = {
     title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
     description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
-    bannerImage: 'https://d.uguu.se/ZWBQdmQX.png',
-    mobileBannerImage: 'https://i.ibb.co/Z1RLzQrG/Designer1-png.png',
+    bannerImage: 'https://h.uguu.se/wgrNpeNi.png',
+    mobileBannerImage: 'https://n.uguu.se/dRESjksn.png',
     buttonText: 'استكشف تشكيلاتنا الآن',
     badgeText: '✨ جودة تستحق الاقتناء',
     name: 'دكـان 962',
@@ -35,19 +35,21 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
         
         <div className="relative rounded-xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] flex items-center bg-[#1C1917]">
           
+          {/* 💡 الخلفية المموهة للموبايل (تم ضبطها لتركز على الأعلى) */}
           <img
             src={mobileBanner}
             alt=""
             aria-hidden="true"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60 sm:hidden"
+            className="absolute inset-0 w-full h-full object-cover object-top blur-xl scale-110 opacity-60 sm:hidden"
           />
+          {/* الخلفية المموهة للكمبيوتر */}
           <img
             src={desktopBanner}
             alt=""
             aria-hidden="true"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60 hidden sm:block"
+            className="absolute inset-0 w-full h-full object-cover object-center blur-xl scale-110 opacity-60 hidden sm:block"
           />
 
           <picture key={desktopBanner}>
@@ -64,14 +66,14 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               fetchPriority="high"
               decoding="async"
               onLoad={() => setLoaded(true)}
-              className={`absolute inset-0 w-full h-full object-cover object-center z-10 transition-opacity duration-500 ${
+              /* 💡 التعديل هنا: object-top sm:object-center */
+              className={`absolute inset-0 w-full h-full object-cover object-top sm:object-center z-10 transition-opacity duration-500 ${
                 loaded ? 'opacity-100' : 'opacity-0'
               }`}
             />
           </picture>
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end z-20">
-            {/* 💡 تم تصغير الخطوط والمسافات على الموبايل */}
             <div className="p-3.5 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
               
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs text-[#E2D5C4] mb-1.5 sm:mb-3 font-medium">
@@ -110,7 +112,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
           </div>
         </div>
 
-        {/* شريط المميزات (معدل للموبايل) */}
+        {/* شريط المميزات السفلي */}
         <div className="mt-3 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-4 p-2 sm:p-4 bg-white rounded-xl sm:rounded-2xl border border-[#E9E1D4] shadow-2xs">
           <div className="flex items-center gap-1.5 p-1">
             <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
