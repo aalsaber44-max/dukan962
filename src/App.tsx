@@ -22,9 +22,9 @@ import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts ص
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
-  image: 'https://d.uguu.se/ZWBQdmQX.png', 
-  bannerImage: 'https://d.uguu.se/ZWBQdmQX.png', // 💡 صورة الكمبيوتر
-  mobileBannerImage: 'https://i.ibb.co/Z1RLzQrG/Designer1-png.png', // 💡 صورة الهاتف
+  image: 'https://h.uguu.se/wgrNpeNi.png', // صورة الكمبيوتر
+  bannerImage: 'https://h.uguu.se/wgrNpeNi.png', // 💡 صورة الكمبيوتر
+  mobileBannerImage: 'https://n.uguu.se/dRESjksn.png', // 💡 صورة الهاتف
   title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
   description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
@@ -84,9 +84,9 @@ export default function App() {
           {
             id: 'tables',
             name: 'طاولات',
-            image: 'https://i.ibb.co/dsQH8qg5/Designer-3-png.png',
-            bannerImage: 'https://i.ibb.co/dsQH8qg5/Designer-3-png.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvma8r09_saqg.png', // 💡 هاتف
+            image: 'https://i.ibb.co/jvqZ8L7H/Designer-3-png.png',
+            bannerImage: 'https://i.ibb.co/jvqZ8L7H/Designer-3-png.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://i.ibb.co/XrC27bbw/Designer-3-png.png', // 💡 هاتف
             title: 'أثاث يجمع بين الراحة والأناقة',
             description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
             buttonText: 'استكشف طاولات العرض الآن',
@@ -97,9 +97,9 @@ export default function App() {
           {
             id: 'shoes',
             name: 'أحذية',
-            image: 'https://d.uguu.se/HHGCUBnz.png',
-            bannerImage: 'https://d.uguu.se/HHGCUBnz.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://d.uguu.se/PLUviaqL.png', // 💡 هاتف
+            image: 'https://d.uguu.se/TxuTHVrs.png',
+            bannerImage: 'https://d.uguu.se/TxuTHVrs.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://n.uguu.se/thTyudkN.png', // 💡 هاتف
             title: 'أحدث صيحات الأحذية',
             description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
             buttonText: 'استكشف الأحذية الآن',
@@ -110,9 +110,9 @@ export default function App() {
           {
             id: 'perfumes',
             name: 'عطور',
-            image: 'https://n.uguu.se/CWHDWKCd.png',
-            bannerImage: 'https://n.uguu.se/CWHDWKCd.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvma8r0q_vyff.png', // 💡 هاتف
+            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mr1l_at4r.png',
+            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mr1l_at4r.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1pv9h_m2cl.png', // 💡 هاتف
             title: 'عطور تدوم طويلاً',
             description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
             buttonText: 'استكشف العطور الآن',
@@ -123,9 +123,9 @@ export default function App() {
           {
             id: 'ramadan',
             name: 'زينة رمضان',
-            image: 'https://d.uguu.se/NkxVlnjk.png', // 💡 صورة الكمبيوتر (تستخدم كصورة احتياطية)
-            bannerImage: 'https://d.uguu.se/NkxVlnjk.png', // 💡 صورة بانر الكمبيوتر
-            mobileBannerImage: 'https://i.ibb.co/xSh7kX1w/Designer-2-png.png', // 💡 صورة بانر الهاتف
+            image: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mqzx_hc33.png',
+            bannerImage: 'https://ais-dev-rjiko7jwa6cnpdxkc7bovc-156223768736.europe-west2.run.app/raw/img_mvo1mqzx_hc33.png', // 💡 كمبيوتر
+            mobileBannerImage: 'https://i.ibb.co/xKk9Jnp8/Designer-2-png.png', // 💡 هاتف
             title: 'زينة رمضان.. أضف البهجة لبيتك',
             description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
             buttonText: 'استكشف زينة رمضان',
