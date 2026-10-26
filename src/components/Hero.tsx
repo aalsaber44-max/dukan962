@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ArrowLeft, Sparkles, ShieldCheck, Truck, Clock } from 'lucide-react';
 import { Category } from '../types/furniture';
 
@@ -11,8 +11,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const defaultData = {
     title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
     description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
-    bannerImage: 'https://h.uguu.se/wgrNpeNi.png',
-    mobileBannerImage: 'https://n.uguu.se/dRESjksn.png',
+    bannerImage: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1200&auto=format&fit=crop',
+    mobileBannerImage: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600&auto=format&fit=crop',
     buttonText: 'استكشف تشكيلاتنا الآن',
     badgeText: '✨ جودة تستحق الاقتناء',
     name: 'دكـان 962',
@@ -23,19 +23,13 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const desktopBanner = displayData.bannerImage || displayData.image || defaultData.bannerImage;
   const mobileBanner = displayData.mobileBannerImage || desktopBanner;
 
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    setLoaded(false);
-  }, [desktopBanner, mobileBanner]);
-
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-6 sm:pb-8">
         
         <div className="relative rounded-xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] flex items-center bg-[#1C1917]">
           
-          {/* 💡 الخلفية المموهة للموبايل (تم ضبطها لتركز على الأعلى) */}
+          {/* الخلفية المموهة (احتياطية) */}
           <img
             src={mobileBanner}
             alt=""
@@ -43,7 +37,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
             referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover object-top blur-xl scale-110 opacity-60 sm:hidden"
           />
-          {/* الخلفية المموهة للكمبيوتر */}
           <img
             src={desktopBanner}
             alt=""
@@ -52,24 +45,18 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
             className="absolute inset-0 w-full h-full object-cover object-center blur-xl scale-110 opacity-60 hidden sm:block"
           />
 
+          {/* 💡 الصورة الأساسية: تظهر دائماً فوراً */}
           <picture key={desktopBanner}>
             <source media="(max-width: 639px)" srcSet={mobileBanner} />
             <source media="(min-width: 640px)" srcSet={desktopBanner} />
             
             <img
-              ref={(el) => {
-                if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
-              }}
               src={desktopBanner}
               alt={displayData.title || displayData.name}
               referrerPolicy="no-referrer"
               fetchPriority="high"
               decoding="async"
-              onLoad={() => setLoaded(true)}
-              /* 💡 التعديل هنا: object-top sm:object-center */
-              className={`absolute inset-0 w-full h-full object-cover object-top sm:object-center z-10 transition-opacity duration-500 ${
-                loaded ? 'opacity-100' : 'opacity-0'
-              }`}
+              className="absolute inset-0 w-full h-full object-cover object-top sm:object-center z-10"
             />
           </picture>
 
