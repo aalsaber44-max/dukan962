@@ -11,6 +11,7 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { Footer } from './components/Footer';
+import { ErrorBoundary } from './components/ErrorBoundary'; // 💡 إضافة درع الحماية
 import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Check, Sparkles } from 'lucide-react';
 
@@ -368,214 +369,217 @@ export default function App() {
     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
-      
-      {/* 💡 إضافة أنيميشن مخصص للتنبيهات */}
-      <style>
-        {`
-          @keyframes slideUpFade {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes shrinkWidth {
-            from { width: 100%; }
-            to { width: 0%; }
-          }
-          .animate-toast {
-            animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          }
-          .animate-progress {
-            animation: shrinkWidth 2.8s linear forwards;
-          }
-        `}
-      </style>
+    // 💡 درع الحماية يحيط بكل شيء
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
+        
+        {/* 💡 إضافة أنيميشن مخصص للتنبيهات */}
+        <style>
+          {`
+            @keyframes slideUpFade {
+              from { opacity: 0; transform: translateY(20px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes shrinkWidth {
+              from { width: 100%; }
+              to { width: 0%; }
+            }
+            .animate-toast {
+              animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            .animate-progress {
+              animation: shrinkWidth 2.8s linear forwards;
+            }
+          `}
+        </style>
 
-      {/* 💡 تحسين شكل التنبيه (Toast) ليصبح زجاجياً واحترافياً */}
-      {toastMessage && (
-        <div className="fixed bottom-8 right-8 z-50 animate-toast">
-          <div className="bg-[#1C1917]/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-[#D4AF37]/30 min-w-[280px] relative overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-[#2E5339] text-[#A7F3D0] flex items-center justify-center shrink-0 shadow-inner">
-              <Check className="w-4 h-4" />
+        {/* 💡 تحسين شكل التنبيه (Toast) ليصبح زجاجياً واحترافياً */}
+        {toastMessage && (
+          <div className="fixed bottom-8 right-8 z-50 animate-toast">
+            <div className="bg-[#1C1917]/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-[#D4AF37]/30 min-w-[280px] relative overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-[#2E5339] text-[#A7F3D0] flex items-center justify-center shrink-0 shadow-inner">
+                <Check className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-[#D4AF37] font-bold tracking-wider mb-0.5">دكان 962</span>
+                <span className="text-xs font-semibold leading-relaxed">{toastMessage}</span>
+              </div>
+              <div className="absolute bottom-0 left-0 h-1 bg-[#D4AF37] animate-progress rounded-b-2xl"></div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-[#D4AF37] font-bold tracking-wider mb-0.5">دكان 962</span>
-              <span className="text-xs font-semibold leading-relaxed">{toastMessage}</span>
-            </div>
-            <div className="absolute bottom-0 left-0 h-1 bg-[#D4AF37] animate-progress rounded-b-2xl"></div>
-          </div>
-        </div>
-      )}
-
-      {/* Top Banner Notice */}
-      <aside aria-label="شريط العروض" className="bg-[#1C1917] text-[#EDE8E0] text-[11px] py-2 px-4 text-center border-b border-[#2C2825]">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-          <span className="text-[#D4AF37] font-bold">👑 دكان 962 (Dukan 962)</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
-          <span>جودة نخب أول</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
-          <span className="text-[#A7F3D0] font-bold">✨ يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
-          <span>التوصيل لجميع محافظات المملكة</span>
-          <span aria-hidden="true" className="hidden sm:inline">·</span>
-          <span className="text-white/80">الدفع كاش أو عبر كليك (CliQ)</span>
-        </div>
-      </aside>
-
-      {/* Navigation Header */}
-      <Navbar
-        categories={categories}
-        currentCategoryData={currentCategoryData}
-        cartCount={cartTotalCount}
-        wishlistCount={wishlist.length}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenWishlist={() => setIsWishlistOpen(true)}
-        onOpenAdmin={() => setIsAdminAuthOpen(true)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onSelectCategory={(cat) => {
-          setSelectedCategory(cat);
-          scrollToCatalog();
-        }}
-      />
-
-      {/* Hero Section */}
-      <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
-
-      {/* Categories Visual Section */}
-      <CategoryBoxes
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelectCategory={(cat) => {
-          setSelectedCategory(cat);
-          scrollToCatalog();
-        }}
-      />
-
-      {/* Catalog & Shop Section */}
-      <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-4 border-b border-[#EAE3D7]">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{selectedCategory !== 'all' ? `تشكيلة ${currentCategoryData.name}` : 'تشكيلات دكان 962 الحصرية'}</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight font-serif">
-              {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
-            </h2>
-            <p className="text-xs text-[#78716C] mt-1">
-              استكشف منتجاتنا، اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
-            </p>
-          </div>
-
-          <div className="text-xs font-bold text-[#2E5339] bg-[#EDF4EE] px-3.5 py-1.5 rounded-xl border border-[#C5DEC8] flex items-center gap-1.5 self-start sm:self-auto">
-            <span>الأسعار بالدينار الأردني (د.أ) فقط</span>
-          </div>
-        </div>
-
-        <FilterBar
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-          priceRange={priceRange}
-          onPriceRangeChange={setPriceRange}
-          selectedColor={selectedColor}
-          onSelectColor={setSelectedColor}
-          onResetFilters={handleResetFilters}
-        />
-
-        {filteredProducts.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-3xl border border-[#ECE5D9] p-8">
-            <p className="text-base font-bold text-[#1C1917] mb-2">
-              لا توجد منتجات مطابقة لمعايير البحث الحالية (أو لم يتم إضافة منتجات بعد)
-            </p>
-            <p className="text-xs text-[#78716C] mb-6">
-              جرّب توسيع نطاق السعر أو اختيار تصنيف آخر، أو قم بإضافة منتجات من لوحة التحكم.
-            </p>
-            <button
-              onClick={handleResetFilters}
-              className="py-2.5 px-6 text-xs font-bold text-white bg-[#1C1917] rounded-xl cursor-pointer"
-            >
-              عرض جميع المنتجات
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                isWishlisted={wishlist.some((w) => w.id === product.id)}
-                onToggleWishlist={handleToggleWishlist}
-                onAddToCart={(p) => handleAddToCart(p)}
-                onQuickView={(p) => setSelectedProductModal(p)}
-              />
-            ))}
           </div>
         )}
-      </main>
 
-      {/* Footer */}
-      <Footer
-        categories={categories}
-        currentCategoryData={currentCategoryData}
-        onSelectCategory={(cat) => {
-          setSelectedCategory(cat);
-          scrollToCatalog();
-        }}
-        onOpenAdmin={() => setIsAdminAuthOpen(true)}
-      />
+        {/* Top Banner Notice */}
+        <aside aria-label="شريط العروض" className="bg-[#1C1917] text-[#EDE8E0] text-[11px] py-2 px-4 text-center border-b border-[#2C2825]">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+            <span className="text-[#D4AF37] font-bold">👑 دكان 962 (Dukan 962)</span>
+            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span>جودة نخب أول</span>
+            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span className="text-[#A7F3D0] font-bold">✨ يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
+            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span>التوصيل لجميع محافظات المملكة</span>
+            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span className="text-white/80">الدفع كاش أو عبر كليك (CliQ)</span>
+          </div>
+        </aside>
 
-      <ProductDetailsPage
-        product={selectedProductModal}
-        isWishlisted={Boolean(selectedProductModal && wishlist.some((w) => w.id === selectedProductModal.id))}
-        onToggleWishlist={handleToggleWishlist}
-        onClose={() => setSelectedProductModal(null)}
-        onAddToCart={handleAddToCart}
-      />
+        {/* Navigation Header */}
+        <Navbar
+          categories={categories}
+          currentCategoryData={currentCategoryData}
+          cartCount={cartTotalCount}
+          wishlistCount={wishlist.length}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onOpenAdmin={() => setIsAdminAuthOpen(true)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToCatalog();
+          }}
+        />
 
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        items={cart}
-        onUpdateQuantity={handleUpdateCartQuantity}
-        onRemoveItem={handleRemoveFromCart}
-        onProceedToCheckout={() => {
-          setIsCartOpen(false);
-          setIsCheckoutOpen(true);
-        }}
-      />
+        {/* Hero Section */}
+        <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
 
-      <WishlistDrawer
-        isOpen={isWishlistOpen}
-        onClose={() => setIsWishlistOpen(false)}
-        wishlist={wishlist}
-        onRemoveFromWishlist={handleToggleWishlist}
-        onAddToCart={(p) => handleAddToCart(p)}
-      />
+        {/* Categories Visual Section */}
+        <CategoryBoxes
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToCatalog();
+          }}
+        />
 
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        items={cart}
-        onSuccessOrder={() => {
-          setCart([]);
-          localStorage.removeItem('dukan962_cart');
-        }}
-      />
+        {/* Catalog & Shop Section */}
+        <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-4 border-b border-[#EAE3D7]">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{selectedCategory !== 'all' ? `تشكيلة ${currentCategoryData.name}` : 'تشكيلات دكان 962 الحصرية'}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight font-serif">
+                {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
+              </h2>
+              <p className="text-xs text-[#78716C] mt-1">
+                استكشف منتجاتنا، اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
+              </p>
+            </div>
 
-      <AdminAuthModal
-        isOpen={isAdminAuthOpen}
-        onClose={() => setIsAdminAuthOpen(false)}
-        onSuccess={() => {
-          setIsAdminAuthOpen(false);
-          setIsAdminOpen(true);
-        }}
-      />
+            <div className="text-xs font-bold text-[#2E5339] bg-[#EDF4EE] px-3.5 py-1.5 rounded-xl border border-[#C5DEC8] flex items-center gap-1.5 self-start sm:self-auto">
+              <span>الأسعار بالدينار الأردني (د.أ) فقط</span>
+            </div>
+          </div>
 
-      <AdminDashboard
-        isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
-      />
-    </div>
+          <FilterBar
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            priceRange={priceRange}
+            onPriceRangeChange={setPriceRange}
+            selectedColor={selectedColor}
+            onSelectColor={setSelectedColor}
+            onResetFilters={handleResetFilters}
+          />
+
+          {filteredProducts.length === 0 ? (
+            <div className="py-20 text-center bg-white rounded-3xl border border-[#ECE5D9] p-8">
+              <p className="text-base font-bold text-[#1C1917] mb-2">
+                لا توجد منتجات مطابقة لمعايير البحث الحالية (أو لم يتم إضافة منتجات بعد)
+              </p>
+              <p className="text-xs text-[#78716C] mb-6">
+                جرّب توسيع نطاق السعر أو اختيار تصنيف آخر، أو قم بإضافة منتجات من لوحة التحكم.
+              </p>
+              <button
+                onClick={handleResetFilters}
+                className="py-2.5 px-6 text-xs font-bold text-white bg-[#1C1917] rounded-xl cursor-pointer"
+              >
+                عرض جميع المنتجات
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isWishlisted={wishlist.some((w) => w.id === product.id)}
+                  onToggleWishlist={handleToggleWishlist}
+                  onAddToCart={(p) => handleAddToCart(p)}
+                  onQuickView={(p) => setSelectedProductModal(p)}
+                />
+              ))}
+            </div>
+          )}
+        </main>
+
+        {/* Footer */}
+        <Footer
+          categories={categories}
+          currentCategoryData={currentCategoryData}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToCatalog();
+          }}
+          onOpenAdmin={() => setIsAdminAuthOpen(true)}
+        />
+
+        <ProductDetailsPage
+          product={selectedProductModal}
+          isWishlisted={Boolean(selectedProductModal && wishlist.some((w) => w.id === selectedProductModal.id))}
+          onToggleWishlist={handleToggleWishlist}
+          onClose={() => setSelectedProductModal(null)}
+          onAddToCart={handleAddToCart}
+        />
+
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          items={cart}
+          onUpdateQuantity={handleUpdateCartQuantity}
+          onRemoveItem={handleRemoveFromCart}
+          onProceedToCheckout={() => {
+            setIsCartOpen(false);
+            setIsCheckoutOpen(true);
+          }}
+        />
+
+        <WishlistDrawer
+          isOpen={isWishlistOpen}
+          onClose={() => setIsWishlistOpen(false)}
+          wishlist={wishlist}
+          onRemoveFromWishlist={handleToggleWishlist}
+          onAddToCart={(p) => handleAddToCart(p)}
+        />
+
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          items={cart}
+          onSuccessOrder={() => {
+            setCart([]);
+            localStorage.removeItem('dukan962_cart');
+          }}
+        />
+
+        <AdminAuthModal
+          isOpen={isAdminAuthOpen}
+          onClose={() => setIsAdminAuthOpen(false)}
+          onSuccess={() => {
+            setIsAdminAuthOpen(false);
+            setIsAdminOpen(true);
+          }}
+        />
+
+        <AdminDashboard
+          isOpen={isAdminOpen}
+          onClose={() => setIsAdminOpen(false)}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }
