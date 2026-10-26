@@ -22,11 +22,11 @@ import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts ص
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
-  image: 'https://h.uguu.se/wgrNpeNi.png',
-  bannerImage: 'https://h.uguu.se/wgrNpeNi.png', 
-  mobileBannerImage: 'https://n.uguu.se/dRESjksn.png', 
-  title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
-  description: 'أرقى التصاميم والمنتجات الفاخرة بجودة عالية وأسعار منافسة. تسوق الآن واستمتع بخدمة المعاينة عند الوصول والتوصيل لجميع المحافظات.',
+  image: 'https://i.ibb.co/8JFbkz2/Designer-1.png',
+  bannerImage: 'https://i.ibb.co/vbvFC4f/Designer.png', 
+  mobileBannerImage: 'https://i.ibb.co/8JFbkz2/Designer-1.png', 
+  title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
+  description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
   badgeText: '✨ جودة تستحق الاقتناء',
   isActive: true,
@@ -79,16 +79,16 @@ export default function App() {
       try {
         const snapshot = await getDocs(collection(db, 'categories'));
         
-        // 💡 قائمة الأقسام بالروابط المباشرة الجديدة من ImgBB
+        // 💡 قائمة الأقسام بالروابط الجديدة
         const defaultCategories = [
           {
             id: 'tables',
             name: 'طاولات',
-            image: 'https://i.ibb.co/jvqZ8L7H/Designer-3-png.png',
-            bannerImage: 'https://i.ibb.co/jvqZ8L7H/Designer-3-png.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://i.ibb.co/XrC27bbw/Designer-3-png.png', // 💡 هاتف
-            title: 'أثاث يجمع بين الراحة والأناقة',
-            description: 'أرقى تصاميم طاولات الوسط، طاولات الشاشات الفاخرة، والمدافئ الديكورية النارية. قطع عملية متقنة مصنعة من أثقل وأجود أخشاب التايلندي لتزيد صالتك فخامة وسحراً.',
+            image: 'https://i.ibb.co/S7wsCmCD/Designer-3.png',
+            bannerImage: 'https://i.ibb.co/W4T7KCZS/Designer-3.png', 
+            mobileBannerImage: 'https://i.ibb.co/S7wsCmCD/Designer-3.png',
+            title: 'طاولات عصرية تجمع بين الأناقة والعملية',
+            description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات',
             buttonText: 'استكشف طاولات العرض الآن',
             badgeText: '✨ يوجد معاينة عند وصول الطلب',
             isActive: true,
@@ -97,9 +97,9 @@ export default function App() {
           {
             id: 'shoes',
             name: 'أحذية',
-            image: 'https://d.uguu.se/TxuTHVrs.png',
-            bannerImage: 'https://d.uguu.se/TxuTHVrs.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://n.uguu.se/thTyudkN.png', // 💡 هاتف
+            image: 'https://i.ibb.co/4wG7G99X/Designer-1.png',
+            bannerImage: 'https://i.ibb.co/cSJ75xmn/Designer-1.png', 
+            mobileBannerImage: 'https://i.ibb.co/4wG7G99X/Designer-1.png', 
             title: 'أحدث صيحات الأحذية',
             description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
             buttonText: 'استكشف الأحذية الآن',
@@ -110,10 +110,9 @@ export default function App() {
           {
             id: 'perfumes',
             name: 'عطور',
-            // ✅ تم استخدام الروابط المباشرة من ImgBB
             image: 'https://i.ibb.co/JDf95Zn/Designer.png',
-            bannerImage: 'https://i.ibb.co/JDf95Zn/Designer.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://i.ibb.co/Xf5vk4tq/Designer.png', // 💡 هاتف
+            bannerImage: 'https://i.ibb.co/JDf95Zn/Designer.png', 
+            mobileBannerImage: 'https://i.ibb.co/Xf5vk4tq/Designer.png', 
             title: 'عطور تدوم طويلاً',
             description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
             buttonText: 'استكشف العطور الآن',
@@ -124,10 +123,9 @@ export default function App() {
           {
             id: 'ramadan',
             name: 'زينة رمضان',
-            // ✅ تم استخدام الروابط المباشرة من ImgBB
             image: 'https://i.ibb.co/Xfynd3V2/Designer-2.png',
-            bannerImage: 'https://i.ibb.co/Xfynd3V2/Designer-2.png', // 💡 كمبيوتر
-            mobileBannerImage: 'https://i.ibb.co/bg4S0DwG/Designer-2.png', // 💡 هاتف
+            bannerImage: 'https://i.ibb.co/Xfynd3V2/Designer-2.png', 
+            mobileBannerImage: 'https://i.ibb.co/bg4S0DwG/Designer-2.png', 
             title: 'زينة رمضان.. أضف البهجة لبيتك',
             description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
             buttonText: 'استكشف زينة رمضان',
@@ -152,13 +150,17 @@ export default function App() {
               if (
                 currentData.image !== defaultCat.image || 
                 currentData.bannerImage !== defaultCat.bannerImage || 
-                currentData.mobileBannerImage !== defaultCat.mobileBannerImage
+                currentData.mobileBannerImage !== defaultCat.mobileBannerImage ||
+                currentData.title !== defaultCat.title ||
+                currentData.description !== defaultCat.description
               ) {
                 await setDoc(doc(db, 'categories', defaultCat.id), {
                   ...currentData,
                   image: defaultCat.image,
                   bannerImage: defaultCat.bannerImage,
-                  mobileBannerImage: defaultCat.mobileBannerImage
+                  mobileBannerImage: defaultCat.mobileBannerImage,
+                  title: defaultCat.title,
+                  description: defaultCat.description
                 });
                 console.log(`✅ تم تحديث صورة قسم ${defaultCat.name} بنجاح!`);
               }
@@ -326,6 +328,7 @@ export default function App() {
     setSelectedColor('');
   };
 
+  // Filtered Products logic
   const filteredProducts = products.filter((prod) => {
     // 💡 إخفاء المنتجات غير النشطة
     if (prod.isActive === false) return false; 
