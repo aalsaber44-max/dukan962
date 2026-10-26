@@ -1,65 +1,54 @@
 // src/types/furniture.ts
 
-// 1. شكل القسم (Category) - عشان نقدر نضيف أقسام جديدة
+// 1. شكل القسم (Category)
 export interface Category {
   id: string;
   name: string;
   image: string; 
   bannerImage: string; 
-  mobileBannerImage?: string; // 💡 أضف هذا السطر الجديد
+  mobileBannerImage?: string; 
   title: string;
   description: string;
   buttonText: string;
   badgeText: string;
   isActive: boolean;
   order: number;
-}ترتيب ظهور القسم في الصفحة الرئيسية
-  
-  // 💡 الحقول الجديدة للبانر الرئيسي (Hero)
-  title?: string;           // عنوان البانر (مثل: "أحدث صيحات الأحذية")
-  description?: string;     // وصف البانر
-  bannerImage?: string;     // صورة البانر الكبيرة
-  buttonText?: string;      // نص الزر (مثل: "استكشف الأحذية الآن")
-  badgeText?: string;       // نص الشارة (مثل: "✨ يوجد معاينة عند وصول الطلب")
 }
 
-// 2. الخصائص الديناميكية (بديل لـ woodType و dimensions)
+// 2. الخصائص الديناميكية
 export interface ProductAttribute {
-  name: string; // اسم الخاصية (مثلاً: المقاس، الخامة، الأبعاد)
-  options: string[]; // القيم المتاحة (مثلاً: ["40", "41"] أو ["خشب", "رخام"])
+  name: string; 
+  options: string[]; 
 }
 
 // 3. ألوان المنتج
 export interface ProductColor {
   name: string;
   hex: string;
-  price: number; // السعر الخاص بهذا اللون
-  originalPrice?: number; // السعر قبل الخصم
-  image: string; // صورة هذا اللون
-  additionalImages?: string[]; // زوايا إضافية
+  price: number; 
+  originalPrice?: number; 
+  image: string; 
+  additionalImages?: string[]; 
 }
 
-// 4. المنتج (Product) - تم تحديثه ليكون ديناميكي
+// 4. المنتج (Product)
 export interface Product {
   id: string;
-  itemNumber: number; // رقم المنتج
+  itemNumber: number; 
   name: string;
   nameEn?: string;
-  categoryId: string; // يربط المنتج بالقسم (بدل الـ category الثابت)
-  basePrice: number; // السعر الأساسي
-  originalPrice?: number; // السعر قبل الخصم (للعروض)
+  categoryId: string; 
+  basePrice: number; 
+  originalPrice?: number; 
   description: string;
-  warranty: string; // ممكن نخليها ديناميكية بعدين لو حبينا
+  warranty: string; 
   images: string[];
   colors: ProductColor[];
-  
-  // الخصائص الديناميكية (هنا السر!)
   attributes?: ProductAttribute[]; 
-  
-  // مميزات إضافية
-  isBestSeller?: boolean; // للأكثر مبيعاً
-  isActive: boolean; // لإخفاء منتج معين
+  isBestSeller?: boolean; 
+  isActive: boolean; 
   createdAt?: string;
+  videoUrl?: string; // 💡 تمت إضافة هذا الحقل لرابط الفيديو
 }
 
 // 5. السلة (Cart)
@@ -67,24 +56,24 @@ export interface CartItem {
   product: Product;
   quantity: number;
   selectedColor: ProductColor;
-  selectedAttributes?: Record<string, string>; // لحفظ المقاس أو الخامة اللي الزبون اختارها
+  selectedAttributes?: Record<string, string>; 
 }
 
-// 6. الطلبات (Order) - تم إزالة الفيزا وإضافة رقمين وعنوان مفصل
+// 6. الطلبات (Order)
 export interface Order {
   id: string;
   createdAt: string;
   status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
   name: string;
   phone: string;
-  phone2?: string; // الرقم الثاني
+  phone2?: string; 
   governorate: string;
   address: string;
-  region?: string; // المنطقة
-  street?: string; // الشارع
-  building?: string; // العمارة
+  region?: string; 
+  street?: string; 
+  building?: string; 
   notes?: string;
-  paymentMethod: 'cod' | 'cliq'; // شلنا card
+  paymentMethod: 'cod' | 'cliq'; 
   cliqRef?: string;
   items: CartItem[];
   subtotal: number;
