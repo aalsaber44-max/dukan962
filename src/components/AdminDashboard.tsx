@@ -19,6 +19,9 @@ import {
   MapPin,
   Star,
   Search,
+  Download,
+  TrendingUp,
+  DollarSign,
 } from 'lucide-react';
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
 // استيراد Firebase
@@ -95,6 +98,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newDesc, setNewDesc] = useState('');
   const [newWarranty, setNewWarranty] = useState('ضمان سنتين');
   const [newIsBestSeller, setNewIsBestSeller] = useState(false);
+  const [newVideoUrl, setNewVideoUrl] = useState(''); // 💡 حالة الفيديو الجديد
   const [newAttributes, setNewAttributes] = useState<ProductAttribute[]>([]);
   const [newColors, setNewColors] = useState<ProductColor[]>([
     {
@@ -367,6 +371,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       colors: safeColors,
       attributes: newAttributes,
       isBestSeller: newIsBestSeller,
+      videoUrl: newVideoUrl.trim() !== '' ? newVideoUrl.trim() : undefined, // 💡 إضافة الفيديو
       isActive: true,
       createdAt: new Date().toISOString(),
     };
@@ -382,6 +387,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setNewDesc('');
       setNewAttributes([]);
       setNewIsBestSeller(false);
+      setNewVideoUrl(''); // 💡 تفريغ حقل الفيديو
     } catch (error) {
       alert('حدث خطأ أثناء الإضافة. تأكد من حجم الصور.');
       console.error(error);
@@ -456,6 +462,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const sortedOrders = [...filteredOrders].sort((a, b) => 
     new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime()
   );
+
+  // 💡 حساب الإحصائيات
+  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  
+  // 💡 دالة تصدير الإكسل
+  const handleExportExcel = () => {
+    if (orders.length === 0) return alert('لا توجد طلبات لتصديرها');
+    
+    const headers = ['رقم الطلب', 'الاسم', 'الهاتف', 'المحافظة', 'العنوان', 'الإجمالي (د.أ)', 'طريقة الدفع', 'الحالة', 'التاريخ'];
+    const rows = sortedOrders.map(o => [
+      o.id,
+      o.name,
+      o.phone,
+      o.governorate,
+      o.address.replace(/,/g, ' '), // إزالة الفواصل لتجنب مشاكل الإكسل
+      o.total,
+      o.paymentMethod === 'cod' ? 'كاش' : 'كليك',
+      o.status,
+      new Date(o.createdAt || Date.now()).toLocaleDateString('ar-JO')
+    ]);
+
+    const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `orders_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
@@ -686,6 +723,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* TAB 2: INCOMING ORDERS */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
+              
+              {/* 💡 إحصائيات سريعة */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div className="bg-white p-4 rounded-2xl border border-[#EDE5D8] shadow-xs flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#EDF4EE] text-[#2E5339] flex items-center justify-center shrink-0">
+                    <ShoppingBag className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#78716C] font-semibold">إجمالي الطلبات</p>
+                    <p className="text-xl font-black text-[#1C1917] font-mono">{orders.length}</p>
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#EDE5D8] shadow-xs flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#FAF4E8] text-[#8C6D46] flex items-center justify-center shrink-0">
+                    <DollarSign className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#78716C] font-semibold">إجمالي المبيعات (د.أ)</p>
+                    <p className="text-xl font-black text-[#1C1917] font-mono">{totalRevenue.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-bold text-[#1C1917]">
@@ -697,8 +757,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
                 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  {/* 💡 مربع البحث الجديد */}
-                  <div className="relative w-full sm:w-64">
+                  <div className="relative w-full sm:w-56">
                     <input
                       type="text"
                       placeholder="ابحث باسم الزبون أو رقمه..."
@@ -708,6 +767,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                     <Search className="w-4 h-4 text-[#A8A29E] absolute right-2.5 top-2.5 pointer-events-none" />
                   </div>
+
+                  {/* 💡 زر تصدير الإكسل */}
+                  <button
+                    onClick={handleExportExcel}
+                    className="py-2 px-3 bg-[#FAF7F2] border border-[#DDD5C7] rounded-xl text-xs font-bold text-[#1C1917] hover:bg-[#F2EDE4] flex items-center gap-1.5 cursor-pointer shrink-0"
+                    title="تصدير الطلبات إلى ملف Excel"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>تصدير</span>
+                  </button>
 
                   <button
                     onClick={fetchOrders}
@@ -888,7 +957,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-[#E9E1D4]"
                                 >
                                   <div className="flex items-center gap-3">
-                                    {/* 💡 هنا التعديل: الصورة أصبحت أكبر وقابلة للضغط للتكبير */}
                                     <a 
                                       href={it.selectedColor?.image || it.product?.images?.[0] || 'https://via.placeholder.com/150'} 
                                       target="_blank" 
@@ -1029,6 +1097,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setNewDesc(e.target.value)}
                     placeholder="شرح سلس عن مميزات المنتج..."
                     className="w-full text-xs py-2 px-3 bg-white border border-[#DDD5C7] rounded-lg focus:outline-hidden focus:border-[#8C6D46]"
+                  />
+                </div>
+
+                {/* 💡 إضافة رابط الفيديو */}
+                <div className="pt-2 border-t border-[#EAE3D7]">
+                  <label className="block text-xs font-semibold text-[#1C1917] mb-1">
+                    رابط فيديو المنتج (اختياري - يوتيوب أو فيميو)
+                  </label>
+                  <input
+                    type="text"
+                    value={newVideoUrl}
+                    onChange={(e) => setNewVideoUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="w-full text-xs py-2 px-3 bg-white border border-[#DDD5C7] rounded-lg focus:outline-hidden focus:border-[#8C6D46] font-mono"
+                    dir="ltr"
                   />
                 </div>
               </div>
@@ -1225,6 +1308,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
   const [warranty, setWarranty] = useState(product.warranty || '');
   const [description, setDescription] = useState(product.description || '');
   const [isBestSeller, setIsBestSeller] = useState(product.isBestSeller || false);
+  const [videoUrl, setVideoUrl] = useState(product.videoUrl || ''); // 💡 حالة فيديو المنتج
   const [colors, setColors] = useState<ProductColor[]>(product.colors || []);
   const [attributes, setAttributes] = useState<ProductAttribute[]>(product.attributes || []);
 
@@ -1334,6 +1418,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
       attributes,
       isBestSeller,
       images: finalImages,
+      videoUrl: videoUrl.trim() !== '' ? videoUrl.trim() : undefined, // 💡 حفظ الفيديو
     };
 
     onSave(updated);
@@ -1429,6 +1514,19 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full text-xs py-2 px-3 border border-[#DDD5C7] rounded-xl"
+            />
+          </div>
+
+          {/* 💡 إضافة رابط الفيديو في التعديل */}
+          <div className="pt-4 border-t border-[#EAE3D7]">
+            <label className="block text-xs font-bold text-[#1C1917] mb-1">رابط فيديو المنتج (اختياري):</label>
+            <input
+              type="text"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full text-xs py-2 px-3 border border-[#DDD5C7] rounded-xl font-mono"
+              dir="ltr"
             />
           </div>
 
