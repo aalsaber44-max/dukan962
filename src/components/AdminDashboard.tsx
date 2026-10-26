@@ -21,14 +21,11 @@ import {
   Search,
   Download,
   DollarSign,
-  Bell, // 💡 تمت إضافة أيقونة التنبيهات
+  Bell, 
 } from 'lucide-react';
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
-// استيراد Firebase
 import { db } from '../firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-
-// ✅ استيراد مكون إدارة الأقسام
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore'; 
 import { CategoryManager } from './CategoryManager';
 
 interface AdminDashboardProps {
@@ -36,25 +33,22 @@ interface AdminDashboardProps {
   onClose: () => void;
 }
 
-// 🔑 كلمة المرور الافتراضية للوحة التحكم
 const DEFAULT_ADMIN_PASSWORD = 'Dukan962@Admin#2024!';
 const PASSWORD_STORAGE_KEY = 'dukan962_admin_password';
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80';
 
-// 💡 دالة لضغط الصور وتصغيرها وتحويلها لصيغة WebP السريعة
 const compressImage = (file: File, callback: (base64: string) => void) => {
   const reader = new FileReader();
   reader.onload = (e) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 800; // تصغير العرض إلى 800 بكسل
+      const MAX_WIDTH = 800;
       const scale = MAX_WIDTH / img.width;
       canvas.width = MAX_WIDTH;
       canvas.height = img.height * scale;
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      // 💡 التعديل هنا: استخدام WebP بجودة 80% بدلاً من JPEG
       callback(canvas.toDataURL('image/webp', 0.8));
     };
     img.src = e.target?.result as string;
@@ -69,35 +63,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<'list' | 'orders' | 'add' | 'settings' | 'categories'>('list');
   const [successToast, setSuccessToast] = useState('');
   
-  // حالة المنتجات والأقسام من Firebase
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // Orders State
+  // 💡 الطلبات الآن تأتي من Firebase مباشرة
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  // 💡 حالة البحث في الطلبات
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
 
-  // 💡 حالة لتخزين الطلبات المقروءة
   const [readOrders, setReadOrders] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('dukan962_read_orders') || '[]');
     } catch { return []; }
   });
 
-  // Inline price editing state: { [productId]: newPrice }
   const [editingPrices, setEditingPrices] = useState<Record<string, number | string>>({});
-
-  // Confirm delete state (no window.confirm)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteOrderId, setConfirmDeleteOrderId] = useState<string | null>(null);
-
-  // Edit existing product modal state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // New product form state
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState<string>('');
   const [newBasePrice, setNewBasePrice] = useState<number | string>('');
@@ -105,7 +90,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newDesc, setNewDesc] = useState('');
   const [newWarranty, setNewWarranty] = useState('ضمان سنتين');
   const [newIsBestSeller, setNewIsBestSeller] = useState(false);
-  const [newVideoUrl, setNewVideoUrl] = useState(''); // 💡 حالة الفيديو الجديد
+  const [newVideoUrl, setNewVideoUrl] = useState(''); 
   const [newAttributes, setNewAttributes] = useState<ProductAttribute[]>([]);
   const [newColors, setNewColors] = useState<ProductColor[]>([
     {
@@ -116,10 +101,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     },
   ]);
   
-  // حالة لحفظ الروابط المؤقتة للزوايا الإضافية (للإضافة الجديدة)
   const [tempNewColorUrls, setTempNewColorUrls] = useState<Record<number, string>>({});
-
-  // Password Change State
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [passMsg, setPassMsg] = useState<{ text: string; error: boolean } | null>(null);
@@ -129,74 +111,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
-  // تعيين كلمة المرور الافتراضية عند أول تشغيل
   useEffect(() => {
     if (!localStorage.getItem(PASSWORD_STORAGE_KEY)) {
       localStorage.setItem(PASSWORD_STORAGE_KEY, DEFAULT_ADMIN_PASSWORD);
     }
   }, []);
 
-  // جلب المنتجات والأقسام من Firebase مباشرة
+  // 💡 الاستماع للبيانات (المنتجات، الأقسام، والطلبات) من Firebase مباشرة
   useEffect(() => {
     if (!isOpen) return;
     
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
-      snapshot.forEach((doc) => {
-        prods.push({ id: doc.id, ...doc.data() } as Product);
-      });
+      snapshot.forEach((doc) => prods.push({ id: doc.id, ...doc.data() } as Product));
       setProducts(prods);
       setLoadingProducts(false);
     });
 
     const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
       const cats: Category[] = [];
-      snapshot.forEach((doc) => {
-        cats.push({ id: doc.id, ...doc.data() } as Category);
-      });
+      snapshot.forEach((doc) => cats.push({ id: doc.id, ...doc.data() } as Category));
       setCategories(cats);
+    });
+
+    // 💡 جلب الطلبات من Firebase
+    const unsubscribeOrders = onSnapshot(collection(db, 'orders'), (snapshot) => {
+      const ords: Order[] = [];
+      snapshot.forEach((doc) => ords.push({ id: doc.id, ...doc.data() } as Order));
+      setOrders(ords);
+      setLoadingOrders(false);
     });
 
     return () => {
       unsubscribeProducts();
       unsubscribeCategories();
+      unsubscribeOrders();
     };
   }, [isOpen]);
 
-  // Fetch orders
-  const fetchOrders = async () => {
-    setLoadingOrders(true);
-    try {
-      const res = await fetch('/api/orders');
-      const data = await res.json();
-      if (data.success && Array.isArray(data.orders)) {
-        setOrders(data.orders);
-        setLoadingOrders(false);
-        return;
-      }
-    } catch {
-      // fallback
-    }
-
-    try {
-      const local = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
-      setOrders(local);
-    } catch {
-      setOrders([]);
-    } finally {
-      setLoadingOrders(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchOrders();
-    }
-  }, [isOpen, activeTab]);
-
   if (!isOpen) return null;
-
-  // --- Firebase Operations ---
 
   const handlePriceChange = (id: string, price: number | string) => {
     setEditingPrices((prev) => ({ ...prev, [id]: price }));
@@ -253,7 +206,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // --- Dynamic Attributes Logic (For Add Form) ---
   const addAttribute = () => {
     setNewAttributes(prev => [...prev, { name: '', options: [] }]);
   };
@@ -271,7 +223,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setNewAttributes(prev => prev.filter((_, i) => i !== index));
   };
 
-  // --- Colors Logic ---
   const handleAddColor = () => {
     setNewColors((prev) => [
       ...prev,
@@ -378,7 +329,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       colors: safeColors,
       attributes: newAttributes,
       isBestSeller: newIsBestSeller,
-      videoUrl: newVideoUrl.trim() !== '' ? newVideoUrl.trim() : undefined, // 💡 إضافة الفيديو
+      videoUrl: newVideoUrl.trim() !== '' ? newVideoUrl.trim() : undefined, 
       isActive: true,
       createdAt: new Date().toISOString(),
     };
@@ -394,43 +345,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setNewDesc('');
       setNewAttributes([]);
       setNewIsBestSeller(false);
-      setNewVideoUrl(''); // 💡 تفريغ حقل الفيديو
+      setNewVideoUrl(''); 
     } catch (error) {
       alert('حدث خطأ أثناء الإضافة. تأكد من حجم الصور.');
       console.error(error);
     }
   };
 
+  // 💡 تحديث حالة الطلب في Firebase
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await fetch(`/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-    } catch {}
-
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as any } : o))
-    );
-    showNotification(`تم تغيير حالة الطلب #${orderId} إلى "${newStatus}"`);
+      await updateDoc(doc(db, 'orders', orderId), { status: newStatus });
+      showNotification(`تم تغيير حالة الطلب إلى "${newStatus}"`);
+    } catch (error) {
+      alert('حدث خطأ أثناء تحديث حالة الطلب');
+    }
   };
 
+  // 💡 حذف الطلب من Firebase
   const handleDeleteOrder = async (orderId: string) => {
     try {
-      await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
-    } catch {}
-
-    setOrders((prev) => prev.filter((o) => o.id !== orderId));
-    
-    try {
-      const local = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
-      const updatedLocal = local.filter((o: any) => o.id !== orderId);
-      localStorage.setItem('dukan962_orders_local', JSON.stringify(updatedLocal));
-    } catch {}
-
-    setConfirmDeleteOrderId(null);
-    showNotification('تم حذف الطلب من السجل نهائياً.');
+      await deleteDoc(doc(db, 'orders', orderId));
+      setConfirmDeleteOrderId(null);
+      showNotification('تم حذف الطلب من السجل نهائياً.');
+    } catch (error) {
+      alert('حدث خطأ أثناء حذف الطلب');
+    }
   };
 
   const handleChangePassword = (e: React.FormEvent) => {
@@ -455,7 +395,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم تحديث كلمة المرور بنجاح!');
   };
 
-  // 💡 دالة تحويل الطلب من "غير مقروء" إلى "مقروء"
   const handleMarkOrderAsRead = (orderId: string) => {
     if (!readOrders.includes(orderId)) {
       const newReadOrders = [...readOrders, orderId];
@@ -464,7 +403,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // 💡 تصفية الطلبات بناءً على البحث
   const filteredOrders = orders.filter(order => {
     const query = orderSearchQuery.toLowerCase();
     return (
@@ -474,18 +412,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
   });
 
-  // 💡 ترتيب الطلبات من الأحدث للأقدم
   const sortedOrders = [...filteredOrders].sort((a, b) => 
     new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime()
   );
 
-  // 💡 حساب الإحصائيات
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
-
-  // 💡 حساب عدد الطلبات غير المقروءة
   const unreadCount = orders.filter(o => !readOrders.includes(o.id)).length;
   
-  // 💡 دالة تصدير الإكسل
   const handleExportExcel = () => {
     if (orders.length === 0) return alert('لا توجد طلبات لتصديرها');
     
@@ -495,7 +428,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       o.name,
       o.phone,
       o.governorate,
-      o.address.replace(/,/g, ' '), // إزالة الفواصل لتجنب مشاكل الإكسل
+      o.address.replace(/,/g, ' '),
       o.total,
       o.paymentMethod === 'cod' ? 'كاش' : 'كليك',
       o.status,
@@ -572,7 +505,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <ShoppingBag className="w-4 h-4 text-[#8C6D46]" />
             <span>طلبات الزبائن الواردة</span>
-            {/* 💡 النقطة الحمراء للطلبات الجديدة */}
             {unreadCount > 0 ? (
               <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full animate-pulse flex items-center gap-1 shadow-xs">
                 <Bell className="w-3 h-3" /> {unreadCount} جديد
@@ -804,8 +736,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <span>تصدير</span>
                   </button>
 
+                  {/* (زر التحديث مازال موجوداً هنا، لكن onSnapshot يجلب الطلبات تلقائياً) */}
                   <button
-                    onClick={fetchOrders}
                     disabled={loadingOrders}
                     className="py-2 px-3 bg-[#FAF7F2] border border-[#DDD5C7] rounded-xl text-xs font-bold text-[#1C1917] hover:bg-[#F2EDE4] flex items-center gap-1.5 cursor-pointer shrink-0"
                   >
@@ -815,7 +747,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {sortedOrders.length === 0 ? (
+              {loadingOrders ? (
+                <div className="text-center py-10 font-bold text-[#8C6D46]">جاري تحميل الطلبات من السحابة...</div>
+              ) : sortedOrders.length === 0 ? (
                 <div className="py-16 text-center bg-white rounded-2xl border border-[#EDE5D8] p-8">
                   <div className="w-12 h-12 rounded-full bg-[#FAF7F2] text-[#8C6D46] flex items-center justify-center mx-auto mb-3">
                     <ShoppingBag className="w-6 h-6" />
@@ -830,7 +764,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               ) : (
                 <div className="space-y-3">
                   {sortedOrders.map((order) => {
-                    const isUnread = !readOrders.includes(order.id); // 💡 فحص إذا كان الطلب جديداً
+                    const isUnread = !readOrders.includes(order.id);
                     const statusColors: Record<string, string> = {
                       'جديد': 'bg-emerald-50 text-emerald-800 border-emerald-200',
                       'جاري التجهيز': 'bg-amber-50 text-amber-800 border-amber-200',
@@ -845,7 +779,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     });
 
                     return (
-                      // 💡 عند الضغط على الكارت، يتم تحويله إلى "مقروء"
                       <div
                         key={order.id}
                         onClick={() => handleMarkOrderAsRead(order.id)}
@@ -856,7 +789,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {/* Top row */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F2ECE1]">
                           <div className="flex items-center gap-2.5">
-                            {/* 💡 النقطة الحمراء بجانب رقم الطلب */}
                             {isUnread && (
                               <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse inline-block" title="طلب جديد غير مقروء"></span>
                             )}
@@ -877,7 +809,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
 
                           {/* Status changer & Delete */}
-                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}> {/* 💡 منع انتشار الحدث */}
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <span className="text-[11px] text-[#78716C]">تغيير الحالة:</span>
                             <select
                               value={order.status}
@@ -933,7 +865,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </strong>
                               <a
                                 href={`tel:${order.phone}`}
-                                onClick={(e) => e.stopPropagation()} // 💡 منع انتشار الحدث
+                                onClick={(e) => e.stopPropagation()}
                                 className="p-1 rounded bg-[#FAF7F2] hover:bg-[#EAE2D5] text-[#1C1917] border border-[#DDD5C7]"
                                 title="اتصال هاتفي"
                               >
@@ -941,7 +873,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </a>
                               <a
                                 href={`https://wa.me/962${order.phone?.replace(/^0+/, '')}`}
-                                onClick={(e) => e.stopPropagation()} // 💡 منع انتشار الحدث
+                                onClick={(e) => e.stopPropagation()}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-1 rounded bg-[#EDF4EE] hover:bg-[#DEEFE0] text-[#2E5339] border border-[#C5DEC8]"
@@ -996,7 +928,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   <div className="flex items-center gap-3">
                                     <a 
                                       href={it.selectedColor?.image || it.product?.images?.[0] || 'https://via.placeholder.com/150'} 
-                                      onClick={(e) => e.stopPropagation()} // 💡 منع انتشار الحدث
+                                      onClick={(e) => e.stopPropagation()}
                                       target="_blank" 
                                       rel="noopener noreferrer"
                                       title="اضغط لفتح الصورة بحجم كامل"
@@ -1138,7 +1070,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                {/* 💡 إضافة رابط الفيديو */}
                 <div className="pt-2 border-t border-[#EAE3D7]">
                   <label className="block text-xs font-semibold text-[#1C1917] mb-1">
                     رابط فيديو المنتج (اختياري - يوتيوب أو فيميو)
@@ -1346,10 +1277,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
   const [warranty, setWarranty] = useState(product.warranty || '');
   const [description, setDescription] = useState(product.description || '');
   const [isBestSeller, setIsBestSeller] = useState(product.isBestSeller || false);
-  const [videoUrl, setVideoUrl] = useState(product.videoUrl || ''); // 💡 حالة فيديو المنتج
+  const [videoUrl, setVideoUrl] = useState(product.videoUrl || ''); 
   const [colors, setColors] = useState<ProductColor[]>(product.colors || []);
   const [attributes, setAttributes] = useState<ProductAttribute[]>(product.attributes || []);
-
   const [tempColorUrls, setTempColorUrls] = useState<Record<number, string>>({});
 
   const handleColorUpdate = (idx: number, field: keyof ProductColor, val: any) => {
@@ -1456,7 +1386,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
       attributes,
       isBestSeller,
       images: finalImages,
-      videoUrl: videoUrl.trim() !== '' ? videoUrl.trim() : undefined, // 💡 حفظ الفيديو
+      videoUrl: videoUrl.trim() !== '' ? videoUrl.trim() : undefined,
     };
 
     onSave(updated);
@@ -1555,7 +1485,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
             />
           </div>
 
-          {/* 💡 إضافة رابط الفيديو في التعديل */}
           <div className="pt-4 border-t border-[#EAE3D7]">
             <label className="block text-xs font-bold text-[#1C1917] mb-1">رابط فيديو المنتج (اختياري):</label>
             <input
@@ -1568,7 +1497,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
             />
           </div>
 
-          {/* Attributes in Edit */}
           <div className="pt-4 border-t border-[#EAE3D7]">
              <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-bold text-[#1C1917]">الخصائص الديناميكية:</h4>
@@ -1583,7 +1511,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
             ))}
           </div>
 
-          {/* Colors & Photos section */}
           <div className="pt-4 border-t border-[#EAE3D7]">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -1642,7 +1569,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                       />
                     </div>
 
-                    {/* الصورة الرئيسية */}
                     <div className="sm:col-span-4 bg-white p-2 rounded-lg border border-[#DDD5C7]">
                       <div className="flex justify-between items-center mb-1">
                         <label className="block text-[10px] font-bold text-[#1C1917]">الصورة الرئيسية للون:</label>
@@ -1680,7 +1606,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                     </div>
                   </div>
 
-                  {/* الزوايا الإضافية (مع رابط + رفع) في شاشة التعديل */}
                   <div className="pt-2 border-t border-[#EAE3D7]/70">
                     <div className="flex flex-col gap-2 mb-2">
                       <span className="text-[11px] text-[#78716C]">
