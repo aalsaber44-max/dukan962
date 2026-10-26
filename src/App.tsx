@@ -11,21 +11,21 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { Footer } from './components/Footer';
-import { ErrorBoundary } from './components/ErrorBoundary'; // 💡 إضافة درع الحماية
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Check, Sparkles } from 'lucide-react';
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
-import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts صحيح
+import { db } from './firebase';
 
-// 💡 بيانات الصفحة الرئيسية الافتراضية (تم تحديث الروابط إلى Cloudinary)
+// 💡 بيانات الصفحة الرئيسية الافتراضية (كمبيوتر + هاتف)
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
   image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1',
-  bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1', 
-  mobileBannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1', 
+  bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1', // 💻 كمبيوتر
+  mobileBannerImage: 'https://i.ibb.co/dw3SrPZr/Designer1.png', // 📱 هاتف
   title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
   description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
@@ -64,7 +64,6 @@ export default function App() {
       snapshot.forEach((doc) => {
         cats.push({ id: doc.id, ...doc.data() } as Category);
       });
-      // بنعرض الأقسام المفعلة بس وبنرتبها
       setCategories(cats.filter(c => c.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)));
     });
 
@@ -74,13 +73,12 @@ export default function App() {
     };
   }, []);
 
-  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور (كمبيوتر + هاتف)
+  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور
   useEffect(() => {
     const seedCategories = async () => {
       try {
         const snapshot = await getDocs(collection(db, 'categories'));
         
-        // 💡 قائمة الأقسام بالروابط الجديدة
         const defaultCategories = [
           {
             id: 'tables',
@@ -137,13 +135,11 @@ export default function App() {
         ];
 
         if (snapshot.empty) {
-          // إذا كانت قاعدة البيانات فاضية، نقوم بإنشاء الأقسام
           for (const cat of defaultCategories) {
             await setDoc(doc(db, 'categories', cat.id), cat);
           }
           console.log('✅ تمت إضافة الأقسام الافتراضية بنجاح!');
         } else {
-          // 💡 التحديث الإجباري: نقوم بتحديث صور جميع الأقسام (الكمبيوتر والهاتف) إذا كانت مختلفة
           for (const defaultCat of defaultCategories) {
             const existingDoc = snapshot.docs.find(d => d.id === defaultCat.id);
             if (existingDoc) {
@@ -176,7 +172,7 @@ export default function App() {
     seedCategories();
   }, []);
 
-  // 4. كود ترحيل المنتجات القديمة من المتصفح إلى السحابة (يعمل مرة واحدة فقط)
+  // 4. كود ترحيل المنتجات القديمة من المتصفح إلى السحابة
   useEffect(() => {
     const migrateOldProducts = async () => {
       const savedOldProducts = localStorage.getItem('dukan962_products_v3');
@@ -256,7 +252,7 @@ export default function App() {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2800); // 💡 زدنا الوقت قليلاً ليتناسب مع الأنيميشن
+    setTimeout(() => setToastMessage(null), 2800);
   };
 
   // Add to cart with color & quantity
@@ -331,7 +327,6 @@ export default function App() {
 
   // Filtered Products logic
   const filteredProducts = products.filter((prod) => {
-    // 💡 إخفاء المنتجات غير النشطة
     if (prod.isActive === false) return false; 
     
     const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
@@ -351,7 +346,6 @@ export default function App() {
     return matchesCategory && matchesSearch && matchesPrice && matchesColor;
   });
 
-  // 💡 السطر السحري: ترتيب المنتجات بحيث تظهر المنتجات المميزة (الأكثر مبيعاً) أولاً
   filteredProducts.sort((a, b) => Number(b.isBestSeller || false) - Number(a.isBestSeller || false));
 
   const cartTotalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -363,17 +357,14 @@ export default function App() {
     }
   };
 
-  // 💡 بنجيب بيانات القسم المختار، وإذا كان "الكل" بنجيب بيانات الصفحة الرئيسية
   const currentCategoryData = selectedCategory === 'all' 
     ? homeCategoryData 
     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
   return (
-    // 💡 درع الحماية يحيط بكل شيء
     <ErrorBoundary>
       <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
         
-        {/* 💡 إضافة أنيميشن مخصص للتنبيهات */}
         <style>
           {`
             @keyframes slideUpFade {
@@ -393,7 +384,6 @@ export default function App() {
           `}
         </style>
 
-        {/* 💡 تحسين شكل التنبيه (Toast) ليصبح زجاجياً واحترافياً */}
         {toastMessage && (
           <div className="fixed bottom-8 right-8 z-50 animate-toast">
             <div className="bg-[#1C1917]/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-[#D4AF37]/30 min-w-[280px] relative overflow-hidden">
