@@ -255,7 +255,7 @@ export default function App() {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2500);
+    setTimeout(() => setToastMessage(null), 2800); // 💡 زدنا الوقت قليلاً ليتناسب مع الأنيميشن
   };
 
   // Add to cart with color & quantity
@@ -369,13 +369,40 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
-      {/* Toast Notification */}
+      
+      {/* 💡 إضافة أنيميشن مخصص للتنبيهات */}
+      <style>
+        {`
+          @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes shrinkWidth {
+            from { width: 100%; }
+            to { width: 0%; }
+          }
+          .animate-toast {
+            animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+          .animate-progress {
+            animation: shrinkWidth 2.8s linear forwards;
+          }
+        `}
+      </style>
+
+      {/* 💡 تحسين شكل التنبيه (Toast) ليصبح زجاجياً واحترافياً */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#1C1917] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-[#3E3834] animate-bounce">
-          <div className="w-5 h-5 rounded-full bg-[#2E5339] text-white flex items-center justify-center shrink-0">
-            <Check className="w-3.5 h-3.5" />
+        <div className="fixed bottom-8 right-8 z-50 animate-toast">
+          <div className="bg-[#1C1917]/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-[#D4AF37]/30 min-w-[280px] relative overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-[#2E5339] text-[#A7F3D0] flex items-center justify-center shrink-0 shadow-inner">
+              <Check className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-[#D4AF37] font-bold tracking-wider mb-0.5">دكان 962</span>
+              <span className="text-xs font-semibold leading-relaxed">{toastMessage}</span>
+            </div>
+            <div className="absolute bottom-0 left-0 h-1 bg-[#D4AF37] animate-progress rounded-b-2xl"></div>
           </div>
-          <span className="text-xs font-semibold">{toastMessage}</span>
         </div>
       )}
 
