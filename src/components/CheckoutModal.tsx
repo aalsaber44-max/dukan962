@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react'; // 💡 أضفنا useRef
 import { X, CheckCircle, Truck, ShieldCheck, Copy, Check, MessageCircle, Smartphone } from 'lucide-react';
 import { CartItem } from '../types/furniture';
 import {
@@ -47,6 +47,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [phone2Error, setPhone2Error] = useState<string | null>(null);
   const [autoDetectedGov, setAutoDetectedGov] = useState<string | null>(null);
 
+  // 💡 حماية إضافية لمنع التكرار
+  const isSubmittingRef = useRef(false);
+
   const subtotal = items.reduce(
     (acc, item) => acc + (Number(item.selectedColor.price) || Number(item.product.basePrice) || 0) * item.quantity,
     0
@@ -94,6 +97,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 💡 الحماية الصارمة: إذا كان الطلب قيد الإرسال، لا تفعل شيئاً
+    if (isSubmittingRef.current) return;
+
     const nameParts = name.trim().split(/\s+/);
     if (nameParts.length < 4) {
       setNameError('الرجاء إدخال الاسم الرباعي كاملاً (أربع مقاطع على الأقل).');
@@ -127,7 +133,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
+    // 💡 تفعيل القفل
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
+
     const num = 'DUKAN-' + Math.floor(10000 + Math.random() * 90000);
     setOrderNumber(num);
 
@@ -153,7 +162,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       createdAt: new Date().toISOString(),
     };
 
-    // 💡 بناء رابط الواتساب
     const paymentLabel = paymentMethod === 'cod' ? 'الدفع كاش عند الاستلام بعد المعاينة' : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
     
     const whatsAppText = encodeURIComponent(
@@ -181,10 +189,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     setFinalWhatsAppUrl(`https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${whatsAppText}`);
 
-    // 💡 التعديل الجديد: التحقق الفعلي من نجاح الحفظ
     let isSaved = false;
 
-    // 1. محاولة الحفظ في السيرفر
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -196,7 +202,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       console.warn('Backend order save error, fallback to local:', err);
     }
 
-    // 2. إذا فشل السيرفر، نحاول الحفظ في ذاكرة المتصفح
     if (!isSaved) {
       try {
         const existing = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
@@ -210,11 +215,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     setIsSubmitting(false);
 
-    // 3. إظهار شاشة النجاح فقط إذا تم الحفظ فعلياً
     if (isSaved) {
       setOrderConfirmed(true);
-      onSuccessOrder(orderPayload); // هذا السطر يمسح السلة
+      onSuccessOrder(orderPayload); 
     } else {
+      isSubmittingRef.current = false; // 💡 فك القفل في حال الفشل ليتمكن من المحاولة مجدداً
       alert('عذراً، حدث خطأ في الشبكة أثناء حفظ طلبك. يرجى المحاولة مرة أخرى أو إرسال الطلب مباشرة عبر الواتساب.');
     }
   };
@@ -222,6 +227,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const jordanGovernorates = JORDAN_GOVERNORATES;
 
   return (
+    // ... (باقي واجهة الـ JSX كما هي تماماً في كودك السابق بدون أي تغيير) ...
+    // (لقد قمت بتضمينها كاملة في الملف المرفق بالأسفل لتسهيل النسخ)
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[#E9E1D4] flex flex-col my-6 max-h-[90vh]">
         
