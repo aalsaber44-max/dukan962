@@ -41,7 +41,7 @@ const DEFAULT_ADMIN_PASSWORD = 'Dukan962@Admin#2024!';
 const PASSWORD_STORAGE_KEY = 'dukan962_admin_password';
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80';
 
-// 💡 دالة لضغط الصور وتصغيرها قبل الحفظ لتجنب خطأ المساحة (الانهيار)
+// 💡 دالة لضغط الصور وتصغيرها وتحويلها لصيغة WebP السريعة
 const compressImage = (file: File, callback: (base64: string) => void) => {
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -54,8 +54,8 @@ const compressImage = (file: File, callback: (base64: string) => void) => {
       canvas.height = img.height * scale;
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      // ضغط الصورة بجودة 70% بصيغة JPEG
-      callback(canvas.toDataURL('image/jpeg', 0.7));
+      // 💡 التعديل هنا: استخدام WebP بجودة 80% بدلاً من JPEG
+      callback(canvas.toDataURL('image/webp', 0.8));
     };
     img.src = e.target?.result as string;
   };
