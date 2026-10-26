@@ -29,7 +29,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
         
         <div className="relative rounded-xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] flex items-center bg-[#1C1917]">
           
-          {/* الخلفية المموهة (احتياطية) */}
+          {/* الخلفية المموهة (احتياطية) - تم تعديلها لـ object-top */}
           <img
             src={mobileBanner}
             alt=""
@@ -42,10 +42,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
             alt=""
             aria-hidden="true"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover object-center blur-xl scale-110 opacity-60 hidden sm:block"
+            className="absolute inset-0 w-full h-full object-cover object-top blur-xl scale-110 opacity-60 hidden sm:block"
           />
 
-          {/* 💡 الصورة الأساسية: تظهر دائماً فوراً */}
+          {/* 💡 الصورة الأساسية: تظهر دائماً فوراً - تم تعديلها لـ object-top */}
           <picture key={desktopBanner}>
             <source media="(max-width: 639px)" srcSet={mobileBanner} />
             <source media="(min-width: 640px)" srcSet={desktopBanner} />
@@ -56,7 +56,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               referrerPolicy="no-referrer"
               fetchPriority="high"
               decoding="async"
-              className="absolute inset-0 w-full h-full object-cover object-top sm:object-center z-10"
+              className="absolute inset-0 w-full h-full object-cover object-top z-10"
             />
           </picture>
 
