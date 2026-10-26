@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react'; // 💡 أضفنا useRef
+import React, { useState, useRef } from 'react';
 import { X, CheckCircle, Truck, ShieldCheck, Copy, Check, MessageCircle, Smartphone } from 'lucide-react';
 import { CartItem } from '../types/furniture';
+import { db } from '../firebase'; // 💡 استيراد قاعدة البيانات
+import { collection, addDoc } from 'firebase/firestore'; // 💡 استيراد دوال Firebase
 import {
   STORE_PHONE,
   STORE_PHONE_INTL,
@@ -97,7 +99,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 💡 الحماية الصارمة: إذا كان الطلب قيد الإرسال، لا تفعل شيئاً
     if (isSubmittingRef.current) return;
 
     const nameParts = name.trim().split(/\s+/);
@@ -133,7 +134,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    // 💡 تفعيل القفل
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
@@ -159,6 +159,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       subtotal,
       deliveryFee,
       total,
+      status: 'جديد', // 💡 حالة الطلب الافتراضية
       createdAt: new Date().toISOString(),
     };
 
@@ -189,46 +190,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     setFinalWhatsAppUrl(`https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${whatsAppText}`);
 
-    let isSaved = false;
-
+    // 💡 هنا السحر: الحفظ المباشر في قاعدة بيانات Firebase
     try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload),
-      });
-      if (res.ok) isSaved = true;
-    } catch (err) {
-      console.warn('Backend order save error, fallback to local:', err);
-    }
-
-    if (!isSaved) {
-      try {
-        const existing = JSON.parse(localStorage.getItem('dukan962_orders_local') || '[]');
-        existing.unshift(orderPayload);
-        localStorage.setItem('dukan962_orders_local', JSON.stringify(existing));
-        isSaved = true;
-      } catch (err) {
-        console.error('Local save error:', err);
-      }
-    }
-
-    setIsSubmitting(false);
-
-    if (isSaved) {
+      await addDoc(collection(db, 'orders'), orderPayload);
+      setIsSubmitting(false);
       setOrderConfirmed(true);
-      onSuccessOrder(orderPayload); 
-    } else {
-      isSubmittingRef.current = false; // 💡 فك القفل في حال الفشل ليتمكن من المحاولة مجدداً
-      alert('عذراً، حدث خطأ في الشبكة أثناء حفظ طلبك. يرجى المحاولة مرة أخرى أو إرسال الطلب مباشرة عبر الواتساب.');
+      onSuccessOrder(orderPayload); // مسح السلة
+    } catch (error) {
+      console.error('Error saving order to Firebase:', error);
+      setIsSubmitting(false);
+      isSubmittingRef.current = false;
+      alert('عذراً، حدث خطأ أثناء حفظ طلبك في السحابة. يرجى المحاولة مرة أخرى أو إرسال الطلب مباشرة عبر واتساب.');
     }
   };
 
   const jordanGovernorates = JORDAN_GOVERNORATES;
 
   return (
-    // ... (باقي واجهة الـ JSX كما هي تماماً في كودك السابق بدون أي تغيير) ...
-    // (لقد قمت بتضمينها كاملة في الملف المرفق بالأسفل لتسهيل النسخ)
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[#E9E1D4] flex flex-col my-6 max-h-[90vh]">
         
@@ -258,7 +236,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <span className="text-xs font-bold text-[#8C6D46] uppercase tracking-wider">رقم تتبع الطلب</span>
               <h4 className="text-2xl font-black text-[#1C1917] font-mono mt-1 mb-2">{orderNumber}</h4>
               <p className="text-xs text-[#57534E] leading-relaxed max-w-md mx-auto mb-5">
-                تم استلام طلبك وحفظه بنجاح! يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
+                تم استلام طلبك وحفظه بنجاح في السحابة! يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
               </p>
 
               <div className="mb-6">
