@@ -20,8 +20,8 @@ import {
   Star,
   Search,
   Download,
-  TrendingUp,
   DollarSign,
+  Bell, // 💡 تمت إضافة أيقونة التنبيهات
 } from 'lucide-react';
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
 // استيراد Firebase
@@ -79,6 +79,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [loadingOrders, setLoadingOrders] = useState(false);
   // 💡 حالة البحث في الطلبات
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
+
+  // 💡 حالة لتخزين الطلبات المقروءة
+  const [readOrders, setReadOrders] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dukan962_read_orders') || '[]');
+    } catch { return []; }
+  });
 
   // Inline price editing state: { [productId]: newPrice }
   const [editingPrices, setEditingPrices] = useState<Record<string, number | string>>({});
@@ -448,6 +455,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم تحديث كلمة المرور بنجاح!');
   };
 
+  // 💡 دالة تحويل الطلب من "غير مقروء" إلى "مقروء"
+  const handleMarkOrderAsRead = (orderId: string) => {
+    if (!readOrders.includes(orderId)) {
+      const newReadOrders = [...readOrders, orderId];
+      setReadOrders(newReadOrders);
+      localStorage.setItem('dukan962_read_orders', JSON.stringify(newReadOrders));
+    }
+  };
+
   // 💡 تصفية الطلبات بناءً على البحث
   const filteredOrders = orders.filter(order => {
     const query = orderSearchQuery.toLowerCase();
@@ -465,6 +481,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // 💡 حساب الإحصائيات
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+
+  // 💡 حساب عدد الطلبات غير المقروءة
+  const unreadCount = orders.filter(o => !readOrders.includes(o.id)).length;
   
   // 💡 دالة تصدير الإكسل
   const handleExportExcel = () => {
@@ -553,9 +572,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <ShoppingBag className="w-4 h-4 text-[#8C6D46]" />
             <span>طلبات الزبائن الواردة</span>
-            <span className="bg-[#2E5339] text-white text-[10px] font-mono px-1.5 py-0.2 rounded-full">
-              {orders.length}
-            </span>
+            {/* 💡 النقطة الحمراء للطلبات الجديدة */}
+            {unreadCount > 0 ? (
+              <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full animate-pulse flex items-center gap-1 shadow-xs">
+                <Bell className="w-3 h-3" /> {unreadCount} جديد
+              </span>
+            ) : (
+              <span className="bg-[#2E5339] text-white text-[10px] font-mono px-1.5 py-0.2 rounded-full">
+                {orders.length}
+              </span>
+            )}
           </button>
 
           <button
@@ -804,6 +830,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               ) : (
                 <div className="space-y-3">
                   {sortedOrders.map((order) => {
+                    const isUnread = !readOrders.includes(order.id); // 💡 فحص إذا كان الطلب جديداً
                     const statusColors: Record<string, string> = {
                       'جديد': 'bg-emerald-50 text-emerald-800 border-emerald-200',
                       'جاري التجهيز': 'bg-amber-50 text-amber-800 border-amber-200',
@@ -818,13 +845,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     });
 
                     return (
+                      // 💡 عند الضغط على الكارت، يتم تحويله إلى "مقروء"
                       <div
                         key={order.id}
-                        className="bg-white border border-[#E5DDD0] rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-[#8C6D46] transition-all"
+                        onClick={() => handleMarkOrderAsRead(order.id)}
+                        className={`bg-white border rounded-2xl p-4 sm:p-5 shadow-2xs transition-all cursor-pointer ${
+                          isUnread ? 'border-rose-300 ring-1 ring-rose-200' : 'border-[#E5DDD0] hover:border-[#8C6D46]'
+                        }`}
                       >
                         {/* Top row */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F2ECE1]">
                           <div className="flex items-center gap-2.5">
+                            {/* 💡 النقطة الحمراء بجانب رقم الطلب */}
+                            {isUnread && (
+                              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse inline-block" title="طلب جديد غير مقروء"></span>
+                            )}
                             <span className="font-mono font-black text-sm text-[#1C1917]">
                               {order.id}
                             </span>
@@ -842,7 +877,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
 
                           {/* Status changer & Delete */}
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}> {/* 💡 منع انتشار الحدث */}
                             <span className="text-[11px] text-[#78716C]">تغيير الحالة:</span>
                             <select
                               value={order.status}
@@ -898,6 +933,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </strong>
                               <a
                                 href={`tel:${order.phone}`}
+                                onClick={(e) => e.stopPropagation()} // 💡 منع انتشار الحدث
                                 className="p-1 rounded bg-[#FAF7F2] hover:bg-[#EAE2D5] text-[#1C1917] border border-[#DDD5C7]"
                                 title="اتصال هاتفي"
                               >
@@ -905,6 +941,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </a>
                               <a
                                 href={`https://wa.me/962${order.phone?.replace(/^0+/, '')}`}
+                                onClick={(e) => e.stopPropagation()} // 💡 منع انتشار الحدث
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-1 rounded bg-[#EDF4EE] hover:bg-[#DEEFE0] text-[#2E5339] border border-[#C5DEC8]"
@@ -959,6 +996,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   <div className="flex items-center gap-3">
                                     <a 
                                       href={it.selectedColor?.image || it.product?.images?.[0] || 'https://via.placeholder.com/150'} 
+                                      onClick={(e) => e.stopPropagation()} // 💡 منع انتشار الحدث
                                       target="_blank" 
                                       rel="noopener noreferrer"
                                       title="اضغط لفتح الصورة بحجم كامل"
