@@ -19,13 +19,13 @@ import { Check, Sparkles } from 'lucide-react';
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from './firebase'; // تأكد أن مسار ملف firebase.ts صحيح
 
-// 💡 بيانات الصفحة الرئيسية الافتراضية (تظهر عند اختيار "الكل")
+// 💡 بيانات الصفحة الرئيسية الافتراضية (تم تحديث الروابط إلى Cloudinary)
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
-  image: 'https://i.ibb.co/8JFbkz2/Designer-1.png',
-  bannerImage: 'https://i.ibb.co/vbvFC4f/Designer.png', 
-  mobileBannerImage: 'https://i.ibb.co/8JFbkz2/Designer-1.png', 
+  image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1',
+  bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1', 
+  mobileBannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1', 
   title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
   description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
