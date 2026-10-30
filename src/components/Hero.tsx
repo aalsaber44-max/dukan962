@@ -44,7 +44,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const frameRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: frameRef, offset: ['start start', 'end start'] });
-  // حركة بسيطة جداً مش هتقص الصورة
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.03]);
 
   return (
@@ -52,8 +51,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-12">
         <div
           ref={frameRef}
-          // خلينا الأبعاد أوسع شوية على الكمبيوتر عشان تبان أحلى
-          className="relative isolate overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[21/9] lg:aspect-[24/9] bg-[#14110F] shadow-lift ring-1 ring-black/5"
+          className="relative isolate overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] bg-[#14110F] shadow-lift ring-1 ring-black/5"
         >
           <motion.div style={reduceMotion ? undefined : { scale }} className="absolute inset-0 will-change-transform">
             <picture key={desktopBanner}>
@@ -65,60 +63,56 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 referrerPolicy="no-referrer"
                 fetchPriority="high"
                 decoding="async"
-                // شلنا الـ animate-kenburns وغيرنا لـ object-center عشان الصورة تبان كاملة
                 className="absolute inset-0 w-full h-full object-cover object-center"
               />
             </picture>
           </motion.div>
 
-          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+          {/* 💡 التدرج اللوني الذكي: أسود من اليمين، شفاف من الشمال، عشان ميغطيش على الصورة */}
+          <div className="absolute inset-0 z-10 bg-gradient-to-l from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-          {/* النص جوه بوكس زجاجي في النص عشان التوازن */}
-          <div className="absolute inset-0 z-20 flex items-center p-4 sm:p-8 lg:p-12">
+          {/* الكلام بقى على الصورة مباشرة بدون صندوق زجاجي */}
+          <div className="absolute inset-0 z-20 flex items-center p-5 sm:p-10 lg:p-16">
             <motion.div
               key={displayData.title}
               variants={container}
               initial="hidden"
               animate="show"
-              className="max-w-2xl rounded-2xl sm:rounded-[28px] bg-black/40 backdrop-blur-md backdrop-saturate-150 ring-1 ring-white/15 shadow-glass p-4 sm:p-8 text-white"
+              className="max-w-2xl text-white"
             >
-              <motion.div variants={item} className="flex items-center gap-2 mb-2 sm:mb-4">
-                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-60 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-full w-full bg-emerald-300" />
+              <motion.div variants={item} className="flex items-center gap-2 mb-3 sm:mb-4">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-full w-full bg-emerald-400" />
                 </span>
-                <span className="text-[10px] sm:text-xs font-semibold text-white/90">{badge}</span>
+                <span className="text-xs sm:text-sm font-bold text-emerald-300 drop-shadow-md">{badge}</span>
               </motion.div>
 
               <motion.h1
                 variants={item}
-                className="text-xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.3] mb-2 sm:mb-4 text-balance font-serif"
+                className="text-2xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.2] mb-3 sm:mb-5 text-balance font-serif drop-shadow-lg"
               >
                 {displayData.title}
               </motion.h1>
 
               <motion.p
                 variants={item}
-                className="text-xs sm:text-base text-white/80 leading-relaxed mb-4 sm:mb-6 max-w-xl line-clamp-2 sm:line-clamp-3"
+                className="text-sm sm:text-lg text-white/90 leading-relaxed mb-6 sm:mb-8 max-w-xl line-clamp-2 sm:line-clamp-3 drop-shadow-md font-medium"
               >
                 {displayData.description}
               </motion.p>
 
-              <motion.div variants={item} className="flex items-center gap-2 sm:gap-3">
+              <motion.div variants={item} className="flex items-center gap-3 sm:gap-4">
                 <button
                   onClick={onExploreClick}
-                  className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-10 sm:h-12 px-5 sm:px-6 rounded-full bg-white text-[#14110F] text-xs sm:text-sm font-bold shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                  className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full bg-[#E3C16F] text-[#14110F] text-sm sm:text-base font-bold shadow-xl transition-all duration-300 hover:bg-white hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                 >
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-[#E3C16F]/50 to-transparent"
-                  />
                   <span className="relative">{displayData.buttonText || 'استكشف الآن'}</span>
-                  <ArrowLeft className="relative w-4 h-4 transition-transform duration-300 group-hover/btn:-translate-x-1" />
+                  <ArrowLeft className="relative w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover/btn:-translate-x-1" />
                 </button>
 
-                <span className="hidden sm:inline-flex items-center gap-2 h-12 px-4 rounded-full text-xs font-semibold text-white/90 bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
-                  <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                <span className="hidden sm:inline-flex items-center gap-2 h-14 px-5 rounded-full text-sm font-semibold text-white bg-black/30 ring-1 ring-white/20 backdrop-blur-md">
+                  <ShieldCheck className="w-5 h-5 text-emerald-300" />
                   يوجد معاينة عند وصول الطلب
                 </span>
               </motion.div>
