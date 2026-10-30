@@ -15,7 +15,6 @@ const perks = [
   { Icon: Sparkles, title: 'ألوان حصرية', sub: 'تشكيلات متنوعة' },
 ];
 
-// حركة دخول واحدة منسقة للنصوص (تُعاد عند تغيير القسم)
 const container = {
   hidden: {},
   show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
@@ -40,21 +39,21 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const desktopBanner = displayData.bannerImage || displayData.image || defaultData.bannerImage;
   const mobileBanner = displayData.mobileBannerImage || desktopBanner;
 
-  // نحذف الإيموجي من بداية الشارة ليبدو النص أنظف
   const badge = String(displayData.badgeText || 'يوجد معاينة').replace(/^[^\p{L}\p{N}]+/u, '');
 
-  // تكبير خفيف جداً للصورة مع التمرير (بدون إزاحة حتى لا يُقص نص البنر)
   const frameRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: frameRef, offset: ['start start', 'end start'] });
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.07]);
+  // حركة بسيطة جداً مش هتقص الصورة
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.03]);
 
   return (
     <section className="relative bg-[#FBFAF7]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-12">
         <div
           ref={frameRef}
-          className="relative isolate overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#14110F] shadow-lift ring-1 ring-black/5"
+          // خلينا الأبعاد أوسع شوية على الكمبيوتر عشان تبان أحلى
+          className="relative isolate overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[21/9] lg:aspect-[24/9] bg-[#14110F] shadow-lift ring-1 ring-black/5"
         >
           <motion.div style={reduceMotion ? undefined : { scale }} className="absolute inset-0 will-change-transform">
             <picture key={desktopBanner}>
@@ -66,20 +65,22 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 referrerPolicy="no-referrer"
                 fetchPriority="high"
                 decoding="async"
-                className="absolute inset-0 w-full h-full object-cover object-top animate-kenburns"
+                // شلنا الـ animate-kenburns وغيرنا لـ object-center عشان الصورة تبان كاملة
+                className="absolute inset-0 w-full h-full object-cover object-center"
               />
             </picture>
           </motion.div>
 
-          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-          <div className="absolute inset-x-0 bottom-0 z-20 p-2.5 sm:p-8 lg:p-10">
+          {/* النص جوه بوكس زجاجي في النص عشان التوازن */}
+          <div className="absolute inset-0 z-20 flex items-center p-4 sm:p-8 lg:p-12">
             <motion.div
               key={displayData.title}
               variants={container}
               initial="hidden"
               animate="show"
-              className="max-w-2xl rounded-2xl sm:rounded-[28px] bg-black/30 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/15 shadow-glass p-3.5 sm:p-8 text-white"
+              className="max-w-2xl rounded-2xl sm:rounded-[28px] bg-black/40 backdrop-blur-md backdrop-saturate-150 ring-1 ring-white/15 shadow-glass p-4 sm:p-8 text-white"
             >
               <motion.div variants={item} className="flex items-center gap-2 mb-2 sm:mb-4">
                 <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
@@ -91,14 +92,14 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
 
               <motion.h1
                 variants={item}
-                className="text-lg sm:text-5xl lg:text-[3.4rem] font-bold tracking-tight leading-[1.25] mb-1.5 sm:mb-4 text-balance font-serif"
+                className="text-xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.3] mb-2 sm:mb-4 text-balance font-serif"
               >
                 {displayData.title}
               </motion.h1>
 
               <motion.p
                 variants={item}
-                className="text-[11px] sm:text-base text-white/80 leading-relaxed mb-3 sm:mb-7 max-w-xl line-clamp-2 sm:line-clamp-3"
+                className="text-xs sm:text-base text-white/80 leading-relaxed mb-4 sm:mb-6 max-w-xl line-clamp-2 sm:line-clamp-3"
               >
                 {displayData.description}
               </motion.p>
@@ -106,14 +107,14 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               <motion.div variants={item} className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={onExploreClick}
-                  className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-9 sm:h-12 px-4 sm:px-6 rounded-full bg-white text-[#14110F] text-[11px] sm:text-sm font-bold shadow-[0_10px_30px_-10px_rgba(255,255,255,0.55)] transition-all duration-300 hover:shadow-[0_14px_36px_-10px_rgba(255,255,255,0.8)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                  className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-10 sm:h-12 px-5 sm:px-6 rounded-full bg-white text-[#14110F] text-xs sm:text-sm font-bold shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                 >
                   <span
                     aria-hidden="true"
                     className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-[#E3C16F]/50 to-transparent"
                   />
                   <span className="relative">{displayData.buttonText || 'استكشف الآن'}</span>
-                  <ArrowLeft className="relative w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover/btn:-translate-x-1" />
+                  <ArrowLeft className="relative w-4 h-4 transition-transform duration-300 group-hover/btn:-translate-x-1" />
                 </button>
 
                 <span className="hidden sm:inline-flex items-center gap-2 h-12 px-4 rounded-full text-xs font-semibold text-white/90 bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
@@ -125,8 +126,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
           </div>
         </div>
 
-        {/* شريط المميزات: بطاقة زجاجية واحدة بفواصل رفيعة */}
-        <div className="mt-3 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl ring-1 ring-black/[0.06] shadow-soft overflow-hidden">
+        {/* شريط المميزات */}
+        <div className="mt-4 sm:mt-8 grid grid-cols-2 lg:grid-cols-4 bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl ring-1 ring-black/[0.06] shadow-soft overflow-hidden">
           {perks.map(({ Icon, title, sub }, i) => (
             <div
               key={title}
