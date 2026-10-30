@@ -1,11 +1,77 @@
 @import "tailwindcss";
 
+/* ───────── Design tokens ───────── */
+@theme {
+  --font-sans: 'IBM Plex Sans Arabic', 'Cairo', system-ui, -apple-system, sans-serif;
+  /* كل العناوين في المشروع تستخدم font-serif، فتتحدث كلها تلقائياً */
+  --font-serif: 'El Messiri', 'IBM Plex Sans Arabic', serif;
+  /* الأسعار والأرقام تستخدم font-mono: خط لاتيني نظيف بدل الأحادي */
+  --font-mono: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+
+  --shadow-soft:
+    0 1px 2px rgb(20 17 15 / 0.04),
+    0 8px 24px -10px rgb(20 17 15 / 0.10),
+    0 24px 48px -28px rgb(20 17 15 / 0.14);
+  --shadow-lift:
+    0 2px 4px rgb(20 17 15 / 0.05),
+    0 18px 40px -16px rgb(20 17 15 / 0.22),
+    0 48px 80px -40px rgb(20 17 15 / 0.30);
+  --shadow-glass:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 20px 50px -20px rgb(0 0 0 / 0.55);
+
+  --animate-kenburns: kenburns 2.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-skeleton: skeleton 1.6s ease-in-out infinite;
+  --animate-toast-progress: toast-progress 3s linear forwards;
+  --animate-float-slow: float-slow 6s ease-in-out infinite;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1.07); }
+  to   { transform: scale(1); }
+}
+@keyframes skeleton {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
 @layer base {
+  html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
   body {
-    font-family: 'Cairo', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
+    font-feature-settings: 'kern', 'liga';
+    text-rendering: optimizeLegibility;
+  }
+  /* حلقة تركيز واضحة للوحة المفاتيح */
+  :focus-visible {
+    outline: 2px solid #B8923A;
+    outline-offset: 3px;
+    border-radius: 0.5rem;
   }
 }
 
-html {
-  scroll-behavior: smooth;
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .skeleton-bg {
+    background: linear-gradient(90deg, #F1ECE3 25%, #F8F5EF 50%, #F1ECE3 75%);
+    background-size: 200% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
