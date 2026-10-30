@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Eye, Heart, Check, Sparkles } from 'lucide-react';
+import { ShoppingBag, Eye, Heart, Check, Sparkles, ShieldCheck } from 'lucide-react';
 import { Product } from '../types/furniture';
+import { spotlightMove } from '../utils/useSpotlight';
 
 interface ProductCardProps {
   product: Product;
@@ -43,117 +44,112 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const woodTypeText = product.woodType ? product.woodType.split(' - ')[0] : '';
+  const hasDiscount = Number(product.originalPrice) > Number(product.basePrice);
+  const discountPct = hasDiscount
+    ? Math.round((1 - Number(product.basePrice) / Number(product.originalPrice)) * 100)
+    : 0;
 
   return (
     <article
       onClick={() => onQuickView(product)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      // 💡 تحسينات الأنيميشن: طفو خفيف، ظل ملون، حواف ناعمة
-      className="group flex flex-col bg-white rounded-2xl border border-[#ECE5D9] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(140,109,70,0.15)] hover:border-[#8C6D46] cursor-pointer"
+      onMouseMove={spotlightMove}
+      className="spotlight group flex flex-col bg-[#141210] rounded-[26px] ring-1 ring-white/10 shadow-soft transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-lift cursor-pointer"
     >
-      {/* 65%-75% Visual Height Container */}
-      <div className="relative aspect-4/3 w-full bg-[#F5EFE6] overflow-hidden">
+      {/* مسند العرض: خلفية عاجية دافئة تُظهر المنتج بوضوح داخل البطاقة الداكنة */}
+      <div className="relative m-2 aspect-4/3 overflow-hidden rounded-[20px] bg-gradient-to-b from-[#EFE9DE] to-[#DCD4C5] shadow-[inset_0_0_40px_rgba(90,70,30,0.12)]">
         <img
           src={currentDisplayImage}
           alt={product.name}
           referrerPolicy="no-referrer"
-          // 💡 تكبير الصورة ببطء عند التمرير
-          className="w-full h-full object-contain object-center p-2 group-hover:scale-110 transition-transform duration-700 ease-out"
+          className="w-full h-full object-contain object-center p-3 group-hover:scale-[1.07] transition-transform duration-700 ease-out"
         />
 
-        {/* Quiet Olive Green Offer Badge */}
         {product.isOffer && (
-          <div className="absolute top-3 right-3 bg-[#2E5339] text-[#F0FDF4] text-[11px] font-bold px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-[#A7F3D0]" />
+          <div className="absolute top-3 right-3 bg-[#0B0A09] text-[#E8CC8A] text-[11px] font-bold px-2.5 py-1 rounded-full ring-1 ring-[#D4B06A]/40 flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
             <span>عرض خاص</span>
           </div>
         )}
 
-        {/* Floating Heart Wishlist Button */}
         <button
           onClick={handleWishlist}
           aria-label={isWishlisted ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}
-          // 💡 تحسين زر المفضلة: يكبر قليلاً عند التمرير
-          className={`absolute top-3 left-3 p-2 rounded-full backdrop-blur-md transition-all duration-300 shadow-xs cursor-pointer hover:scale-110 active:scale-95 ${
+          className={`absolute top-3 left-3 grid place-items-center w-9 h-9 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer hover:scale-110 active:scale-90 ${
             isWishlisted
-              ? 'bg-rose-50 text-rose-600 border border-rose-200'
-              : 'bg-white/80 hover:bg-white text-[#78716C] hover:text-rose-500'
+              ? 'bg-[#0B0A09] text-rose-400 ring-1 ring-rose-400/40'
+              : 'bg-[#0B0A09]/60 text-[#F3EEE4] ring-1 ring-white/20 hover:bg-[#0B0A09] hover:text-rose-400'
           }`}
         >
-          <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-600' : ''}`} />
+          <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-400' : ''}`} />
         </button>
 
-        {/* Hover quick angle notification */}
-        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-          <span className="text-[10px] bg-black/70 backdrop-blur-xs text-white px-2 py-0.5 rounded-md">
-            زاوية أخرى
-          </span>
-        </div>
-
-        {/* Quick View Floating Action */}
-        <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 delay-75">
-          <span className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-white/95 backdrop-blur-md rounded-lg text-xs font-semibold text-[#1C1917] shadow-sm">
-            <Eye className="w-3.5 h-3.5" />
+        <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+          <span className="inline-flex items-center gap-1.5 h-8 px-3.5 bg-[#0B0A09]/85 backdrop-blur-md rounded-full text-xs font-semibold text-[#F3EEE4] ring-1 ring-white/15">
+            <Eye className="w-3.5 h-3.5 text-[#E8CC8A]" />
             <span>عرض التفاصيل</span>
           </span>
         </div>
+
+        {hasDiscount && discountPct > 0 && (
+          <span className="absolute bottom-3 right-3 h-7 px-2.5 grid place-items-center rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] text-[11px] font-extrabold font-mono shadow-gold">
+            -{discountPct}%
+          </span>
+        )}
       </div>
 
-      {/* Card Content */}
-      <div className="p-5 flex flex-col flex-1 justify-between">
+      <div className="px-5 pt-3 pb-5 flex flex-col flex-1 justify-between">
         <div>
-          {/* Metadata */}
-          <div className="flex items-center justify-between text-xs text-[#8C827A] mb-1.5 font-medium">
+          <div className="flex items-center justify-between text-xs text-[#A39A8B] mb-1.5 font-medium">
             <span>{product.categoryLabel || 'منتج'}</span>
-            <span className="text-[#8C6D46]">{woodTypeText}</span>
+            <span className="text-[#D4B06A]">{woodTypeText}</span>
           </div>
 
-          {/* Product Name */}
-          <h3 className="text-sm sm:text-base font-bold text-[#1C1917] group-hover:text-[#8C6D46] transition-colors duration-300 leading-snug mb-2 line-clamp-1 font-serif">
+          <h3 className="text-base sm:text-lg font-bold text-[#F3EEE4] group-hover:text-[#E8CC8A] transition-colors duration-300 leading-snug mb-2 line-clamp-1 font-serif">
             {product.name}
           </h3>
 
-          <p className="text-xs text-[#66605B] leading-relaxed line-clamp-2 mb-3">
+          <p className="text-xs text-[#A39A8B] leading-relaxed line-clamp-2 mb-4">
             {product.description}
           </p>
 
-          {/* Color preview dots */}
-          {product.colors && product.colors.length > 0 && (
-            <div className="flex items-center gap-1.5 mb-3">
-              <span className="text-[11px] text-[#A8A29E]">الألوان:</span>
-              <div className="flex items-center gap-1">
-                {product.colors.map((c, idx) => (
+          <div className="flex items-center justify-between gap-2 mb-4">
+            {product.colors && product.colors.length > 0 ? (
+              <div className="flex items-center gap-1.5">
+                {product.colors.slice(0, 5).map((c, idx) => (
                   <span
                     key={idx}
                     title={`${c.name} - ${Number(c.price)} د.أ`}
-                    className="w-3.5 h-3.5 rounded-full border border-black/15 shadow-2xs hover:scale-125 transition-transform"
+                    className="w-4 h-4 rounded-full ring-1 ring-white/25 ring-offset-2 ring-offset-[#141210] hover:scale-125 transition-transform"
                     style={{ backgroundColor: c.hex }}
                   />
                 ))}
+                {product.colors.length > 5 && (
+                  <span className="text-[11px] text-[#8A8173] font-mono">+{product.colors.length - 5}</span>
+                )}
               </div>
-            </div>
-          )}
+            ) : (
+              <span />
+            )}
 
-          {/* Trust inspection badge */}
-          <div className="mb-3 flex items-center gap-1.5 text-[10px] text-[#2E5339] font-medium bg-[#EDF4EE] px-2 py-1 rounded-md w-fit">
-            <span>✨ يوجد معاينة عند وصول الطلب</span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#7FD1A0]">
+              <ShieldCheck className="w-3 h-3" />
+              معاينة عند الوصول
+            </span>
           </div>
         </div>
 
-        {/* Price & Primary CTA */}
-        <div className="pt-3 border-t border-[#F2ECE1] flex items-center justify-between">
+        <div className="pt-4 border-t border-white/10 flex items-center justify-between">
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-black text-[#1C1917] tabular-nums font-mono group-hover:text-[#8C6D46] transition-colors duration-300">
+              <span className="text-xl font-extrabold text-[#E8CC8A] tabular-nums font-mono">
                 {Number(product.basePrice || 0).toFixed(2)}
               </span>
-              <span className="text-xs font-bold text-[#78716C]">
-                د.أ
-              </span>
+              <span className="text-xs font-bold text-[#A39A8B]">د.أ</span>
             </div>
             {Number(product.originalPrice) > 0 && (
-              <span className="text-[11px] text-[#A8A29E] line-through tabular-nums font-mono">
+              <span className="text-[11px] text-[#8A8173] line-through tabular-nums font-mono">
                 {Number(product.originalPrice).toFixed(2)} د.أ
               </span>
             )}
@@ -162,11 +158,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <button
             onClick={handleAdd}
             aria-label={`إضافة ${product.name} إلى السلة`}
-            // 💡 تحسين زر الإضافة: تغير لون وحركة عند الضغط
-            className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer shadow-xs hover:shadow-md active:scale-95 ${
+            className={`relative overflow-hidden h-10 px-4 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer active:scale-95 ${
               addedAnim
-                ? 'bg-[#2E5339] text-white'
-                : 'bg-[#1C1917] text-white hover:bg-[#38332E] hover:shadow-[#1C1917]/20'
+                ? 'bg-[#7FD1A0] text-[#0B0A09] ring-1 ring-[#7FD1A0]'
+                : 'bg-white/[0.04] text-[#E8CC8A] ring-1 ring-[#D4B06A]/40 hover:bg-gradient-to-b hover:from-[#E8CC8A] hover:to-[#D4B06A] hover:text-[#0B0A09] hover:ring-[#D4B06A] hover:shadow-gold'
             }`}
           >
             {addedAnim ? (
