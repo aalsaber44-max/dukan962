@@ -1,70 +1,120 @@
 @import "tailwindcss";
 
-/* ───────── Design tokens ───────── */
+/* ───────────────────────────────────────────
+   دكان 962 — Obsidian & Brass
+   أسود دافئ عميق + ذهبي نحاسي + عاجي
+   ─────────────────────────────────────────── */
 @theme {
   --font-sans: 'IBM Plex Sans Arabic', 'Cairo', system-ui, -apple-system, sans-serif;
-  /* كل العناوين في المشروع تستخدم font-serif، فتتحدث كلها تلقائياً */
   --font-serif: 'El Messiri', 'IBM Plex Sans Arabic', serif;
-  /* الأسعار والأرقام تستخدم font-mono: خط لاتيني نظيف بدل الأحادي */
   --font-mono: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif;
 
-  --shadow-soft:
-    0 1px 2px rgb(20 17 15 / 0.04),
-    0 8px 24px -10px rgb(20 17 15 / 0.10),
-    0 24px 48px -28px rgb(20 17 15 / 0.14);
-  --shadow-lift:
-    0 2px 4px rgb(20 17 15 / 0.05),
-    0 18px 40px -16px rgb(20 17 15 / 0.22),
-    0 48px 80px -40px rgb(20 17 15 / 0.30);
-  --shadow-glass:
-    inset 0 1px 0 rgb(255 255 255 / 0.18),
-    0 20px 50px -20px rgb(0 0 0 / 0.55);
+  --color-obsidian: #0B0A09;
+  --color-surface: #141210;
+  --color-raised: #1C1815;
+  --color-ivory: #F3EEE4;
+  --color-mute: #A39A8B;
+  --color-gold: #D4B06A;
+  --color-gold-bright: #E8CC8A;
+  --color-gold-deep: #8A6D2F;
+
+  --shadow-soft: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -14px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 30px 70px -28px rgb(0 0 0 / 0.9), 0 0 60px -30px rgb(212 176 106 / 0.25);
+  --shadow-glass: inset 0 1px 0 rgb(255 255 255 / 0.10), 0 24px 60px -24px rgb(0 0 0 / 0.8);
+  --shadow-gold: 0 10px 30px -10px rgb(212 176 106 / 0.55);
 
   --animate-kenburns: kenburns 2.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-skeleton: skeleton 1.6s ease-in-out infinite;
+  --animate-skeleton: skeleton 1.8s ease-in-out infinite;
   --animate-toast-progress: toast-progress 3s linear forwards;
   --animate-float-slow: float-slow 6s ease-in-out infinite;
+  --animate-drawer: drawer-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade: fade-in 0.3s ease-out both;
+  --animate-pop: pop-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-@keyframes kenburns {
-  from { transform: scale(1.07); }
-  to   { transform: scale(1); }
-}
-@keyframes skeleton {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-@keyframes toast-progress {
-  from { transform: scaleX(1); }
-  to   { transform: scaleX(0); }
-}
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
-}
+@keyframes kenburns { from { transform: scale(1.06); } to { transform: scale(1); } }
+@keyframes skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes float-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
 
 @layer base {
-  html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    color-scheme: dark;
+    background: #0B0A09;
+  }
   body {
     font-family: var(--font-sans);
     font-feature-settings: 'kern', 'liga';
     text-rendering: optimizeLegibility;
+    background:
+      radial-gradient(1200px 520px at 50% -120px, rgb(212 176 106 / 0.10), transparent 70%),
+      #0B0A09;
+    background-attachment: fixed;
   }
-  /* حلقة تركيز واضحة للوحة المفاتيح */
   :focus-visible {
-    outline: 2px solid #B8923A;
+    outline: 2px solid #D4B06A;
     outline-offset: 3px;
     border-radius: 0.5rem;
   }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #0B0A09; }
+  ::-webkit-scrollbar-thumb { background: #2A2520; border-radius: 99px; border: 2px solid #0B0A09; }
+  ::-webkit-scrollbar-thumb:hover { background: #3A332B; }
+  input[type='range'] { accent-color: #D4B06A; }
 }
 
 @layer utilities {
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
+
   .skeleton-bg {
-    background: linear-gradient(90deg, #F1ECE3 25%, #F8F5EF 50%, #F1ECE3 75%);
+    background: linear-gradient(90deg, #17140F 25%, #221E19 50%, #17140F 75%);
     background-size: 200% 100%;
   }
+
+  /* خط ذهبي رفيع يتلاشى على الأطراف */
+  .gold-rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(212 176 106 / 0.55), transparent);
+  }
+
+  /* ✨ العنصر المميز: إضاءة ذهبية تتبع المؤشر على الحافة والسطح */
+  .spotlight { position: relative; }
+  .spotlight::before,
+  .spotlight::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  }
+  .spotlight::before {
+    z-index: 1;
+    background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), rgb(212 176 106 / 0.13), transparent 60%);
+  }
+  .spotlight::after {
+    z-index: 2;
+    padding: 1px;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgb(232 204 138 / 0.85), transparent 65%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  .spotlight:hover::before,
+  .spotlight:hover::after,
+  .spotlight:focus-visible::before,
+  .spotlight:focus-visible::after { opacity: 1; }
+}
+
+@media (hover: none) {
+  .spotlight::before, .spotlight::after { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
