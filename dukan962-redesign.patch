@@ -1,0 +1,1299 @@
+diff --git a/index.html b/index.html
+index c60bbf2..9d61f0a 100644
+--- a/index.html
++++ b/index.html
+@@ -11,9 +11,9 @@
+     <meta name="twitter:card" content="summary_large_image" />
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
++    <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+   </head>
+-  <body class="bg-[#FAF8F5] text-[#1E1E1E] antialiased selection:bg-[#E2D5C4] selection:text-[#1A1A1A]">
++  <body class="bg-[#FBFAF7] text-[#14110F] antialiased selection:bg-[#E8D9B5] selection:text-[#14110F]">
+     <div id="root"></div>
+     <script type="module" src="/src/main.tsx"></script>
+   </body>
+diff --git a/src/App.tsx b/src/App.tsx
+index e9f111d..b5dee42 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,4 +1,4 @@
+-import React, { useState, useEffect } from 'react';
++import React, { useState, useEffect, useRef } from 'react';
+ import { Navbar } from './components/Navbar';
+ import { Hero } from './components/Hero';
+ import { CategoryBoxes } from './components/CategoryBoxes';
+@@ -13,7 +13,8 @@ import { AdminAuthModal } from './components/AdminAuthModal';
+ import { Footer } from './components/Footer';
+ import { ErrorBoundary } from './components/ErrorBoundary';
+ import { Product, CartItem, ProductColor, Category } from './types/furniture';
+-import { Check, Sparkles } from 'lucide-react';
++import { Toast, ToastData, ToastVariant } from './components/Toast';
++import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
+ 
+ // استيراد دوال Firebase
+ import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
+@@ -38,6 +39,7 @@ export default function App() {
+   // 1. حالات المنتجات والأقسام
+   const [products, setProducts] = useState<Product[]>([]);
+   const [categories, setCategories] = useState<Category[]>([]);
++  const [productsLoaded, setProductsLoaded] = useState(false);
+ 
+   // 2. جلب المنتجات والأقسام من السحابة (Live Sync)
+   useEffect(() => {
+@@ -56,6 +58,10 @@ export default function App() {
+         } as Product);
+       });
+       setProducts(prods);
++      setProductsLoaded(true);
++    }, (error) => {
++      console.error('Error loading products:', error);
++      setProductsLoaded(true);
+     });
+ 
+     // جلب الأقسام
+@@ -239,7 +245,8 @@ export default function App() {
+   const [isAdminOpen, setIsAdminOpen] = useState(false);
+ 
+   // Toast feedback
+-  const [toastMessage, setToastMessage] = useState<string | null>(null);
++  const [toast, setToast] = useState<ToastData | null>(null);
++  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+ 
+   // Cart & Wishlist persistence
+   useEffect(() => {
+@@ -250,9 +257,18 @@ export default function App() {
+     localStorage.setItem('dukan962_wishlist', JSON.stringify(wishlist));
+   }, [wishlist]);
+ 
+-  const showToast = (msg: string) => {
+-    setToastMessage(msg);
+-    setTimeout(() => setToastMessage(null), 2800);
++  const dismissToast = () => {
++    if (toastTimer.current) clearTimeout(toastTimer.current);
++    setToast(null);
++  };
++
++  const showToast = (
++    message: string,
++    options: { variant?: ToastVariant; actionLabel?: string; onAction?: () => void } = {}
++  ) => {
++    if (toastTimer.current) clearTimeout(toastTimer.current);
++    setToast({ id: Date.now(), message, variant: options.variant ?? 'success', ...options });
++    toastTimer.current = setTimeout(() => setToast(null), 3000);
+   };
+ 
+   // Add to cart with color & quantity
+@@ -281,7 +297,11 @@ export default function App() {
+       }
+     });
+ 
+-    showToast(`تمت إضافة "${product.name} (${activeColor.name})" إلى السلة`);
++    showToast(`${product.name} (${activeColor.name})`, {
++      variant: 'cart',
++      actionLabel: 'عرض السلة',
++      onAction: () => setIsCartOpen(true),
++    });
+   };
+ 
+   const handleUpdateCartQuantity = (id: string, colorName: string, delta: number) => {
+@@ -309,10 +329,14 @@ export default function App() {
+     setWishlist((prev) => {
+       const exists = prev.some((p) => p.id === product.id);
+       if (exists) {
+-        showToast(`تمت إزالة "${product.name}" من المفضلة`);
++        showToast(product.name, { variant: 'remove' });
+         return prev.filter((p) => p.id !== product.id);
+       } else {
+-        showToast(`تمت إضافة "${product.name}" إلى المفضلة ❤️`);
++        showToast(product.name, {
++          variant: 'wishlist',
++          actionLabel: 'عرض المفضلة',
++          onAction: () => setIsWishlistOpen(true),
++        });
+         return [...prev, product];
+       }
+     });
+@@ -357,60 +381,51 @@ export default function App() {
+     }
+   };
+ 
++  const scrollToCategories = () => {
++    document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
++  };
++
++  // الفلاتر النشطة (تظهر كشرائح قابلة للإزالة في حالة عدم وجود نتائج)
++  const activeFilters: ActiveFilter[] = [];
++  if (selectedCategory !== 'all') {
++    activeFilters.push({
++      key: 'category',
++      label: categories.find((c) => c.id === selectedCategory)?.name || 'قسم محدد',
++      onRemove: () => setSelectedCategory('all'),
++    });
++  }
++  if (searchQuery.trim() !== '') {
++    activeFilters.push({ key: 'search', label: `بحث: ${searchQuery.trim()}`, onRemove: () => setSearchQuery('') });
++  }
++  if (selectedColor !== '') {
++    activeFilters.push({ key: 'color', label: `اللون: ${selectedColor}`, onRemove: () => setSelectedColor('') });
++  }
++  if (priceRange[0] !== 0 || priceRange[1] !== 1000) {
++    activeFilters.push({
++      key: 'price',
++      label: `${priceRange[0]} - ${priceRange[1]} د.أ`,
++      onRemove: () => setPriceRange([0, 1000]),
++    });
++  }
++
+   const currentCategoryData = selectedCategory === 'all' 
+     ? homeCategoryData 
+     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
+ 
+   return (
+     <ErrorBoundary>
+-      <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
++      <div className="min-h-screen flex flex-col bg-[#FBFAF7] text-[#14110F] overflow-x-hidden">
+         
+-        <style>
+-          {`
+-            @keyframes slideUpFade {
+-              from { opacity: 0; transform: translateY(20px); }
+-              to { opacity: 1; transform: translateY(0); }
+-            }
+-            @keyframes shrinkWidth {
+-              from { width: 100%; }
+-              to { width: 0%; }
+-            }
+-            .animate-toast {
+-              animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+-            }
+-            .animate-progress {
+-              animation: shrinkWidth 2.8s linear forwards;
+-            }
+-          `}
+-        </style>
+-
+-        {toastMessage && (
+-          <div className="fixed bottom-8 right-8 z-50 animate-toast">
+-            <div className="bg-[#1C1917]/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-[#D4AF37]/30 min-w-[280px] relative overflow-hidden">
+-              <div className="w-8 h-8 rounded-full bg-[#2E5339] text-[#A7F3D0] flex items-center justify-center shrink-0 shadow-inner">
+-                <Check className="w-4 h-4" />
+-              </div>
+-              <div className="flex flex-col">
+-                <span className="text-[10px] text-[#D4AF37] font-bold tracking-wider mb-0.5">دكان 962</span>
+-                <span className="text-xs font-semibold leading-relaxed">{toastMessage}</span>
+-              </div>
+-              <div className="absolute bottom-0 left-0 h-1 bg-[#D4AF37] animate-progress rounded-b-2xl"></div>
+-            </div>
+-          </div>
+-        )}
++        <Toast toast={toast} onDismiss={dismissToast} />
+ 
+         {/* Top Banner Notice */}
+-        <aside aria-label="شريط العروض" className="bg-[#1C1917] text-[#EDE8E0] text-[11px] py-2 px-4 text-center border-b border-[#2C2825]">
+-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+-            <span className="text-[#D4AF37] font-bold">👑 دكان 962 (Dukan 962)</span>
+-            <span aria-hidden="true" className="hidden sm:inline">·</span>
+-            <span>جودة نخب أول</span>
+-            <span aria-hidden="true" className="hidden sm:inline">·</span>
+-            <span className="text-[#A7F3D0] font-bold">✨ يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
+-            <span aria-hidden="true" className="hidden sm:inline">·</span>
+-            <span>التوصيل لجميع محافظات المملكة</span>
+-            <span aria-hidden="true" className="hidden sm:inline">·</span>
+-            <span className="text-white/80">الدفع كاش أو عبر كليك (CliQ)</span>
++        <aside aria-label="شريط العروض" className="bg-[#14110F] text-white/75 text-[11px] sm:text-xs py-2.5 px-4 text-center">
++          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
++            <span className="text-[#E3C16F] font-bold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
++            <span aria-hidden="true" className="hidden sm:block h-3 w-px bg-white/15" />
++            <span className="hidden sm:inline">التوصيل لجميع محافظات المملكة</span>
++            <span aria-hidden="true" className="hidden md:block h-3 w-px bg-white/15" />
++            <span className="hidden md:inline">الدفع كاش أو عبر كليك (CliQ)</span>
+           </div>
+         </aside>
+ 
+@@ -446,22 +461,19 @@ export default function App() {
+ 
+         {/* Catalog & Shop Section */}
+         <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-4 border-b border-[#EAE3D7]">
++          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+             <div>
+-              <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
+-                <Sparkles className="w-3.5 h-3.5" />
+-                <span>{selectedCategory !== 'all' ? `تشكيلة ${currentCategoryData.name}` : 'تشكيلات دكان 962 الحصرية'}</span>
+-              </div>
+-              <h2 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight font-serif">
++              <h2 className="text-2xl sm:text-4xl font-bold text-[#14110F] tracking-tight font-serif">
+                 {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
+               </h2>
+-              <p className="text-xs text-[#78716C] mt-1">
+-                استكشف منتجاتنا، اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
++              <p className="text-sm text-[#78716C] mt-2">
++                اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
+               </p>
+             </div>
+ 
+-            <div className="text-xs font-bold text-[#2E5339] bg-[#EDF4EE] px-3.5 py-1.5 rounded-xl border border-[#C5DEC8] flex items-center gap-1.5 self-start sm:self-auto">
+-              <span>الأسعار بالدينار الأردني (د.أ) فقط</span>
++            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full bg-[#EDF4EE] ring-1 ring-[#C5DEC8] text-xs font-bold text-[#2E5339]">
++              <span className="w-1.5 h-1.5 rounded-full bg-[#2E5339]" />
++              الأسعار بالدينار الأردني (د.أ) فقط
+             </div>
+           </div>
+ 
+@@ -476,21 +488,16 @@ export default function App() {
+             onResetFilters={handleResetFilters}
+           />
+ 
+-          {filteredProducts.length === 0 ? (
+-            <div className="py-20 text-center bg-white rounded-3xl border border-[#ECE5D9] p-8">
+-              <p className="text-base font-bold text-[#1C1917] mb-2">
+-                لا توجد منتجات مطابقة لمعايير البحث الحالية (أو لم يتم إضافة منتجات بعد)
+-              </p>
+-              <p className="text-xs text-[#78716C] mb-6">
+-                جرّب توسيع نطاق السعر أو اختيار تصنيف آخر، أو قم بإضافة منتجات من لوحة التحكم.
+-              </p>
+-              <button
+-                onClick={handleResetFilters}
+-                className="py-2.5 px-6 text-xs font-bold text-white bg-[#1C1917] rounded-xl cursor-pointer"
+-              >
+-                عرض جميع المنتجات
+-              </button>
+-            </div>
++          {!productsLoaded ? (
++            <ProductSkeletonGrid />
++          ) : filteredProducts.length === 0 ? (
++            <EmptyState
++              variant={products.length === 0 ? 'no-products' : 'no-results'}
++              searchQuery={searchQuery}
++              activeFilters={activeFilters}
++              onReset={handleResetFilters}
++              onBrowseCategories={scrollToCategories}
++            />
+           ) : (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+               {filteredProducts.map((product) => (
+diff --git a/src/components/CategoryBoxes.tsx b/src/components/CategoryBoxes.tsx
+index 45b1cef..2d33724 100644
+--- a/src/components/CategoryBoxes.tsx
++++ b/src/components/CategoryBoxes.tsx
+@@ -1,4 +1,5 @@
+ import React from 'react';
++import { ArrowUpLeft, Check } from 'lucide-react';
+ import { Category } from '../types/furniture';
+ 
+ interface CategoryBoxesProps {
+@@ -7,6 +8,27 @@ interface CategoryBoxesProps {
+   onSelectCategory: (cat: string) => void;
+ }
+ 
++/**
++ * تخطيط Bento: أول قسم كبير، والباقي يملأ الشبكة بدون فراغات.
++ * يعمل تلقائياً مع 3-5 أقسام، وما زاد عن ذلك يتحول لشبكة متساوية.
++ */
++const getSpanClasses = (index: number, total: number): string => {
++  const rest = total - 1;
++  const bento = total >= 3 && total <= 5;
++  if (!bento) return '';
++
++  if (index === 0) return 'col-span-2 lg:row-span-2';
++
++  const isLast = index === total - 1;
++  // موبايل: إذا كان عدد الباقي فردياً يأخذ الأخير عرضاً كاملاً
++  const mobile = isLast && rest % 2 === 1 ? 'col-span-2' : '';
++  // كمبيوتر: ملء المنطقة اليمنى (عمودان × صفان)
++  let desktop = '';
++  if (rest === 3 && isLast) desktop = 'lg:col-span-2';
++  if (rest === 2) desktop = 'lg:col-span-2';
++  return `${mobile} ${desktop}`.trim();
++};
++
+ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
+   categories,
+   selectedCategory,
+@@ -17,72 +39,87 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
+   // 💡 دالة لتصغير حجم الصورة من Cloudinary (إذا كنت تستخدمه)
+   const getThumbnail = (url: string) => {
+     if (url && url.includes('res.cloudinary.com')) {
+-      return url.replace('/upload/', '/upload/w_600,c_fill,q_auto:good/');
++      return url.replace('/upload/', '/upload/w_900,c_fill,q_auto:good/');
+     }
+     return url;
+   };
+ 
++  const total = categories.length;
++
+   return (
+-    <section className="py-6 sm:py-12 bg-[#FAF8F5]">
++    <section id="categories" className="py-8 sm:py-16 bg-[#FBFAF7]">
+       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+-        
+-        <div className="flex items-center justify-between mb-4 sm:mb-8">
+-          <div>
+-            <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-[#8C6D46] mb-1">
+-              <span>تشكيلاتنا المتنوعة</span>
+-            </div>
+-            <h2 className="text-lg sm:text-2xl font-extrabold text-[#1C1917] tracking-tight font-serif">
+-              تسوق حسب القسم
+-            </h2>
+-          </div>
++        <div className="flex items-end justify-between gap-4 mb-5 sm:mb-9">
++          <h2 className="text-2xl sm:text-4xl font-bold text-[#14110F] tracking-tight font-serif">
++            تسوّق حسب القسم
++          </h2>
++          <button
++            onClick={() => onSelectCategory('all')}
++            className="group/all inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#78716C] hover:text-[#14110F] transition-colors cursor-pointer shrink-0"
++          >
++            <span>عرض كل المنتجات</span>
++            <ArrowUpLeft className="w-4 h-4 transition-transform duration-300 group-hover/all:-translate-x-0.5 group-hover/all:-translate-y-0.5" />
++          </button>
+         </div>
+ 
+-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+-          {categories.map((cat) => {
++        <div className="grid grid-cols-2 lg:grid-cols-4 auto-rows-[168px] sm:auto-rows-[220px] gap-2.5 sm:gap-4 grid-flow-dense">
++          {categories.map((cat, index) => {
+             const isSelected = selectedCategory === cat.id;
++            const isFeatured = index === 0 && total >= 3 && total <= 5;
+ 
+             return (
+               <button
+                 key={cat.id}
+                 onClick={() => onSelectCategory(cat.id)}
+-                className={`group relative overflow-hidden rounded-xl sm:rounded-2xl text-right transition-all duration-300 border cursor-pointer flex flex-col justify-end min-h-[140px] sm:min-h-[220px] ${
++                aria-pressed={isSelected}
++                className={`group relative isolate overflow-hidden rounded-[20px] sm:rounded-[28px] text-right cursor-pointer flex flex-col justify-end bg-[#1C1917] transition-all duration-500 ease-out active:scale-[0.985] ${getSpanClasses(
++                  index,
++                  total
++                )} ${
+                   isSelected
+-                    ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50 shadow-lg'
+-                    : 'border-[#EAE1D3] hover:shadow-xl hover:border-[#8C6D46]'
++                    ? 'ring-2 ring-[#E3C16F] ring-offset-2 ring-offset-[#FBFAF7] shadow-lift'
++                    : 'ring-1 ring-black/5 shadow-soft hover:shadow-lift hover:-translate-y-1'
+                 }`}
+               >
+-                <div className="absolute inset-0">
+-                  <img
+-                    src={getThumbnail(cat.image)}
+-                    alt={cat.name}
+-                    loading="lazy"
+-                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
+-                    referrerPolicy="no-referrer"
+-                  />
+-                  
+-                  <div className={`absolute inset-0 bg-gradient-to-t transition-opacity duration-300 ${
+-                    isSelected 
+-                      ? 'from-[#1C1917]/95 via-[#1C1917]/40 to-transparent' 
+-                      : 'from-black/85 via-black/30 to-transparent group-hover:from-black/95'
+-                  }`}></div>
+-                </div>
++                <img
++                  src={getThumbnail(cat.image)}
++                  alt=""
++                  loading="lazy"
++                  referrerPolicy="no-referrer"
++                  className="absolute inset-0 -z-10 w-full h-full object-cover object-center transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]"
++                />
++                <div
++                  className={`absolute inset-0 -z-10 bg-gradient-to-t transition-opacity duration-500 ${
++                    isSelected
++                      ? 'from-black/85 via-black/25 to-transparent'
++                      : 'from-black/70 via-black/10 to-transparent group-hover:from-black/80'
++                  }`}
++                />
+ 
+-                <div className="relative z-10 p-2.5 sm:p-5 w-full mt-auto">
+-                  <h3 className="text-sm sm:text-xl font-bold leading-tight mb-1 sm:mb-2 text-white drop-shadow-md">
++                {isSelected && (
++                  <span className="absolute top-3 right-3 sm:top-4 sm:right-4 inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-[#E3C16F] text-[#14110F] text-[11px] font-bold shadow-md">
++                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
++                    القسم الحالي
++                  </span>
++                )}
++
++                {/* شريحة زجاجية للعنوان */}
++                <div className="m-2 sm:m-3.5 flex items-center justify-between gap-3 rounded-2xl bg-white/12 backdrop-blur-xl ring-1 ring-white/20 px-3.5 py-2.5 sm:px-5 sm:py-3.5">
++                  <h3
++                    className={`font-serif font-bold text-white leading-tight ${
++                      isFeatured ? 'text-lg sm:text-3xl' : 'text-base sm:text-xl'
++                    }`}
++                  >
+                     {cat.name}
+                   </h3>
+-                  
+-                  <div className="pt-1.5 sm:pt-2 border-t border-white/20 flex items-center justify-between text-[9px] sm:text-[11px] font-bold">
+-                    <span className={isSelected ? 'text-[#D4AF37]' : 'text-[#EAE1D3] group-hover:text-white transition-colors'}>
+-                      {isSelected ? '✓ القسم المختار' : 'استعراض ←'}
+-                    </span>
+-                  </div>
++                  <span className="grid place-items-center w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full bg-white/20 text-white transition-all duration-500 group-hover:bg-white group-hover:text-[#14110F] group-hover:-rotate-12">
++                    <ArrowUpLeft className="w-4 h-4" />
++                  </span>
+                 </div>
+               </button>
+             );
+           })}
+         </div>
+-
+       </div>
+     </section>
+   );
+diff --git a/src/components/EmptyState.tsx b/src/components/EmptyState.tsx
+new file mode 100644
+index 0000000..ca9c13b
+--- /dev/null
++++ b/src/components/EmptyState.tsx
+@@ -0,0 +1,119 @@
++import React from 'react';
++import { motion } from 'motion/react';
++import { SearchX, PackageOpen, RotateCcw, LayoutGrid, X } from 'lucide-react';
++
++export interface ActiveFilter {
++  key: string;
++  label: string;
++  onRemove: () => void;
++}
++
++interface EmptyStateProps {
++  /** no-results: الفلاتر لا تطابق شيئاً | no-products: لا توجد منتجات في المتجر أصلاً */
++  variant: 'no-results' | 'no-products';
++  searchQuery?: string;
++  activeFilters?: ActiveFilter[];
++  onReset?: () => void;
++  onBrowseCategories?: () => void;
++}
++
++export const EmptyState: React.FC<EmptyStateProps> = ({
++  variant,
++  searchQuery,
++  activeFilters = [],
++  onReset,
++  onBrowseCategories,
++}) => {
++  const isNoResults = variant === 'no-results';
++  const Icon = isNoResults ? SearchX : PackageOpen;
++  const query = searchQuery?.trim();
++
++  const title = isNoResults ? 'لا توجد نتائج مطابقة' : 'المتجر قيد التجهيز';
++  const body = isNoResults
++    ? query
++      ? `لم نجد منتجات تطابق "${query}" مع الفلاتر الحالية. جرّب كلمة أخرى أو أزل أحد الفلاتر.`
++      : 'لا توجد منتجات تطابق الفلاتر الحالية. وسّع نطاق السعر أو جرّب قسماً آخر.'
++    : 'لم تُنشر منتجات بعد. ستظهر هنا فور إضافتها.';
++
++  return (
++    <motion.div
++      initial={{ opacity: 0, y: 12 }}
++      animate={{ opacity: 1, y: 0 }}
++      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
++      className="relative overflow-hidden rounded-[28px] sm:rounded-[36px] bg-white ring-1 ring-black/[0.06] shadow-soft px-6 py-14 sm:py-20 text-center"
++    >
++      {/* هالة ذهبية خفيفة في الخلفية */}
++      <div
++        aria-hidden="true"
++        className="absolute inset-x-0 -top-24 h-72 bg-[radial-gradient(closest-side,rgba(227,193,111,0.22),transparent)] pointer-events-none"
++      />
++
++      <div className="relative mx-auto mb-7 grid place-items-center w-36 h-36">
++        <span className="absolute inset-0 rounded-full ring-1 ring-black/[0.05]" />
++        <span className="absolute inset-4 rounded-full ring-1 ring-black/[0.06] bg-[#FBF7EE]/60" />
++        <span className="absolute inset-9 rounded-full bg-gradient-to-br from-[#F7EFD9] to-[#EBD9A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_24px_-10px_rgba(140,109,31,0.5)]" />
++        <Icon className="relative w-9 h-9 text-[#6B5217] animate-float-slow" strokeWidth={1.6} />
++      </div>
++
++      <h3 className="relative text-xl sm:text-2xl font-bold font-serif text-[#14110F] mb-2">{title}</h3>
++      <p className="relative text-sm text-[#78716C] leading-relaxed max-w-md mx-auto">{body}</p>
++
++      {isNoResults && activeFilters.length > 0 && (
++        <div className="relative flex flex-wrap items-center justify-center gap-2 mt-6">
++          {activeFilters.map((f) => (
++            <button
++              key={f.key}
++              onClick={f.onRemove}
++              aria-label={`إزالة فلتر ${f.label}`}
++              className="group/chip inline-flex items-center gap-1.5 h-8 pr-3.5 pl-2 rounded-full bg-[#FBF7EE] ring-1 ring-[#E3D4AE] text-xs font-semibold text-[#5C4713] transition-all hover:bg-[#F4EAD0] active:scale-95 cursor-pointer"
++            >
++              <span>{f.label}</span>
++              <span className="grid place-items-center w-4 h-4 rounded-full bg-[#5C4713]/10 group-hover/chip:bg-[#5C4713]/20 transition-colors">
++                <X className="w-2.5 h-2.5" />
++              </span>
++            </button>
++          ))}
++        </div>
++      )}
++
++      {isNoResults && (
++        <div className="relative flex flex-col sm:flex-row items-center justify-center gap-2.5 mt-8">
++          <button
++            onClick={onReset}
++            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-[#14110F] text-white text-sm font-bold shadow-[0_10px_24px_-10px_rgba(20,17,15,0.6)] transition-all hover:bg-[#2A2522] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
++          >
++            <RotateCcw className="w-4 h-4" />
++            إعادة ضبط الفلاتر
++          </button>
++          <button
++            onClick={onBrowseCategories}
++            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-white text-[#14110F] text-sm font-bold ring-1 ring-black/10 transition-all hover:bg-[#FBF7EE] hover:ring-black/20 active:scale-95 cursor-pointer"
++          >
++            <LayoutGrid className="w-4 h-4" />
++            تصفح الأقسام
++          </button>
++        </div>
++      )}
++    </motion.div>
++  );
++};
++
++/** هيكل تحميل بدل ومضة "لا توجد منتجات" أثناء جلب البيانات من Firebase */
++export const ProductSkeletonGrid: React.FC<{ count?: number }> = ({ count = 6 }) => (
++  <div aria-busy="true" aria-label="جاري تحميل المنتجات" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
++    {Array.from({ length: count }).map((_, i) => (
++      <div key={i} className="rounded-2xl bg-white ring-1 ring-black/[0.05] overflow-hidden shadow-soft">
++        <div className="aspect-4/3 skeleton-bg animate-skeleton" />
++        <div className="p-5 space-y-3">
++          <div className="h-3 w-1/3 rounded-full skeleton-bg animate-skeleton" />
++          <div className="h-4 w-3/4 rounded-full skeleton-bg animate-skeleton" />
++          <div className="h-3 w-full rounded-full skeleton-bg animate-skeleton" />
++          <div className="flex items-center justify-between pt-4">
++            <div className="h-6 w-24 rounded-full skeleton-bg animate-skeleton" />
++            <div className="h-9 w-28 rounded-xl skeleton-bg animate-skeleton" />
++          </div>
++        </div>
++      </div>
++    ))}
++  </div>
++);
+diff --git a/src/components/Hero.tsx b/src/components/Hero.tsx
+index d05922d..ffc123e 100644
+--- a/src/components/Hero.tsx
++++ b/src/components/Hero.tsx
+@@ -1,4 +1,5 @@
+-import React from 'react';
++import React, { useRef } from 'react';
++import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react';
+ import { ArrowLeft, Sparkles, ShieldCheck, Truck, Clock } from 'lucide-react';
+ import { Category } from '../types/furniture';
+ 
+@@ -7,6 +8,23 @@ interface HeroProps {
+   categoryData?: Category | null;
+ }
+ 
++const perks = [
++  { Icon: ShieldCheck, title: 'جودة مضمونة', sub: 'خامات نخب أول' },
++  { Icon: Truck, title: 'توصيل شامل', sub: 'لجميع المحافظات' },
++  { Icon: Clock, title: 'توصيل سريع', sub: 'خلال 24-48 ساعة' },
++  { Icon: Sparkles, title: 'ألوان حصرية', sub: 'تشكيلات متنوعة' },
++];
++
++// حركة دخول واحدة منسقة للنصوص (تُعاد عند تغيير القسم)
++const container = {
++  hidden: {},
++  show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
++};
++const item = {
++  hidden: { opacity: 0, y: 16 },
++  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
++};
++
+ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
+   const defaultData = {
+     title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
+@@ -19,127 +37,112 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
+   };
+ 
+   const displayData: any = categoryData || defaultData;
+-  
+   const desktopBanner = displayData.bannerImage || displayData.image || defaultData.bannerImage;
+   const mobileBanner = displayData.mobileBannerImage || desktopBanner;
+ 
++  // نحذف الإيموجي من بداية الشارة ليبدو النص أنظف
++  const badge = String(displayData.badgeText || 'يوجد معاينة').replace(/^[^\p{L}\p{N}]+/u, '');
++
++  // تكبير خفيف جداً للصورة مع التمرير (بدون إزاحة حتى لا يُقص نص البنر)
++  const frameRef = useRef<HTMLDivElement>(null);
++  const reduceMotion = useReducedMotion();
++  const { scrollYProgress } = useScroll({ target: frameRef, offset: ['start start', 'end start'] });
++  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.07]);
++
+   return (
+-    <section className="relative overflow-hidden bg-[#FAF8F5]">
+-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-6 sm:pb-8">
+-        
+-        <div className="relative rounded-xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] flex items-center bg-[#1C1917]">
+-          
+-          {/* الخلفية المموهة (احتياطية) - تم تعديلها لـ object-top */}
+-          <img
+-            src={mobileBanner}
+-            alt=""
+-            aria-hidden="true"
+-            referrerPolicy="no-referrer"
+-            className="absolute inset-0 w-full h-full object-cover object-top blur-xl scale-110 opacity-60 sm:hidden"
+-          />
+-          <img
+-            src={desktopBanner}
+-            alt=""
+-            aria-hidden="true"
+-            referrerPolicy="no-referrer"
+-            className="absolute inset-0 w-full h-full object-cover object-top blur-xl scale-110 opacity-60 hidden sm:block"
+-          />
++    <section className="relative bg-[#FBFAF7]">
++      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-12">
++        <div
++          ref={frameRef}
++          className="relative isolate overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#14110F] shadow-lift ring-1 ring-black/5"
++        >
++          <motion.div style={reduceMotion ? undefined : { scale }} className="absolute inset-0 will-change-transform">
++            <picture key={desktopBanner}>
++              <source media="(max-width: 639px)" srcSet={mobileBanner} />
++              <source media="(min-width: 640px)" srcSet={desktopBanner} />
++              <img
++                src={desktopBanner}
++                alt={displayData.title || displayData.name}
++                referrerPolicy="no-referrer"
++                fetchPriority="high"
++                decoding="async"
++                className="absolute inset-0 w-full h-full object-cover object-top animate-kenburns"
++              />
++            </picture>
++          </motion.div>
+ 
+-          {/* 💡 الصورة الأساسية: تظهر دائماً فوراً - تم تعديلها لـ object-top */}
+-          <picture key={desktopBanner}>
+-            <source media="(max-width: 639px)" srcSet={mobileBanner} />
+-            <source media="(min-width: 640px)" srcSet={desktopBanner} />
+-            
+-            <img
+-              src={desktopBanner}
+-              alt={displayData.title || displayData.name}
+-              referrerPolicy="no-referrer"
+-              fetchPriority="high"
+-              decoding="async"
+-              className="absolute inset-0 w-full h-full object-cover object-top z-10"
+-            />
+-          </picture>
++          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none" />
+ 
+-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end z-20">
+-            <div className="p-3.5 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
+-              
+-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs text-[#E2D5C4] mb-1.5 sm:mb-3 font-medium">
+-                <span className="bg-[#2E5339] text-[#F0FDF4] px-1.5 py-0.5 rounded-md font-bold shadow-xs">
+-                  {displayData.name || 'دكـان 962'}
+-                </span>
+-                <span className="text-[#A7F3D0] font-bold hidden sm:inline">
+-                  {displayData.badgeText || '✨ يوجد معاينة'}
++          <div className="absolute inset-x-0 bottom-0 z-20 p-2.5 sm:p-8 lg:p-10">
++            <motion.div
++              key={displayData.title}
++              variants={container}
++              initial="hidden"
++              animate="show"
++              className="max-w-2xl rounded-2xl sm:rounded-[28px] bg-black/30 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/15 shadow-glass p-3.5 sm:p-8 text-white"
++            >
++              <motion.div variants={item} className="flex items-center gap-2 mb-2 sm:mb-4">
++                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
++                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-60 animate-ping" />
++                  <span className="relative inline-flex rounded-full h-full w-full bg-emerald-300" />
+                 </span>
+-                <span className="hidden sm:inline">· توصيل لجميع المحافظات</span>
+-              </div>
++                <span className="text-[10px] sm:text-xs font-semibold text-white/90">{badge}</span>
++              </motion.div>
+ 
+-              <h1 className="text-base sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.3] mb-2 sm:mb-4 text-balance font-serif">
++              <motion.h1
++                variants={item}
++                className="text-lg sm:text-5xl lg:text-[3.4rem] font-bold tracking-tight leading-[1.25] mb-1.5 sm:mb-4 text-balance font-serif"
++              >
+                 {displayData.title}
+-              </h1>
++              </motion.h1>
+ 
+-              <p className="text-[10px] sm:text-base text-[#EAE4DC] leading-relaxed mb-3 sm:mb-7 max-w-2xl font-light line-clamp-2 sm:line-clamp-none">
++              <motion.p
++                variants={item}
++                className="text-[11px] sm:text-base text-white/80 leading-relaxed mb-3 sm:mb-7 max-w-xl line-clamp-2 sm:line-clamp-3"
++              >
+                 {displayData.description}
+-              </p>
++              </motion.p>
+ 
+-              <div className="flex flex-row items-stretch sm:items-center gap-2 sm:gap-3">
++              <motion.div variants={item} className="flex items-center gap-2 sm:gap-3">
+                 <button
+                   onClick={onExploreClick}
+-                  className="py-2 px-3 sm:py-3 sm:px-5 text-[10px] sm:text-sm font-bold text-[#1C1917] bg-[#EAE2D5] hover:bg-white rounded-lg sm:rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
++                  className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-9 sm:h-12 px-4 sm:px-6 rounded-full bg-white text-[#14110F] text-[11px] sm:text-sm font-bold shadow-[0_10px_30px_-10px_rgba(255,255,255,0.55)] transition-all duration-300 hover:shadow-[0_14px_36px_-10px_rgba(255,255,255,0.8)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                 >
+-                  <span>{displayData.buttonText || 'استكشف الآن'}</span>
+-                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
++                  <span
++                    aria-hidden="true"
++                    className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-[#E3C16F]/50 to-transparent"
++                  />
++                  <span className="relative">{displayData.buttonText || 'استكشف الآن'}</span>
++                  <ArrowLeft className="relative w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover/btn:-translate-x-1" />
+                 </button>
+ 
+-                <div className="hidden sm:flex items-center justify-center gap-2 text-xs text-white/95 bg-[#2E5339]/90 backdrop-blur-md py-3 px-4 rounded-xl border border-[#A7F3D0]/30 font-semibold">
+-                  <ShieldCheck className="w-4 h-4 text-[#A7F3D0]" />
+-                  <span>يوجد معاينة عند وصول الطلب</span>
+-                </div>
+-              </div>
+-            </div>
++                <span className="hidden sm:inline-flex items-center gap-2 h-12 px-4 rounded-full text-xs font-semibold text-white/90 bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
++                  <ShieldCheck className="w-4 h-4 text-emerald-300" />
++                  يوجد معاينة عند وصول الطلب
++                </span>
++              </motion.div>
++            </motion.div>
+           </div>
+         </div>
+ 
+-        {/* شريط المميزات السفلي */}
+-        <div className="mt-3 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-4 p-2 sm:p-4 bg-white rounded-xl sm:rounded-2xl border border-[#E9E1D4] shadow-2xs">
+-          <div className="flex items-center gap-1.5 p-1">
+-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
+-              <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+-            </div>
+-            <div>
+-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">جودة مضمونة</p>
+-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">خامات نخب أول</p>
+-            </div>
+-          </div>
+-
+-          <div className="flex items-center gap-1.5 p-1">
+-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
+-              <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+-            </div>
+-            <div>
+-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">توصيل شامل</p>
+-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">لجميع المحافظات</p>
+-            </div>
+-          </div>
+-
+-          <div className="flex items-center gap-1.5 p-1">
+-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
+-              <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+-            </div>
+-            <div>
+-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">توصيل سريع</p>
+-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">خلال 24-48 ساعة</p>
+-            </div>
+-          </div>
+-
+-          <div className="flex items-center gap-1.5 p-1">
+-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
+-              <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+-            </div>
+-            <div>
+-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">ألوان حصرية</p>
+-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">تشكيلات متنوعة</p>
++        {/* شريط المميزات: بطاقة زجاجية واحدة بفواصل رفيعة */}
++        <div className="mt-3 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl ring-1 ring-black/[0.06] shadow-soft overflow-hidden">
++          {perks.map(({ Icon, title, sub }, i) => (
++            <div
++              key={title}
++              className={`group/perk flex items-center gap-2.5 sm:gap-3.5 p-3 sm:p-5 transition-colors duration-300 hover:bg-[#FBF7EE] ${
++                i % 2 === 0 ? 'border-l' : ''
++              } ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i !== 3 ? 'lg:border-l' : 'lg:border-l-0'} border-black/[0.06]`}
++            >
++              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#F7EFD9] to-[#EEDFB8] text-[#8C6D1F] grid place-items-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform duration-500 group-hover/perk:scale-110 group-hover/perk:-rotate-6">
++                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
++              </div>
++              <div className="min-w-0">
++                <p className="text-[11px] sm:text-sm font-bold text-[#14110F]">{title}</p>
++                <p className="text-[10px] sm:text-xs text-[#78716C] mt-0.5">{sub}</p>
++              </div>
+             </div>
+-          </div>
++          ))}
+         </div>
+       </div>
+     </section>
+diff --git a/src/components/Navbar.tsx b/src/components/Navbar.tsx
+index 0a1f04f..1d7eb73 100644
+--- a/src/components/Navbar.tsx
++++ b/src/components/Navbar.tsx
+@@ -1,5 +1,6 @@
+-import React from 'react';
+-import { ShoppingBag, Search, Heart } from 'lucide-react';
++import React, { useEffect, useRef, useState } from 'react';
++import { motion } from 'motion/react';
++import { ShoppingBag, Search, Heart, X } from 'lucide-react';
+ import { DukanLogo } from './DukanLogo';
+ import { Category } from '../types/furniture';
+ 
+@@ -16,6 +17,19 @@ interface NavbarProps {
+   onSelectCategory: (category: string) => void;
+ }
+ 
++/** شارة العدّاد: تقفز قفزة صغيرة كل ما تغيّر الرقم */
++const CountBadge: React.FC<{ count: number; className: string }> = ({ count, className }) => (
++  <motion.span
++    key={count}
++    initial={{ scale: 1.7 }}
++    animate={{ scale: 1 }}
++    transition={{ type: 'spring', stiffness: 500, damping: 18 }}
++    className={className}
++  >
++    {count}
++  </motion.span>
++);
++
+ export const Navbar: React.FC<NavbarProps> = ({
+   categories,
+   currentCategoryData,
+@@ -28,114 +42,185 @@ export const Navbar: React.FC<NavbarProps> = ({
+   onSearchChange,
+   onSelectCategory,
+ }) => {
+-  
++  const [scrolled, setScrolled] = useState(false);
++  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
++  const mobileSearchRef = useRef<HTMLInputElement>(null);
++
++  useEffect(() => {
++    const onScroll = () => setScrolled(window.scrollY > 12);
++    onScroll();
++    window.addEventListener('scroll', onScroll, { passive: true });
++    return () => window.removeEventListener('scroll', onScroll);
++  }, []);
++
++  useEffect(() => {
++    if (mobileSearchOpen) mobileSearchRef.current?.focus();
++  }, [mobileSearchOpen]);
++
+   const logoSubtitle = currentCategoryData && currentCategoryData.id !== 'all'
+     ? `${currentCategoryData.name} · الأردن`
+     : 'متجرك الشامل · الأردن';
+ 
++  const navItems = [{ id: 'all', name: 'جميع الأقسام' }, ...categories.map((c) => ({ id: c.id, name: c.name }))];
++  const activeId = currentCategoryData?.id ?? 'all';
++
++  const iconBtn =
++    'relative grid place-items-center w-10 h-10 rounded-full bg-white/70 backdrop-blur-md ring-1 ring-black/[0.07] text-[#44403C] shadow-[0_1px_2px_rgba(20,17,15,0.05)] transition-all duration-300 hover:bg-white hover:text-[#14110F] hover:shadow-soft active:scale-90 cursor-pointer';
++
+   return (
+-    <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E8E2D8]">
+-      {/* الصف العلوي: الشعار والأدوات */}
+-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+-        
++    <header
++      className={`sticky top-0 z-40 transition-all duration-500 ${
++        scrolled
++          ? 'bg-[#FBFAF7]/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-black/[0.06] shadow-[0_10px_30px_-18px_rgba(20,17,15,0.25)]'
++          : 'bg-[#FBFAF7]/0 border-b border-transparent'
++      }`}
++    >
++      <div
++        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 transition-[height] duration-500 ${
++          scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
++        }`}
++      >
+         <button
+           type="button"
+           onClick={onOpenAdmin}
+-          className="shrink-0 flex items-center cursor-pointer hover:opacity-90 transition-opacity text-right"
++          className="shrink-0 flex items-center cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-95 text-right"
+           title="شعار دكان 962"
+         >
+           <DukanLogo variant="dark" className="h-9 sm:h-12" subtitle={logoSubtitle} />
+         </button>
+ 
+-        {/* روابط الكمبيوتر (تختفي في الموبايل) */}
+-        <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-[#57534E]">
+-          <button
+-            onClick={() => onSelectCategory('all')}
+-            className={`transition-colors whitespace-nowrap cursor-pointer hover:underline underline-offset-8 ${
+-              currentCategoryData?.id === 'all' ? 'text-[#1C1917] font-bold' : 'hover:text-[#1C1917]'
+-            }`}
+-          >
+-            جميع الأقسام
+-          </button>
+-          {categories.map((cat) => (
+-            <button
+-              key={cat.id}
+-              onClick={() => onSelectCategory(cat.id)}
+-              className={`transition-colors whitespace-nowrap cursor-pointer hover:underline underline-offset-8 ${
+-                currentCategoryData?.id === cat.id ? 'text-[#1C1917] font-bold' : 'hover:text-[#1C1917]'
+-              }`}
+-            >
+-              {cat.name}
+-            </button>
+-          ))}
++        {/* روابط الكمبيوتر مع مؤشر منزلق للقسم النشط */}
++        <nav
++          aria-label="الأقسام"
++          className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-black/[0.035] ring-1 ring-black/[0.04] max-w-[46%] overflow-x-auto no-scrollbar"
++        >
++          {navItems.map((item) => {
++            const isActive = activeId === item.id;
++            return (
++              <button
++                key={item.id}
++                onClick={() => onSelectCategory(item.id)}
++                aria-current={isActive ? 'page' : undefined}
++                className={`relative px-4 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap cursor-pointer transition-colors duration-300 ${
++                  isActive ? 'text-[#14110F]' : 'text-[#78716C] hover:text-[#14110F]'
++                }`}
++              >
++                {isActive && (
++                  <motion.span
++                    layoutId="nav-active-pill"
++                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
++                    className="absolute inset-0 rounded-full bg-white shadow-[0_1px_3px_rgba(20,17,15,0.12),0_6px_14px_-6px_rgba(20,17,15,0.18)]"
++                  />
++                )}
++                <span className="relative">{item.name}</span>
++              </button>
++            );
++          })}
+         </nav>
+ 
+-        {/* أدوات البحث والسلة */}
+-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+-          <div className="relative hidden md:block">
++        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
++          {/* بحث الكمبيوتر: يتمدد عند التركيز */}
++          <div className="relative hidden md:block group/search">
++            <Search className="w-4 h-4 text-[#A8A29E] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within/search:text-[#B8923A]" />
+             <input
+               type="text"
+               value={searchQuery}
+               onChange={(e) => onSearchChange(e.target.value)}
+-              placeholder="ابحث..."
+-              className="text-xs w-36 lg:w-56 py-2 pr-8 pl-3 bg-[#F2EDE4] border border-[#DDD5C7] rounded-xl text-[#1C1917] placeholder-[#8C827A] focus:outline-hidden focus:border-[#8C6D46] transition-all"
++              placeholder="ابحث عن منتج أو رقمه"
++              aria-label="بحث"
++              className="text-[13px] w-40 focus:w-64 lg:w-48 lg:focus:w-72 h-10 pr-10 pl-9 bg-white/70 backdrop-blur-md ring-1 ring-black/[0.07] rounded-full text-[#14110F] placeholder-[#A8A29E] focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#B8923A]/60 transition-all duration-500"
+             />
+-            <Search className="w-3.5 h-3.5 text-[#8C827A] absolute right-2.5 top-2.5 pointer-events-none" />
++            {searchQuery && (
++              <button
++                onClick={() => onSearchChange('')}
++                aria-label="مسح البحث"
++                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 grid place-items-center rounded-full bg-black/10 hover:bg-black/20 text-[#44403C] cursor-pointer transition-colors"
++              >
++                <X className="w-3 h-3" />
++              </button>
++            )}
+           </div>
+ 
++          {/* بحث الموبايل (لم يكن متاحاً سابقاً) */}
+           <button
+-            onClick={onOpenWishlist}
+-            className="relative p-2 sm:p-2.5 rounded-xl bg-[#F2EDE4] hover:bg-[#EAE2D5] text-[#1C1917] border border-[#DDD5C7] transition-all cursor-pointer shadow-2xs"
++            onClick={() => setMobileSearchOpen((v) => !v)}
++            aria-label="بحث"
++            aria-expanded={mobileSearchOpen}
++            className={`${iconBtn} md:hidden`}
+           >
+-            <Heart className="w-4 h-4 text-[#57534E]" />
++            {mobileSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
++          </button>
++
++          <button onClick={onOpenWishlist} aria-label="المفضلة" className={iconBtn}>
++            <Heart className={`w-4 h-4 transition-colors ${wishlistCount > 0 ? 'text-rose-500 fill-rose-500' : ''}`} />
+             {wishlistCount > 0 && (
+-              <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center font-mono">
+-                {wishlistCount}
+-              </span>
++              <CountBadge
++                count={wishlistCount}
++                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-600 text-white text-[10px] font-bold rounded-full grid place-items-center font-mono ring-2 ring-[#FBFAF7]"
++              />
+             )}
+           </button>
+ 
+           <button
+             onClick={onOpenCart}
+-            className="flex items-center gap-1.5 sm:gap-2 py-1.5 px-2.5 sm:py-2 sm:px-3.5 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
++            aria-label="السلة"
++            className="group/cart relative flex items-center gap-2 h-10 pl-3.5 pr-3 sm:pl-4 text-[13px] font-bold text-white bg-[#14110F] rounded-full shadow-[0_6px_18px_-6px_rgba(20,17,15,0.55)] transition-all duration-300 hover:bg-[#2A2522] hover:shadow-[0_10px_24px_-8px_rgba(20,17,15,0.65)] hover:-translate-y-px active:translate-y-0 active:scale-95 cursor-pointer shrink-0"
+           >
+-            <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
++            <ShoppingBag className="w-4 h-4 text-[#E3C16F] transition-transform duration-300 group-hover/cart:-rotate-12" />
+             <span className="hidden sm:inline">السلة</span>
+             {cartCount > 0 && (
+-              <span className="bg-[#2E5339] text-white text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-full font-mono">
+-                {cartCount}
+-              </span>
++              <CountBadge
++                count={cartCount}
++                className="min-w-[20px] h-5 px-1.5 bg-[#E3C16F] text-[#14110F] text-[11px] font-extrabold rounded-full grid place-items-center font-mono"
++              />
+             )}
+           </button>
+         </div>
+       </div>
+ 
+-      {/* 💡 شريط الأقسام الأفقي للموبايل فقط */}
+-      <div className="lg:hidden overflow-x-auto border-t border-[#E8E2D8] bg-[#FAF8F5]">
+-        <div className="flex items-center gap-2 px-4 py-2.5 whitespace-nowrap">
+-          <button
+-            onClick={() => onSelectCategory('all')}
+-            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+-              currentCategoryData?.id === 'all' 
+-                ? 'bg-[#1C1917] text-white border-[#1C1917]' 
+-                : 'bg-white text-[#57534E] border-[#DDD5C7]'
+-            }`}
+-          >
+-            جميع الأقسام
+-          </button>
+-          {categories.map((cat) => (
+-            <button
+-              key={cat.id}
+-              onClick={() => onSelectCategory(cat.id)}
+-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+-                currentCategoryData?.id === cat.id 
+-                  ? 'bg-[#1C1917] text-white border-[#1C1917]' 
+-                  : 'bg-white text-[#57534E] border-[#DDD5C7]'
+-              }`}
+-            >
+-              {cat.name}
+-            </button>
+-          ))}
++      {/* شريط البحث المنسدل للموبايل */}
++      <div
++        className={`md:hidden grid transition-all duration-300 ${
++          mobileSearchOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
++        }`}
++      >
++        <div className="overflow-hidden">
++          <div className="px-4 pb-3 relative">
++            <Search className="w-4 h-4 text-[#A8A29E] absolute right-7 top-[calc(50%-6px)] -translate-y-1/2 pointer-events-none" />
++            <input
++              ref={mobileSearchRef}
++              type="text"
++              value={searchQuery}
++              onChange={(e) => onSearchChange(e.target.value)}
++              placeholder="ابحث عن منتج أو رقمه"
++              aria-label="بحث"
++              tabIndex={mobileSearchOpen ? 0 : -1}
++              className="w-full h-11 pr-11 pl-4 text-sm bg-white ring-1 ring-black/[0.08] rounded-2xl placeholder-[#A8A29E] focus:outline-hidden focus:ring-2 focus:ring-[#B8923A]/60"
++            />
++          </div>
++        </div>
++      </div>
++
++      {/* شريط الأقسام للموبايل */}
++      <div className="lg:hidden overflow-x-auto no-scrollbar">
++        <div className="flex items-center gap-2 px-4 pb-2.5 pt-0.5 whitespace-nowrap">
++          {navItems.map((item) => {
++            const isActive = activeId === item.id;
++            return (
++              <button
++                key={item.id}
++                onClick={() => onSelectCategory(item.id)}
++                aria-current={isActive ? 'page' : undefined}
++                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 active:scale-95 ${
++                  isActive
++                    ? 'bg-[#14110F] text-white shadow-[0_6px_14px_-6px_rgba(20,17,15,0.5)]'
++                    : 'bg-white/80 text-[#57534E] ring-1 ring-black/[0.07]'
++                }`}
++              >
++                {item.name}
++              </button>
++            );
++          })}
+         </div>
+       </div>
+     </header>
+diff --git a/src/components/Toast.tsx b/src/components/Toast.tsx
+new file mode 100644
+index 0000000..9316e47
+--- /dev/null
++++ b/src/components/Toast.tsx
+@@ -0,0 +1,103 @@
++import React from 'react';
++import { AnimatePresence, motion } from 'motion/react';
++import { ShoppingBag, Heart, HeartOff, CircleCheck, X } from 'lucide-react';
++
++export type ToastVariant = 'cart' | 'wishlist' | 'remove' | 'success';
++
++export interface ToastData {
++  id: number;
++  message: string;
++  variant: ToastVariant;
++  actionLabel?: string;
++  onAction?: () => void;
++}
++
++interface ToastProps {
++  toast: ToastData | null;
++  onDismiss: () => void;
++}
++
++const variants: Record<ToastVariant, { title: string; Icon: React.ElementType; tile: string }> = {
++  cart: {
++    title: 'أُضيف إلى السلة',
++    Icon: ShoppingBag,
++    tile: 'from-emerald-400/30 to-emerald-600/30 text-emerald-200 ring-emerald-300/30',
++  },
++  wishlist: {
++    title: 'أُضيف إلى المفضلة',
++    Icon: Heart,
++    tile: 'from-rose-400/30 to-rose-600/30 text-rose-200 ring-rose-300/30',
++  },
++  remove: {
++    title: 'أُزيل من المفضلة',
++    Icon: HeartOff,
++    tile: 'from-white/15 to-white/5 text-white/80 ring-white/20',
++  },
++  success: {
++    title: 'تم بنجاح',
++    Icon: CircleCheck,
++    tile: 'from-emerald-400/30 to-emerald-600/30 text-emerald-200 ring-emerald-300/30',
++  },
++};
++
++export const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => (
++  <div
++    aria-live="polite"
++    className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-8"
++  >
++    <AnimatePresence mode="wait">
++      {toast && (
++        <motion.div
++          key={toast.id}
++          role="status"
++          initial={{ opacity: 0, y: 28, scale: 0.94, filter: 'blur(6px)' }}
++          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
++          exit={{ opacity: 0, y: 16, scale: 0.97, filter: 'blur(4px)' }}
++          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
++          className="pointer-events-auto relative overflow-hidden w-full max-w-md flex items-center gap-3.5 pl-3 pr-3.5 py-3 rounded-[22px] bg-[#14110F]/80 backdrop-blur-2xl backdrop-saturate-150 text-white ring-1 ring-white/10 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]"
++        >
++          {(() => {
++            const { Icon, tile, title } = variants[toast.variant];
++            return (
++              <>
++                <div className={`grid place-items-center w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-br ring-1 ${tile}`}>
++                  <Icon className={`w-5 h-5 ${toast.variant === 'wishlist' ? 'fill-rose-300' : ''}`} />
++                </div>
++
++                <div className="min-w-0 flex-1">
++                  <p className="text-[13px] font-bold leading-tight">{title}</p>
++                  <p className="text-xs text-white/65 mt-0.5 truncate">{toast.message}</p>
++                </div>
++
++                {toast.actionLabel && toast.onAction && (
++                  <button
++                    onClick={() => {
++                      toast.onAction?.();
++                      onDismiss();
++                    }}
++                    className="shrink-0 h-8 px-3.5 rounded-full bg-white text-[#14110F] text-xs font-bold transition-all hover:bg-[#E3C16F] active:scale-95 cursor-pointer"
++                  >
++                    {toast.actionLabel}
++                  </button>
++                )}
++
++                <button
++                  onClick={onDismiss}
++                  aria-label="إغلاق"
++                  className="shrink-0 grid place-items-center w-7 h-7 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
++                >
++                  <X className="w-3.5 h-3.5" />
++                </button>
++
++                <span
++                  key={`bar-${toast.id}`}
++                  className="absolute bottom-0 inset-x-0 h-[3px] origin-right bg-gradient-to-l from-[#E3C16F] to-[#B8923A] animate-toast-progress"
++                />
++              </>
++            );
++          })()}
++        </motion.div>
++      )}
++    </AnimatePresence>
++  </div>
++);
+diff --git a/src/index.css b/src/index.css
+index 7d9a5fd..f8708b5 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -1,11 +1,77 @@
+ @import "tailwindcss";
+ 
++/* ───────── Design tokens ───────── */
++@theme {
++  --font-sans: 'IBM Plex Sans Arabic', 'Cairo', system-ui, -apple-system, sans-serif;
++  /* كل العناوين في المشروع تستخدم font-serif، فتتحدث كلها تلقائياً */
++  --font-serif: 'El Messiri', 'IBM Plex Sans Arabic', serif;
++  /* الأسعار والأرقام تستخدم font-mono: خط لاتيني نظيف بدل الأحادي */
++  --font-mono: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif;
++
++  --shadow-soft:
++    0 1px 2px rgb(20 17 15 / 0.04),
++    0 8px 24px -10px rgb(20 17 15 / 0.10),
++    0 24px 48px -28px rgb(20 17 15 / 0.14);
++  --shadow-lift:
++    0 2px 4px rgb(20 17 15 / 0.05),
++    0 18px 40px -16px rgb(20 17 15 / 0.22),
++    0 48px 80px -40px rgb(20 17 15 / 0.30);
++  --shadow-glass:
++    inset 0 1px 0 rgb(255 255 255 / 0.18),
++    0 20px 50px -20px rgb(0 0 0 / 0.55);
++
++  --animate-kenburns: kenburns 2.6s cubic-bezier(0.16, 1, 0.3, 1) both;
++  --animate-skeleton: skeleton 1.6s ease-in-out infinite;
++  --animate-toast-progress: toast-progress 3s linear forwards;
++  --animate-float-slow: float-slow 6s ease-in-out infinite;
++}
++
++@keyframes kenburns {
++  from { transform: scale(1.07); }
++  to   { transform: scale(1); }
++}
++@keyframes skeleton {
++  0%   { background-position: 200% 0; }
++  100% { background-position: -200% 0; }
++}
++@keyframes toast-progress {
++  from { transform: scaleX(1); }
++  to   { transform: scaleX(0); }
++}
++@keyframes float-slow {
++  0%, 100% { transform: translateY(0); }
++  50%      { transform: translateY(-6px); }
++}
++
+ @layer base {
++  html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
+   body {
+-    font-family: 'Cairo', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
++    font-family: var(--font-sans);
++    font-feature-settings: 'kern', 'liga';
++    text-rendering: optimizeLegibility;
++  }
++  /* حلقة تركيز واضحة للوحة المفاتيح */
++  :focus-visible {
++    outline: 2px solid #B8923A;
++    outline-offset: 3px;
++    border-radius: 0.5rem;
+   }
+ }
+ 
+-html {
+-  scroll-behavior: smooth;
++@layer utilities {
++  .no-scrollbar { scrollbar-width: none; }
++  .no-scrollbar::-webkit-scrollbar { display: none; }
++  .skeleton-bg {
++    background: linear-gradient(90deg, #F1ECE3 25%, #F8F5EF 50%, #F1ECE3 75%);
++    background-size: 200% 100%;
++  }
++}
++
++@media (prefers-reduced-motion: reduce) {
++  html { scroll-behavior: auto; }
++  *, *::before, *::after {
++    animation-duration: 0.01ms !important;
++    animation-iteration-count: 1 !important;
++    transition-duration: 0.01ms !important;
++  }
+ }
