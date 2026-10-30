@@ -20,13 +20,13 @@ import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/Empt
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from './firebase';
 
-// 💡 بيانات الصفحة الرئيسية الافتراضية (كمبيوتر + هاتف)
+// 💡 بيانات الصفحة الرئيسية الافتراضية (تم تحديث الروابط إلى Postimages)
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
-  image: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1',
-  bannerImage: 'https://res.cloudinary.com/pxn4yowl/image/upload/f_auto,q_auto/Designer1', // 💻 كمبيوتر
-  mobileBannerImage: 'https://i.ibb.co/dw3SrPZr/Designer1.png', // 📱 هاتف
+  image: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  bannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png', // 💻 كمبيوتر
+  mobileBannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png', // 📱 هاتف
   title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
   description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
@@ -89,9 +89,9 @@ export default function App() {
           {
             id: 'tables',
             name: 'طاولات',
-            image: 'https://i.ibb.co/S7wsCmCD/Designer-3.png',
-            bannerImage: 'https://i.ibb.co/W4T7KCZS/Designer-3.png', 
-            mobileBannerImage: 'https://i.ibb.co/S7wsCmCD/Designer-3.png',
+            image: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png',
+            bannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', 
+            mobileBannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png',
             title: 'طاولات عصرية تجمع بين الأناقة والعملية',
             description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات',
             buttonText: 'استكشف طاولات العرض الآن',
@@ -102,9 +102,9 @@ export default function App() {
           {
             id: 'shoes',
             name: 'أحذية',
-            image: 'https://i.ibb.co/4wG7G99X/Designer-1.png',
-            bannerImage: 'https://i.ibb.co/cSJ75xmn/Designer-1.png', 
-            mobileBannerImage: 'https://i.ibb.co/4wG7G99X/Designer-1.png', 
+            image: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png',
+            bannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', 
+            mobileBannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', 
             title: 'أحدث صيحات الأحذية',
             description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
             buttonText: 'استكشف الأحذية الآن',
@@ -115,9 +115,9 @@ export default function App() {
           {
             id: 'perfumes',
             name: 'عطور',
-            image: 'https://i.ibb.co/JDf95Zn/Designer.png',
-            bannerImage: 'https://i.ibb.co/JDf95Zn/Designer.png', 
-            mobileBannerImage: 'https://i.ibb.co/Xf5vk4tq/Designer.png', 
+            image: 'https://i.postimg.cc/R0LRh1yY/Designer.png',
+            bannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', 
+            mobileBannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', 
             title: 'عطور تدوم طويلاً',
             description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
             buttonText: 'استكشف العطور الآن',
@@ -128,9 +128,9 @@ export default function App() {
           {
             id: 'ramadan',
             name: 'زينة رمضان',
-            image: 'https://i.ibb.co/Xfynd3V2/Designer-2.png',
-            bannerImage: 'https://i.ibb.co/Xfynd3V2/Designer-2.png', 
-            mobileBannerImage: 'https://i.ibb.co/bg4S0DwG/Designer-2.png', 
+            image: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png',
+            bannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', 
+            mobileBannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', 
             title: 'زينة رمضان.. أضف البهجة لبيتك',
             description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
             buttonText: 'استكشف زينة رمضان',
