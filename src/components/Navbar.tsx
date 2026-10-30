@@ -65,13 +65,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   const activeId = currentCategoryData?.id ?? 'all';
 
   const iconBtn =
-    'relative grid place-items-center w-10 h-10 rounded-full bg-white/70 backdrop-blur-md ring-1 ring-black/[0.07] text-[#44403C] shadow-[0_1px_2px_rgba(20,17,15,0.05)] transition-all duration-300 hover:bg-white hover:text-[#14110F] hover:shadow-soft active:scale-90 cursor-pointer';
+    'relative grid place-items-center w-10 h-10 rounded-[3px] bg-white/80 backdrop-blur-md ring-1 ring-black/[0.07] text-[#44403C] shadow-[0_1px_2px_rgba(20,17,15,0.05)] transition-all duration-300 hover:bg-white hover:text-[#14110F] hover:shadow-soft active:scale-90 cursor-pointer';
 
   return (
     <header
       className={`sticky top-0 z-40 transition-all duration-500 ${
         scrolled
-          ? 'bg-[#FBFAF7]/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-black/[0.06] shadow-[0_10px_30px_-18px_rgba(20,17,15,0.25)]'
+          ? 'bg-[#F7F4EE]/90 backdrop-blur-2xl backdrop-saturate-150 border-b border-black/[0.06] shadow-[0_10px_30px_-18px_rgba(20,17,15,0.25)]'
           : 'bg-[#FBFAF7]/0 border-b border-transparent'
       }`}
     >
@@ -164,7 +164,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenCart}
             aria-label="السلة"
-            className="group/cart relative flex items-center gap-2 h-10 pl-3.5 pr-3 sm:pl-4 text-[13px] font-bold text-white bg-[#14110F] rounded-full shadow-[0_6px_18px_-6px_rgba(20,17,15,0.55)] transition-all duration-300 hover:bg-[#2A2522] hover:shadow-[0_10px_24px_-8px_rgba(20,17,15,0.65)] hover:-translate-y-px active:translate-y-0 active:scale-95 cursor-pointer shrink-0"
+            className="group/cart relative flex items-center gap-2 h-10 pl-3.5 pr-3 sm:pl-4 text-[13px] font-bold text-white bg-[#14110F] rounded-[3px] shadow-[0_6px_18px_-6px_rgba(20,17,15,0.35)] transition-all duration-300 hover:bg-[#2A2522] hover:shadow-[0_10px_24px_-8px_rgba(20,17,15,0.65)] hover:-translate-y-px active:translate-y-0 active:scale-95 cursor-pointer shrink-0"
           >
             <ShoppingBag className="w-4 h-4 text-[#E3C16F] transition-transform duration-300 group-hover/cart:-rotate-12" />
             <span className="hidden sm:inline">السلة</span>
