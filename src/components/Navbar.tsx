@@ -65,16 +65,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   const activeId = currentCategoryData?.id ?? 'all';
 
   const iconBtn =
-    'relative grid place-items-center w-10 h-10 rounded-full bg-white/70 backdrop-blur-md ring-1 ring-black/[0.07] text-[#44403C] shadow-[0_1px_2px_rgba(20,17,15,0.05)] transition-all duration-300 hover:bg-white hover:text-[#14110F] hover:shadow-soft active:scale-90 cursor-pointer';
+    'relative grid place-items-center w-10 h-10 rounded-full bg-white/[0.04] backdrop-blur-md ring-1 ring-white/10 text-[#CFC7B8] transition-all duration-300 hover:bg-white/10 hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40 active:scale-90 cursor-pointer';
 
   return (
     <header
       className={`sticky top-0 z-40 transition-all duration-500 ${
         scrolled
-          ? 'bg-[#FBFAF7]/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-black/[0.06] shadow-[0_10px_30px_-18px_rgba(20,17,15,0.25)]'
-          : 'bg-[#FBFAF7]/0 border-b border-transparent'
+          ? 'bg-[#0B0A09]/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.06),0_20px_40px_-24px_rgba(0,0,0,0.9)]'
+          : 'bg-[#0B0A09]/0'
       }`}
     >
+      {/* خط ذهبي رفيع أسفل الهيدر يظهر عند التمرير */}
+      <div
+        aria-hidden="true"
+        className={`absolute bottom-0 inset-x-0 gold-rule transition-opacity duration-500 ${scrolled ? 'opacity-100' : 'opacity-0'}`}
+      />
+
       <div
         className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 transition-[height] duration-500 ${
           scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
@@ -86,13 +92,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="shrink-0 flex items-center cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-95 text-right"
           title="شعار دكان 962"
         >
-          <DukanLogo variant="dark" className="h-9 sm:h-12" subtitle={logoSubtitle} />
+          <DukanLogo variant="light" className="h-9 sm:h-12" subtitle={logoSubtitle} />
         </button>
 
         {/* روابط الكمبيوتر مع مؤشر منزلق للقسم النشط */}
         <nav
           aria-label="الأقسام"
-          className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-black/[0.035] ring-1 ring-black/[0.04] max-w-[46%] overflow-x-auto no-scrollbar"
+          className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-white/[0.04] ring-1 ring-white/10 max-w-[46%] overflow-x-auto no-scrollbar"
         >
           {navItems.map((item) => {
             const isActive = activeId === item.id;
@@ -102,14 +108,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => onSelectCategory(item.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`relative px-4 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap cursor-pointer transition-colors duration-300 ${
-                  isActive ? 'text-[#14110F]' : 'text-[#78716C] hover:text-[#14110F]'
+                  isActive ? 'text-[#0B0A09]' : 'text-[#A39A8B] hover:text-[#F3EEE4]'
                 }`}
               >
                 {isActive && (
                   <motion.span
                     layoutId="nav-active-pill"
                     transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    className="absolute inset-0 rounded-full bg-white shadow-[0_1px_3px_rgba(20,17,15,0.12),0_6px_14px_-6px_rgba(20,17,15,0.18)]"
+                    className="absolute inset-0 rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] shadow-[0_6px_18px_-6px_rgba(212,176,106,0.6)]"
                   />
                 )}
                 <span className="relative">{item.name}</span>
@@ -121,27 +127,27 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* بحث الكمبيوتر: يتمدد عند التركيز */}
           <div className="relative hidden md:block group/search">
-            <Search className="w-4 h-4 text-[#A8A29E] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within/search:text-[#B8923A]" />
+            <Search className="w-4 h-4 text-[#8A8173] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within/search:text-[#D4B06A]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="ابحث عن منتج أو رقمه"
               aria-label="بحث"
-              className="text-[13px] w-40 focus:w-64 lg:w-48 lg:focus:w-72 h-10 pr-10 pl-9 bg-white/70 backdrop-blur-md ring-1 ring-black/[0.07] rounded-full text-[#14110F] placeholder-[#A8A29E] focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#B8923A]/60 transition-all duration-500"
+              className="text-[13px] w-40 focus:w-64 lg:w-48 lg:focus:w-72 h-10 pr-10 pl-9 bg-white/[0.04] backdrop-blur-md ring-1 ring-white/10 rounded-full text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:bg-white/[0.07] focus:ring-2 focus:ring-[#D4B06A]/60 transition-all duration-500"
             />
             {searchQuery && (
               <button
                 onClick={() => onSearchChange('')}
                 aria-label="مسح البحث"
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 grid place-items-center rounded-full bg-black/10 hover:bg-black/20 text-[#44403C] cursor-pointer transition-colors"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 grid place-items-center rounded-full bg-white/15 hover:bg-white/25 text-[#F3EEE4] cursor-pointer transition-colors"
               >
                 <X className="w-3 h-3" />
               </button>
             )}
           </div>
 
-          {/* بحث الموبايل (لم يكن متاحاً سابقاً) */}
+          {/* بحث الموبايل */}
           <button
             onClick={() => setMobileSearchOpen((v) => !v)}
             aria-label="بحث"
@@ -152,11 +158,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button onClick={onOpenWishlist} aria-label="المفضلة" className={iconBtn}>
-            <Heart className={`w-4 h-4 transition-colors ${wishlistCount > 0 ? 'text-rose-500 fill-rose-500' : ''}`} />
+            <Heart className={`w-4 h-4 transition-colors ${wishlistCount > 0 ? 'text-rose-400 fill-rose-400' : ''}`} />
             {wishlistCount > 0 && (
               <CountBadge
                 count={wishlistCount}
-                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-600 text-white text-[10px] font-bold rounded-full grid place-items-center font-mono ring-2 ring-[#FBFAF7]"
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center font-mono ring-2 ring-[#0B0A09]"
               />
             )}
           </button>
@@ -164,14 +170,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenCart}
             aria-label="السلة"
-            className="group/cart relative flex items-center gap-2 h-10 pl-3.5 pr-3 sm:pl-4 text-[13px] font-bold text-white bg-[#14110F] rounded-full shadow-[0_6px_18px_-6px_rgba(20,17,15,0.55)] transition-all duration-300 hover:bg-[#2A2522] hover:shadow-[0_10px_24px_-8px_rgba(20,17,15,0.65)] hover:-translate-y-px active:translate-y-0 active:scale-95 cursor-pointer shrink-0"
+            className="group/cart relative flex items-center gap-2 h-10 pl-3.5 pr-3 sm:pl-4 text-[13px] font-bold text-[#0B0A09] bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] rounded-full shadow-gold transition-all duration-300 hover:shadow-[0_14px_34px_-10px_rgba(232,204,138,0.75)] hover:-translate-y-px active:translate-y-0 active:scale-95 cursor-pointer shrink-0"
           >
-            <ShoppingBag className="w-4 h-4 text-[#E3C16F] transition-transform duration-300 group-hover/cart:-rotate-12" />
+            <ShoppingBag className="w-4 h-4 transition-transform duration-300 group-hover/cart:-rotate-12" />
             <span className="hidden sm:inline">السلة</span>
             {cartCount > 0 && (
               <CountBadge
                 count={cartCount}
-                className="min-w-[20px] h-5 px-1.5 bg-[#E3C16F] text-[#14110F] text-[11px] font-extrabold rounded-full grid place-items-center font-mono"
+                className="min-w-[20px] h-5 px-1.5 bg-[#0B0A09] text-[#E8CC8A] text-[11px] font-extrabold rounded-full grid place-items-center font-mono"
               />
             )}
           </button>
@@ -186,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       >
         <div className="overflow-hidden">
           <div className="px-4 pb-3 relative">
-            <Search className="w-4 h-4 text-[#A8A29E] absolute right-7 top-[calc(50%-6px)] -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-[#8A8173] absolute right-7 top-[calc(50%-6px)] -translate-y-1/2 pointer-events-none" />
             <input
               ref={mobileSearchRef}
               type="text"
@@ -195,7 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               placeholder="ابحث عن منتج أو رقمه"
               aria-label="بحث"
               tabIndex={mobileSearchOpen ? 0 : -1}
-              className="w-full h-11 pr-11 pl-4 text-sm bg-white ring-1 ring-black/[0.08] rounded-2xl placeholder-[#A8A29E] focus:outline-hidden focus:ring-2 focus:ring-[#B8923A]/60"
+              className="w-full h-11 pr-11 pl-4 text-sm bg-white/[0.06] ring-1 ring-white/10 rounded-2xl text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:ring-2 focus:ring-[#D4B06A]/60"
             />
           </div>
         </div>
@@ -213,8 +219,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-current={isActive ? 'page' : undefined}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 active:scale-95 ${
                   isActive
-                    ? 'bg-[#14110F] text-white shadow-[0_6px_14px_-6px_rgba(20,17,15,0.5)]'
-                    : 'bg-white/80 text-[#57534E] ring-1 ring-black/[0.07]'
+                    ? 'bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] shadow-gold'
+                    : 'bg-white/[0.05] text-[#A39A8B] ring-1 ring-white/10'
                 }`}
               >
                 {item.name}
