@@ -27,7 +27,8 @@ export const Footer: React.FC<FooterProps> = ({
     : "أقسام المتجر";
 
   return (
-    <footer className="bg-[#1C1917] text-[#EDE8E0] pt-12 pb-6 border-t border-[#2C2825]">
+    <footer className="relative bg-[#080706] text-[#F3EEE4] pt-16 pb-8 mt-10">
+      <div aria-hidden="true" className="absolute top-0 inset-x-0 gold-rule" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
           
@@ -36,10 +37,10 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="mb-4">
               <DukanLogo variant="light" className="h-12" />
             </div>
-            <p className="text-xs text-[#A8A29E] leading-relaxed mb-4">
+            <p className="text-xs text-[#A39A8B] leading-relaxed mb-4">
               {aboutText}
             </p>
-            <div className="flex items-center gap-2 text-xs font-bold text-[#A7F3D0] bg-[#2E5339]/50 px-3 py-2 rounded-lg w-fit border border-[#C5DEC8]/20">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#7FD1A0] bg-[#7FD1A0]/10 px-3.5 py-2 rounded-full w-fit ring-1 ring-[#7FD1A0]/25">
               <ShieldCheck className="w-4 h-4" />
               <span>التوصيل متاح لجميع محافظات المملكة</span>
             </div>
@@ -58,8 +59,8 @@ export const Footer: React.FC<FooterProps> = ({
                     }}
                     className={`text-xs transition-colors ${
                       currentCategoryData?.id === cat.id 
-                        ? 'text-[#D4AF37] font-bold' 
-                        : 'text-[#A8A29E] hover:text-[#D4AF37]'
+                        ? 'text-[#E8CC8A] font-bold' 
+                        : 'text-[#A39A8B] hover:text-[#E8CC8A]'
                     }`}
                   >
                     {cat.name}
@@ -73,8 +74,8 @@ export const Footer: React.FC<FooterProps> = ({
           <div>
             <h4 className="text-sm font-bold text-white mb-4">التواصل والطلب المباشر</h4>
             <div className="space-y-3">
-              <p className="text-xs text-[#A8A29E] flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#8C6D46]" />
+              <p className="text-xs text-[#A39A8B] flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#D4B06A]" />
                 <span>عمان - المملكة الأردنية الهاشمية</span>
               </p>
               
@@ -84,15 +85,15 @@ export const Footer: React.FC<FooterProps> = ({
                   href={`https://wa.me/${STORE_PHONE_INTL}`} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="inline-flex items-center gap-2 bg-[#2E5339] hover:bg-[#1E3826] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                  className="inline-flex items-center gap-2 bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] px-5 py-2.5 rounded-full text-xs font-bold shadow-gold transition-all hover:-translate-y-0.5 active:scale-95"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>تواصل عبر واتساب: {STORE_WHATSAPP_HANDLE}</span>
                 </a>
               </div>
-              <div className="mt-4 pt-4 border-t border-[#2C2825]">
-                <p className="text-[10px] text-[#78716C] mb-2">✨ يوجد معاينة عند وصول الطلب قبل الدفع</p>
-                <p className="text-[10px] text-[#78716C]">فعال: شحن سريع لجميع المناطق</p>
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <p className="text-[10px] text-[#8A8173] mb-2">✨ يوجد معاينة عند وصول الطلب قبل الدفع</p>
+                <p className="text-[10px] text-[#8A8173]">فعال: شحن سريع لجميع المناطق</p>
               </div>
             </div>
           </div>
@@ -100,11 +101,11 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-6 border-t border-[#2C2825] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] text-[#78716C]">
+        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[11px] text-[#8A8173]">
             © {new Date().getFullYear()} دكان 962 (Dukan 962). جميع الحقوق محفوظة.
           </p>
-          <div className="flex items-center gap-4 text-[11px] text-[#78716C]">
+          <div className="flex items-center gap-4 text-[11px] text-[#8A8173]">
             <button onClick={onOpenAdmin} className="hover:text-white transition-colors">لوحة التحكم</button>
             <span>·</span>
             <span>شحن لجميع المناطق</span>
