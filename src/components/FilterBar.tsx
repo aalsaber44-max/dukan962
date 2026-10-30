@@ -33,31 +33,27 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     { name: 'رخامي', hex: '#EAE6DF' },
   ];
 
+  const chip = (active: boolean) =>
+    `py-1.5 px-3.5 text-xs font-semibold rounded-full transition-all duration-300 cursor-pointer whitespace-nowrap active:scale-95 ${
+      active
+        ? 'bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] shadow-gold'
+        : 'bg-white/[0.04] text-[#A39A8B] ring-1 ring-white/10 hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40'
+    }`;
+
   return (
-    <div className="bg-white rounded-2xl border border-[#E9E1D4] p-4 sm:p-5 shadow-xs mb-8">
+    <div className="bg-white/[0.03] backdrop-blur-xl rounded-[24px] ring-1 ring-white/10 p-4 sm:p-6 shadow-soft mb-8">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
         
         {/* Category Filter */}
-        <div className="space-y-1.5 w-full lg:w-auto">
-          <label className="text-xs font-bold text-[#1C1917] block">التصنيف:</label>
+        <div className="space-y-2.5 w-full lg:w-auto">
+          <label className="text-xs font-bold text-[#F3EEE4] block">التصنيف</label>
           <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              onClick={() => onSelectCategory('all')}
-              className={`py-1.5 px-3 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                selectedCategory === 'all' ? 'bg-[#1C1917] text-white shadow-xs' : 'bg-[#FAF7F2] text-[#57534E] hover:bg-[#F2ECE1] border border-[#EDE5D8]'
-              }`}
-            >
+            <button onClick={() => onSelectCategory('all')} className={chip(selectedCategory === 'all')}>
               جميع الأقسام
             </button>
             {/* 💡 هنا بنعرض الأقسام الديناميكية */}
             {categories?.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => onSelectCategory(cat.id)}
-                className={`py-1.5 px-3 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                  selectedCategory === cat.id ? 'bg-[#1C1917] text-white shadow-xs' : 'bg-[#FAF7F2] text-[#57534E] hover:bg-[#F2ECE1] border border-[#EDE5D8]'
-                }`}
-              >
+              <button key={cat.id} onClick={() => onSelectCategory(cat.id)} className={chip(selectedCategory === cat.id)}>
                 {cat.name}
               </button>
             ))}
@@ -65,8 +61,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
 
         {/* Color Filter */}
-        <div className="space-y-1.5 w-full lg:w-auto">
-          <label className="text-xs font-bold text-[#1C1917] block">اللون المفضل:</label>
+        <div className="space-y-2.5 w-full lg:w-auto">
+          <label className="text-xs font-bold text-[#F3EEE4] block">اللون المفضل</label>
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {colorOptions.map((c) => {
               const isSelected = selectedColor === c.name || (c.name === 'الكل' && selectedColor === '');
@@ -74,11 +70,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 <button
                   key={c.name}
                   onClick={() => onSelectColor(c.name === 'الكل' ? '' : c.name)}
-                  className={`flex items-center gap-1.5 py-1 px-2 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                    isSelected ? 'border-[#1C1917] bg-[#FAF8F5] shadow-xs' : 'border-[#DDD5C7] text-[#78716C] hover:border-[#1C1917]'
+                  className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium transition-all duration-300 cursor-pointer active:scale-95 ${
+                    isSelected
+                      ? 'bg-[#D4B06A]/15 ring-1 ring-[#D4B06A] text-[#E8CC8A]'
+                      : 'bg-white/[0.04] ring-1 ring-white/10 text-[#A39A8B] hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40'
                   }`}
                 >
-                  {c.name !== 'الكل' && <span className="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0" style={{ backgroundColor: c.hex }} />}
+                  {c.name !== 'الكل' && <span className="w-3.5 h-3.5 rounded-full ring-1 ring-white/30 shrink-0" style={{ backgroundColor: c.hex }} />}
                   <span>{c.name}</span>
                 </button>
               );
@@ -88,20 +86,16 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
         {/* Price Filter & Reset Button */}
         <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start xl:items-center gap-4 w-full lg:w-auto">
-          <div className="space-y-1.5 w-full sm:w-auto lg:w-full xl:w-auto lg:min-w-[200px]">
-            <div className="flex justify-between items-center text-xs">
-              <label className="font-bold text-[#1C1917]">نطاق السعر:</label>
-              <span className="font-mono text-[11px] text-[#8C6D46] font-bold">{priceRange[0]} د.أ - {priceRange[1]} د.أ</span>
+          <div className="space-y-2.5 w-full sm:w-auto lg:w-full xl:w-auto lg:min-w-[220px]">
+            <div className="flex justify-between items-center text-xs gap-4">
+              <label className="font-bold text-[#F3EEE4]">نطاق السعر</label>
+              <span className="font-mono text-[11px] text-[#E8CC8A] font-bold tabular-nums">{priceRange[0]} - {priceRange[1]} د.أ</span>
             </div>
-            <div className="flex items-center gap-2 pt-2">
-              <input type="range" min="0" max="1000" step="10" value={priceRange[1]} onChange={(e) => onPriceRangeChange([priceRange[0], Number(e.target.value)])} className="w-full accent-[#1C1917] cursor-pointer h-1.5 bg-[#E5DDD0] rounded-lg" />
-            </div>
+            <input type="range" min="0" max="1000" step="10" value={priceRange[1]} onChange={(e) => onPriceRangeChange([priceRange[0], Number(e.target.value)])} className="w-full accent-[#D4B06A] cursor-pointer h-1.5" />
           </div>
-          <div className="w-full sm:w-auto flex items-end mt-2 sm:mt-0">
-            <button onClick={onResetFilters} className="py-2 px-4 w-full sm:w-auto text-xs text-[#78716C] hover:text-[#1C1917] flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-[#E5DDD0] hover:bg-[#FAF7F2] rounded-lg whitespace-nowrap font-bold">
-              <RotateCcw className="w-4 h-4" /><span>إعادة ضبط</span>
-            </button>
-          </div>
+          <button onClick={onResetFilters} className="h-10 px-5 w-full sm:w-auto text-xs text-[#A39A8B] hover:text-[#0B0A09] hover:bg-[#D4B06A] flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer ring-1 ring-white/15 hover:ring-[#D4B06A] rounded-full whitespace-nowrap font-bold active:scale-95">
+            <RotateCcw className="w-4 h-4" /><span>إعادة ضبط</span>
+          </button>
         </div>
 
       </div>
