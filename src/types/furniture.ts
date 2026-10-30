@@ -49,6 +49,10 @@ export interface Product {
   isActive: boolean; 
   createdAt?: string;
   videoUrl?: string; // 💡 تمت إضافة هذا الحقل لرابط الفيديو
+  woodType?: string;
+  isOffer?: boolean;
+  categoryLabel?: string;
+  dimensions?: string;
 }
 
 // 5. السلة (Cart)
