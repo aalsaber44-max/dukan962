@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
@@ -13,7 +13,8 @@ import { AdminAuthModal } from './components/AdminAuthModal';
 import { Footer } from './components/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Product, CartItem, ProductColor, Category } from './types/furniture';
-import { Check, Sparkles } from 'lucide-react';
+import { Toast, ToastData, ToastVariant } from './components/Toast';
+import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
@@ -38,6 +39,7 @@ export default function App() {
   // 1. حالات المنتجات والأقسام
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
 
   // 2. جلب المنتجات والأقسام من السحابة (Live Sync)
   useEffect(() => {
@@ -56,6 +58,10 @@ export default function App() {
         } as Product);
       });
       setProducts(prods);
+      setProductsLoaded(true);
+    }, (error) => {
+      console.error('Error loading products:', error);
+      setProductsLoaded(true);
     });
 
     // جلب الأقسام
@@ -239,7 +245,8 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   // Toast feedback
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cart & Wishlist persistence
   useEffect(() => {
@@ -250,9 +257,18 @@ export default function App() {
     localStorage.setItem('dukan962_wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2800);
+  const dismissToast = () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(null);
+  };
+
+  const showToast = (
+    message: string,
+    options: { variant?: ToastVariant; actionLabel?: string; onAction?: () => void } = {}
+  ) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ id: Date.now(), message, variant: options.variant ?? 'success', ...options });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
   // Add to cart with color & quantity
@@ -281,7 +297,11 @@ export default function App() {
       }
     });
 
-    showToast(`تمت إضافة "${product.name} (${activeColor.name})" إلى السلة`);
+    showToast(`${product.name} (${activeColor.name})`, {
+      variant: 'cart',
+      actionLabel: 'عرض السلة',
+      onAction: () => setIsCartOpen(true),
+    });
   };
 
   const handleUpdateCartQuantity = (id: string, colorName: string, delta: number) => {
@@ -309,10 +329,14 @@ export default function App() {
     setWishlist((prev) => {
       const exists = prev.some((p) => p.id === product.id);
       if (exists) {
-        showToast(`تمت إزالة "${product.name}" من المفضلة`);
+        showToast(product.name, { variant: 'remove' });
         return prev.filter((p) => p.id !== product.id);
       } else {
-        showToast(`تمت إضافة "${product.name}" إلى المفضلة ❤️`);
+        showToast(product.name, {
+          variant: 'wishlist',
+          actionLabel: 'عرض المفضلة',
+          onAction: () => setIsWishlistOpen(true),
+        });
         return [...prev, product];
       }
     });
@@ -357,60 +381,51 @@ export default function App() {
     }
   };
 
+  const scrollToCategories = () => {
+    document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // الفلاتر النشطة (تظهر كشرائح قابلة للإزالة في حالة عدم وجود نتائج)
+  const activeFilters: ActiveFilter[] = [];
+  if (selectedCategory !== 'all') {
+    activeFilters.push({
+      key: 'category',
+      label: categories.find((c) => c.id === selectedCategory)?.name || 'قسم محدد',
+      onRemove: () => setSelectedCategory('all'),
+    });
+  }
+  if (searchQuery.trim() !== '') {
+    activeFilters.push({ key: 'search', label: `بحث: ${searchQuery.trim()}`, onRemove: () => setSearchQuery('') });
+  }
+  if (selectedColor !== '') {
+    activeFilters.push({ key: 'color', label: `اللون: ${selectedColor}`, onRemove: () => setSelectedColor('') });
+  }
+  if (priceRange[0] !== 0 || priceRange[1] !== 1000) {
+    activeFilters.push({
+      key: 'price',
+      label: `${priceRange[0]} - ${priceRange[1]} د.أ`,
+      onRemove: () => setPriceRange([0, 1000]),
+    });
+  }
+
   const currentCategoryData = selectedCategory === 'all' 
     ? homeCategoryData 
     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] overflow-x-hidden">
+      <div className="min-h-screen flex flex-col bg-[#FBFAF7] text-[#14110F] overflow-x-hidden">
         
-        <style>
-          {`
-            @keyframes slideUpFade {
-              from { opacity: 0; transform: translateY(20px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes shrinkWidth {
-              from { width: 100%; }
-              to { width: 0%; }
-            }
-            .animate-toast {
-              animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-            .animate-progress {
-              animation: shrinkWidth 2.8s linear forwards;
-            }
-          `}
-        </style>
-
-        {toastMessage && (
-          <div className="fixed bottom-8 right-8 z-50 animate-toast">
-            <div className="bg-[#1C1917]/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-[#D4AF37]/30 min-w-[280px] relative overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-[#2E5339] text-[#A7F3D0] flex items-center justify-center shrink-0 shadow-inner">
-                <Check className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-[#D4AF37] font-bold tracking-wider mb-0.5">دكان 962</span>
-                <span className="text-xs font-semibold leading-relaxed">{toastMessage}</span>
-              </div>
-              <div className="absolute bottom-0 left-0 h-1 bg-[#D4AF37] animate-progress rounded-b-2xl"></div>
-            </div>
-          </div>
-        )}
+        <Toast toast={toast} onDismiss={dismissToast} />
 
         {/* Top Banner Notice */}
-        <aside aria-label="شريط العروض" className="bg-[#1C1917] text-[#EDE8E0] text-[11px] py-2 px-4 text-center border-b border-[#2C2825]">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-            <span className="text-[#D4AF37] font-bold">👑 دكان 962 (Dukan 962)</span>
-            <span aria-hidden="true" className="hidden sm:inline">·</span>
-            <span>جودة نخب أول</span>
-            <span aria-hidden="true" className="hidden sm:inline">·</span>
-            <span className="text-[#A7F3D0] font-bold">✨ يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
-            <span aria-hidden="true" className="hidden sm:inline">·</span>
-            <span>التوصيل لجميع محافظات المملكة</span>
-            <span aria-hidden="true" className="hidden sm:inline">·</span>
-            <span className="text-white/80">الدفع كاش أو عبر كليك (CliQ)</span>
+        <aside aria-label="شريط العروض" className="bg-[#14110F] text-white/75 text-[11px] sm:text-xs py-2.5 px-4 text-center">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
+            <span className="text-[#E3C16F] font-bold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
+            <span aria-hidden="true" className="hidden sm:block h-3 w-px bg-white/15" />
+            <span className="hidden sm:inline">التوصيل لجميع محافظات المملكة</span>
+            <span aria-hidden="true" className="hidden md:block h-3 w-px bg-white/15" />
+            <span className="hidden md:inline">الدفع كاش أو عبر كليك (CliQ)</span>
           </div>
         </aside>
 
@@ -446,22 +461,19 @@ export default function App() {
 
         {/* Catalog & Shop Section */}
         <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-4 border-b border-[#EAE3D7]">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#8C6D46] mb-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{selectedCategory !== 'all' ? `تشكيلة ${currentCategoryData.name}` : 'تشكيلات دكان 962 الحصرية'}</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#1C1917] tracking-tight font-serif">
+              <h2 className="text-2xl sm:text-4xl font-bold text-[#14110F] tracking-tight font-serif">
                 {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
               </h2>
-              <p className="text-xs text-[#78716C] mt-1">
-                استكشف منتجاتنا، اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
+              <p className="text-sm text-[#78716C] mt-2">
+                اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
               </p>
             </div>
 
-            <div className="text-xs font-bold text-[#2E5339] bg-[#EDF4EE] px-3.5 py-1.5 rounded-xl border border-[#C5DEC8] flex items-center gap-1.5 self-start sm:self-auto">
-              <span>الأسعار بالدينار الأردني (د.أ) فقط</span>
+            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full bg-[#EDF4EE] ring-1 ring-[#C5DEC8] text-xs font-bold text-[#2E5339]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2E5339]" />
+              الأسعار بالدينار الأردني (د.أ) فقط
             </div>
           </div>
 
@@ -476,21 +488,16 @@ export default function App() {
             onResetFilters={handleResetFilters}
           />
 
-          {filteredProducts.length === 0 ? (
-            <div className="py-20 text-center bg-white rounded-3xl border border-[#ECE5D9] p-8">
-              <p className="text-base font-bold text-[#1C1917] mb-2">
-                لا توجد منتجات مطابقة لمعايير البحث الحالية (أو لم يتم إضافة منتجات بعد)
-              </p>
-              <p className="text-xs text-[#78716C] mb-6">
-                جرّب توسيع نطاق السعر أو اختيار تصنيف آخر، أو قم بإضافة منتجات من لوحة التحكم.
-              </p>
-              <button
-                onClick={handleResetFilters}
-                className="py-2.5 px-6 text-xs font-bold text-white bg-[#1C1917] rounded-xl cursor-pointer"
-              >
-                عرض جميع المنتجات
-              </button>
-            </div>
+          {!productsLoaded ? (
+            <ProductSkeletonGrid />
+          ) : filteredProducts.length === 0 ? (
+            <EmptyState
+              variant={products.length === 0 ? 'no-products' : 'no-results'}
+              searchQuery={searchQuery}
+              activeFilters={activeFilters}
+              onReset={handleResetFilters}
+              onBrowseCategories={scrollToCategories}
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {filteredProducts.map((product) => (
