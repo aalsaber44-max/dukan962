@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react';
 import { ArrowLeft, Sparkles, ShieldCheck, Truck, Clock } from 'lucide-react';
 import { Category } from '../types/furniture';
 
@@ -6,6 +7,23 @@ interface HeroProps {
   onExploreClick: () => void;
   categoryData?: Category | null;
 }
+
+const perks = [
+  { Icon: ShieldCheck, title: 'جودة مضمونة', sub: 'خامات نخب أول' },
+  { Icon: Truck, title: 'توصيل شامل', sub: 'لجميع المحافظات' },
+  { Icon: Clock, title: 'توصيل سريع', sub: 'خلال 24-48 ساعة' },
+  { Icon: Sparkles, title: 'ألوان حصرية', sub: 'تشكيلات متنوعة' },
+];
+
+// حركة دخول واحدة منسقة للنصوص (تُعاد عند تغيير القسم)
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
+};
 
 export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const defaultData = {
@@ -19,127 +37,112 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   };
 
   const displayData: any = categoryData || defaultData;
-  
   const desktopBanner = displayData.bannerImage || displayData.image || defaultData.bannerImage;
   const mobileBanner = displayData.mobileBannerImage || desktopBanner;
 
+  // نحذف الإيموجي من بداية الشارة ليبدو النص أنظف
+  const badge = String(displayData.badgeText || 'يوجد معاينة').replace(/^[^\p{L}\p{N}]+/u, '');
+
+  // تكبير خفيف جداً للصورة مع التمرير (بدون إزاحة حتى لا يُقص نص البنر)
+  const frameRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: frameRef, offset: ['start start', 'end start'] });
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.07]);
+
   return (
-    <section className="relative overflow-hidden bg-[#FAF8F5]">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-6 sm:pb-8">
-        
-        <div className="relative rounded-xl sm:rounded-3xl overflow-hidden border border-[#E5DDD0] shadow-xl w-full aspect-[4/3] sm:aspect-[16/9] flex items-center bg-[#1C1917]">
-          
-          {/* الخلفية المموهة (احتياطية) - تم تعديلها لـ object-top */}
-          <img
-            src={mobileBanner}
-            alt=""
-            aria-hidden="true"
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover object-top blur-xl scale-110 opacity-60 sm:hidden"
-          />
-          <img
-            src={desktopBanner}
-            alt=""
-            aria-hidden="true"
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover object-top blur-xl scale-110 opacity-60 hidden sm:block"
-          />
+    <section className="relative bg-[#FBFAF7]">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-12">
+        <div
+          ref={frameRef}
+          className="relative isolate overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#14110F] shadow-lift ring-1 ring-black/5"
+        >
+          <motion.div style={reduceMotion ? undefined : { scale }} className="absolute inset-0 will-change-transform">
+            <picture key={desktopBanner}>
+              <source media="(max-width: 639px)" srcSet={mobileBanner} />
+              <source media="(min-width: 640px)" srcSet={desktopBanner} />
+              <img
+                src={desktopBanner}
+                alt={displayData.title || displayData.name}
+                referrerPolicy="no-referrer"
+                fetchPriority="high"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover object-top animate-kenburns"
+              />
+            </picture>
+          </motion.div>
 
-          {/* 💡 الصورة الأساسية: تظهر دائماً فوراً - تم تعديلها لـ object-top */}
-          <picture key={desktopBanner}>
-            <source media="(max-width: 639px)" srcSet={mobileBanner} />
-            <source media="(min-width: 640px)" srcSet={desktopBanner} />
-            
-            <img
-              src={desktopBanner}
-              alt={displayData.title || displayData.name}
-              referrerPolicy="no-referrer"
-              fetchPriority="high"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover object-top z-10"
-            />
-          </picture>
+          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none" />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end z-20">
-            <div className="p-3.5 sm:p-10 lg:p-14 max-w-3xl text-white w-full">
-              
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs text-[#E2D5C4] mb-1.5 sm:mb-3 font-medium">
-                <span className="bg-[#2E5339] text-[#F0FDF4] px-1.5 py-0.5 rounded-md font-bold shadow-xs">
-                  {displayData.name || 'دكـان 962'}
+          <div className="absolute inset-x-0 bottom-0 z-20 p-2.5 sm:p-8 lg:p-10">
+            <motion.div
+              key={displayData.title}
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="max-w-2xl rounded-2xl sm:rounded-[28px] bg-black/30 backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/15 shadow-glass p-3.5 sm:p-8 text-white"
+            >
+              <motion.div variants={item} className="flex items-center gap-2 mb-2 sm:mb-4">
+                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-60 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-full w-full bg-emerald-300" />
                 </span>
-                <span className="text-[#A7F3D0] font-bold hidden sm:inline">
-                  {displayData.badgeText || '✨ يوجد معاينة'}
-                </span>
-                <span className="hidden sm:inline">· توصيل لجميع المحافظات</span>
-              </div>
+                <span className="text-[10px] sm:text-xs font-semibold text-white/90">{badge}</span>
+              </motion.div>
 
-              <h1 className="text-base sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.3] mb-2 sm:mb-4 text-balance font-serif">
+              <motion.h1
+                variants={item}
+                className="text-lg sm:text-5xl lg:text-[3.4rem] font-bold tracking-tight leading-[1.25] mb-1.5 sm:mb-4 text-balance font-serif"
+              >
                 {displayData.title}
-              </h1>
+              </motion.h1>
 
-              <p className="text-[10px] sm:text-base text-[#EAE4DC] leading-relaxed mb-3 sm:mb-7 max-w-2xl font-light line-clamp-2 sm:line-clamp-none">
+              <motion.p
+                variants={item}
+                className="text-[11px] sm:text-base text-white/80 leading-relaxed mb-3 sm:mb-7 max-w-xl line-clamp-2 sm:line-clamp-3"
+              >
                 {displayData.description}
-              </p>
+              </motion.p>
 
-              <div className="flex flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <motion.div variants={item} className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={onExploreClick}
-                  className="py-2 px-3 sm:py-3 sm:px-5 text-[10px] sm:text-sm font-bold text-[#1C1917] bg-[#EAE2D5] hover:bg-white rounded-lg sm:rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                  className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-9 sm:h-12 px-4 sm:px-6 rounded-full bg-white text-[#14110F] text-[11px] sm:text-sm font-bold shadow-[0_10px_30px_-10px_rgba(255,255,255,0.55)] transition-all duration-300 hover:shadow-[0_14px_36px_-10px_rgba(255,255,255,0.8)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                 >
-                  <span>{displayData.buttonText || 'استكشف الآن'}</span>
-                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-[#E3C16F]/50 to-transparent"
+                  />
+                  <span className="relative">{displayData.buttonText || 'استكشف الآن'}</span>
+                  <ArrowLeft className="relative w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover/btn:-translate-x-1" />
                 </button>
 
-                <div className="hidden sm:flex items-center justify-center gap-2 text-xs text-white/95 bg-[#2E5339]/90 backdrop-blur-md py-3 px-4 rounded-xl border border-[#A7F3D0]/30 font-semibold">
-                  <ShieldCheck className="w-4 h-4 text-[#A7F3D0]" />
-                  <span>يوجد معاينة عند وصول الطلب</span>
-                </div>
-              </div>
-            </div>
+                <span className="hidden sm:inline-flex items-center gap-2 h-12 px-4 rounded-full text-xs font-semibold text-white/90 bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
+                  <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                  يوجد معاينة عند وصول الطلب
+                </span>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
 
-        {/* شريط المميزات السفلي */}
-        <div className="mt-3 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-4 p-2 sm:p-4 bg-white rounded-xl sm:rounded-2xl border border-[#E9E1D4] shadow-2xs">
-          <div className="flex items-center gap-1.5 p-1">
-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+        {/* شريط المميزات: بطاقة زجاجية واحدة بفواصل رفيعة */}
+        <div className="mt-3 sm:mt-6 grid grid-cols-2 lg:grid-cols-4 bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl ring-1 ring-black/[0.06] shadow-soft overflow-hidden">
+          {perks.map(({ Icon, title, sub }, i) => (
+            <div
+              key={title}
+              className={`group/perk flex items-center gap-2.5 sm:gap-3.5 p-3 sm:p-5 transition-colors duration-300 hover:bg-[#FBF7EE] ${
+                i % 2 === 0 ? 'border-l' : ''
+              } ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i !== 3 ? 'lg:border-l' : 'lg:border-l-0'} border-black/[0.06]`}
+            >
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#F7EFD9] to-[#EEDFB8] text-[#8C6D1F] grid place-items-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform duration-500 group-hover/perk:scale-110 group-hover/perk:-rotate-6">
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-sm font-bold text-[#14110F]">{title}</p>
+                <p className="text-[10px] sm:text-xs text-[#78716C] mt-0.5">{sub}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">جودة مضمونة</p>
-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">خامات نخب أول</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 p-1">
-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
-              <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-            </div>
-            <div>
-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">توصيل شامل</p>
-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">لجميع المحافظات</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 p-1">
-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
-              <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-            </div>
-            <div>
-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">توصيل سريع</p>
-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">خلال 24-48 ساعة</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 p-1">
-            <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-lg bg-[#F4EFE6] text-[#8C6D46] flex items-center justify-center shrink-0">
-              <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-            </div>
-            <div>
-              <p className="text-[9px] sm:text-xs font-bold text-[#1C1917]">ألوان حصرية</p>
-              <p className="text-[8px] sm:text-[10px] text-[#78716C]">تشكيلات متنوعة</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
