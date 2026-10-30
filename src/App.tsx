@@ -414,19 +414,20 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen flex flex-col bg-[#FBFAF7] text-[#14110F] overflow-x-hidden">
+      <div className="min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden">
         
         <Toast toast={toast} onDismiss={dismissToast} />
 
         {/* Top Banner Notice */}
-        <aside aria-label="شريط العروض" className="bg-[#14110F] text-white/75 text-[11px] sm:text-xs py-2.5 px-4 text-center">
+        <aside aria-label="شريط العروض" className="relative bg-[#080706] text-[#A39A8B] text-[11px] sm:text-xs py-2.5 px-4 text-center">
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
-            <span className="text-[#E3C16F] font-bold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
+            <span className="text-[#E8CC8A] font-semibold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
             <span aria-hidden="true" className="hidden sm:block h-3 w-px bg-white/15" />
             <span className="hidden sm:inline">التوصيل لجميع محافظات المملكة</span>
             <span aria-hidden="true" className="hidden md:block h-3 w-px bg-white/15" />
             <span className="hidden md:inline">الدفع كاش أو عبر كليك (CliQ)</span>
           </div>
+          <div aria-hidden="true" className="absolute bottom-0 inset-x-0 gold-rule opacity-60" />
         </aside>
 
         {/* Navigation Header */}
@@ -463,16 +464,16 @@ export default function App() {
         <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl sm:text-4xl font-bold text-[#14110F] tracking-tight font-serif">
+              <h2 className="text-2xl sm:text-4xl font-bold text-[#F3EEE4] tracking-tight font-serif">
                 {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
               </h2>
-              <p className="text-sm text-[#78716C] mt-2">
+              <p className="text-sm text-[#A39A8B] mt-2">
                 اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full bg-[#EDF4EE] ring-1 ring-[#C5DEC8] text-xs font-bold text-[#2E5339]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2E5339]" />
+            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full bg-[#7FD1A0]/10 ring-1 ring-[#7FD1A0]/25 text-xs font-bold text-[#7FD1A0]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7FD1A0]" />
               الأسعار بالدينار الأردني (د.أ) فقط
             </div>
           </div>
