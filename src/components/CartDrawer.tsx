@@ -1,7 +1,13 @@
 import React from 'react';
 import { X, Trash2, ShoppingBag, ArrowLeft, MessageCircle, ShieldCheck } from 'lucide-react';
 import { CartItem } from '../types/furniture';
-import { STORE_PHONE_INTL } from '../utils/jordanLocations';
+import {
+  STORE_PHONE_INTL,
+  FREE_DELIVERY_THRESHOLD,
+  DELIVERY_FEE_MIN,
+  DELIVERY_FEE_MAX,
+  isFreeDelivery,
+} from '../utils/jordanLocations';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -28,10 +34,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     0
   );
 
-  const freeThreshold = 150;
-  const progressPercent = Math.min(100, (subtotal / freeThreshold) * 100);
-  const deliveryFee = subtotal >= freeThreshold ? 0 : 5;
-  const grandTotal = subtotal + (items.length > 0 ? deliveryFee : 0);
+  // 💡 التوصيل يُحسب حسب المحافظة في صفحة إتمام الطلب، والسلة تعرض نفس السياسة بدون تضارب
+  const freeThreshold = FREE_DELIVERY_THRESHOLD;
+  const freeDelivery = isFreeDelivery(subtotal);
+  const progressPercent = freeThreshold ? Math.min(100, (subtotal / freeThreshold) * 100) : 0;
+  const deliveryRangeText = `${DELIVERY_FEE_MIN} - ${DELIVERY_FEE_MAX} د.أ حسب المحافظة`;
 
   // 💡 بناء رابط الواتساب مع الفحص الذكي للصور واستخدام api.whatsapp.com
   const whatsAppUrl =
@@ -49,7 +56,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 }
               )
               .join('\n\n') +
-            `\n\n*المجموع الفرعي:* ${subtotal.toFixed(2)} دينار أردني\n*التوصيل:* ${deliveryFee === 0 ? 'مجاني' : '5.00 د.أ'}\n*المجموع الإجمالي:* ${grandTotal.toFixed(2)} دينار أردني\n*طريقة الدفع:* الدفع عند الاستلام كاش أو بطاقة\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
+            `\n\n*المجموع الفرعي:* ${subtotal.toFixed(2)} دينار أردني\n*التوصيل:* ${freeDelivery ? 'مجاني' : 'يُحسب حسب المحافظة (5 د.أ داخل عمان، 8 د.أ خارجها، 10 د.أ العقبة)'}\n*طريقة الدفع:* الدفع عند الاستلام كاش أو بطاقة\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
         )}`
       : '#';
 
@@ -79,10 +86,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </button>
           </div>
 
+          {freeThreshold !== null && (
           <div className="bg-[#1C1815] p-4 border-b border-white/10">
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-[#B9B0A0]">
-                {subtotal >= freeThreshold ? (
+                {freeDelivery ? (
                   <span className="text-[#7FD1A0] font-bold">
                     تهانينا! حصلت على توصيل مجاني لكافة المحافظات 🎉
                   </span>
@@ -97,13 +105,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 )}
               </span>
             </div>
-            <div className="w-full bg-[#1C1815] h-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-[#2E5339] h-full transition-all duration-500 rounded-full"
+                className="bg-gradient-to-l from-[#E8CC8A] to-[#D4B06A] h-full transition-all duration-500 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
+          )}
 
           <div className="flex-1 overflow-y-auto p-6 divide-y divide-white/10">
             {items.length === 0 ? (
@@ -203,16 +212,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
                 <div className="flex justify-between text-[#A39A8B]">
                   <span>التوصيل للمحافظات</span>
-                  <span className="font-semibold text-[#7FD1A0]">
-                    {deliveryFee === 0 ? 'مجاني' : '5.00 د.أ'}
+                  <span className={`font-semibold ${freeDelivery ? 'text-[#7FD1A0]' : 'text-[#E8CC8A]'}`}>
+                    {freeDelivery ? 'مجاني' : deliveryRangeText}
                   </span>
                 </div>
                 <div className="pt-2 border-t border-white/10 flex justify-between text-sm font-black text-[#F3EEE4]">
-                  <span>المبلغ الإجمالي</span>
+                  <span>{freeDelivery ? 'المبلغ الإجمالي' : 'المبلغ قبل التوصيل'}</span>
                   <span className="text-base text-[#F3EEE4] font-mono">
-                    {grandTotal.toFixed(2)} د.أ
+                    {subtotal.toFixed(2)} د.أ
                   </span>
                 </div>
+                {!freeDelivery && (
+                  <p className="text-[11px] text-[#8A8173] leading-relaxed">
+                    يظهر المبلغ النهائي بعد اختيار المحافظة في الخطوة التالية.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2 pt-1">
