@@ -54,7 +54,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => (
           animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
           exit={{ opacity: 0, y: 16, scale: 0.97, filter: 'blur(4px)' }}
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-          className="pointer-events-auto relative overflow-hidden w-full max-w-md flex items-center gap-3.5 pl-3 pr-3.5 py-3 rounded-[22px] bg-[#14110F]/80 backdrop-blur-2xl backdrop-saturate-150 text-white ring-1 ring-white/10 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]"
+          className="pointer-events-auto relative overflow-hidden w-full max-w-md flex items-center gap-3.5 pl-3 pr-3.5 py-3 rounded-[22px] bg-[#141210]/85 backdrop-blur-2xl backdrop-saturate-150 text-[#F3EEE4] ring-1 ring-[#D4B06A]/25 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]"
         >
           {(() => {
             const { Icon, tile, title } = variants[toast.variant];
@@ -75,7 +75,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => (
                       toast.onAction?.();
                       onDismiss();
                     }}
-                    className="shrink-0 h-8 px-3.5 rounded-full bg-white text-[#14110F] text-xs font-bold transition-all hover:bg-[#E3C16F] active:scale-95 cursor-pointer"
+                    className="shrink-0 h-8 px-3.5 rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] text-xs font-bold transition-all hover:brightness-110 active:scale-95 cursor-pointer"
                   >
                     {toast.actionLabel}
                   </button>
