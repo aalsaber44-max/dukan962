@@ -41,7 +41,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
-  
   const [finalWhatsAppUrl, setFinalWhatsAppUrl] = useState('');
 
   const [nameError, setNameError] = useState<string | null>(null);
@@ -97,7 +96,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (isSubmittingRef.current) return;
 
     const nameParts = name.trim().split(/\s+/);
@@ -120,7 +118,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         setPhone2Error(phone2Validation.error || 'رقم الهاتف الإضافي غير صالح.');
         return;
       }
-      
       if (phone1Validation.cleaned === phone2Validation.cleaned) {
         setPhone2Error('رقم الهاتف الإضافي يجب أن يكون مختلفاً عن الرقم الأساسي');
         return;
@@ -163,7 +160,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     };
 
     const paymentLabel = paymentMethod === 'cod' ? 'الدفع كاش عند الاستلام بعد المعاينة' : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
-    
+
     const whatsAppText = encodeURIComponent(
       `*طلب جديد من متجر دكان 962 للأثاث*\n\n` +
       `*رقم الطلب:* ${num}\n` +
@@ -204,10 +201,49 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const jordanGovernorates = JORDAN_GOVERNORATES;
 
+  // 💡 استخرجنا قسم كليك كمتغير منفصل عشان نضمن مفيش أي مشاكل في الـ Parser
+  const cliqSection = paymentMethod === 'cliq' ? (
+    <div className="bg-[#7FD1A0]/10 border border-[#7FD1A0]/25 rounded-2xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs font-bold text-[#7FD1A0]">
+          <Smartphone className="w-4 h-4" />
+          <span>بيانات التحويل:</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <div className="bg-[#141210] p-2.5 rounded-xl border border-[#7FD1A0]/25 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-[#A39A8B] block">اسم الحساب:</span>
+            <strong className="text-[#F3EEE4] font-mono text-sm">{cliqAlias}</strong>
+          </div>
+          <button type="button" onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-1.5 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border cursor-pointer text-[10px] flex items-center gap-1">
+            {copiedField === 'alias' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        <div className="bg-[#141210] p-2.5 rounded-xl border border-[#7FD1A0]/25 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-[#A39A8B] block">رقم الهاتف:</span>
+            <strong className="text-[#F3EEE4] font-mono text-sm">{cliqPhone}</strong>
+          </div>
+          <button type="button" onClick={() => copyToClipboard(cliqPhone, 'phone')} className="p-1.5 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border cursor-pointer text-[10px] flex items-center gap-1">
+            {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-[11px] font-semibold text-[#7FD1A0] mb-1">رقم عملية التحويل أو اسم الحساب (اختياري):</label>
+        <input type="text" value={cliqRef} onChange={(e) => setCliqRef(e.target.value)} placeholder="مثال: رقم العملية..." className="w-full text-xs py-2 px-3 bg-[#141210] border border-[#7FD1A0]/25 rounded-xl" />
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-xl bg-[#141210] rounded-3xl shadow-2xl border border-white/10 flex flex-col my-6 max-h-[90vh]">
-        
+
         <div className="p-5 border-b border-white/10 flex items-center justify-between bg-[#1C1815] rounded-t-3xl shrink-0">
           <div>
             <h3 className="text-base font-bold text-[#F3EEE4]">
@@ -217,10 +253,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {orderConfirmed ? 'شكراً لاختيارك طاولات دكان 962 للأثاث' : 'التوصيل لجميع المحافظات والدفع عند الاستلام أو كليك'}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-[#141210]/10 hover:bg-[#141210]/15 text-[#F3EEE4] transition-colors cursor-pointer"
-          >
+          <button onClick={onClose} className="p-2 rounded-full bg-[#141210]/10 hover:bg-[#141210]/15 text-[#F3EEE4] transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -228,7 +261,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <div className="overflow-y-auto flex-1 p-6 sm:p-8">
           {orderConfirmed ? (
             <div className="text-center">
-              {/* 💡 تم إصلاح كلاس الخلفية هنا */}
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-400/25">
                 <CheckCircle className="w-8 h-8" />
               </div>
@@ -237,22 +269,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <p className="text-xs text-[#B9B0A0] leading-relaxed max-w-md mx-auto mb-5">
                 تم استلام طلبك وحفظه بنجاح في السحابة! يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
               </p>
-
               <div className="mb-6">
-                {/* 💡 تم إصلاح لون النص هنا ليصبح أبيض */}
                 <a href={finalWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3.5 px-6 text-xs sm:text-sm font-bold text-white bg-[#2E5339] hover:bg-[#1E3826] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
                   <MessageCircle className="w-5 h-5" />
                   <span>إرسال تفاصيل الطلب عبر واتساب</span>
                 </a>
               </div>
-
               <button onClick={onClose} className="py-2.5 px-8 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl transition-all cursor-pointer">
                 العودة إلى المعرض
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              
+
               <div>
                 <label className="block text-xs font-bold text-[#F3EEE4] mb-2">اختر طريقة الدفع:</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -263,7 +292,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       <p className="text-[10px] text-[#A39A8B]">كاش بعد المعاينة</p>
                     </div>
                   </button>
-
                   <button type="button" onClick={() => setPaymentMethod('cliq')} className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 cursor-pointer ${paymentMethod === 'cliq' ? 'border-[#D4B06A] bg-[#1C1815] shadow-none ring-1 ring-[#D4B06A]' : 'border-white/10 hover:border-white/10'}`}>
                     <Smartphone className="w-5 h-5 text-[#7FD1A0] shrink-0" />
                     <div>
@@ -274,81 +302,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
               </div>
 
-              {paymentMethod === 'cliq' && (
-                {/* 💡 تم إصلاح الحدود هنا لتكون خضراء */}
-                <div className="bg-[#7FD1A0]/10 border border-[#7FD1A0]/25 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#7FD1A0]">
-                      <Smartphone className="w-4 h-4" />
-                      <span>بيانات التحويل:</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="bg-[#141210] p-2.5 rounded-xl border border-[#7FD1A0]/25 flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] text-[#A39A8B] block">اسم الحساب:</span>
-                        <strong className="text-[#F3EEE4] font-mono text-sm">{cliqAlias}</strong>
-                      </div>
-                      <button type="button" onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-1.5 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border cursor-pointer text-[10px] flex items-center gap-1">
-                        {copiedField === 'alias' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-
-                    <div className="bg-[#141210] p-2.5 rounded-xl border border-[#7FD1A0]/25 flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] text-[#A39A8B] block">رقم الهاتف:</span>
-                        <strong className="text-[#F3EEE4] font-mono text-sm">{cliqPhone}</strong>
-                      </div>
-                      <button type="button" onClick={() => copyToClipboard(cliqPhone, 'phone')} className="p-1.5 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border cursor-pointer text-[10px] flex items-center gap-1">
-                        {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-[#7FD1A0] mb-1">رقم عملية التحويل أو اسم الحساب (اختياري):</label>
-                    <input type="text" value={cliqRef} onChange={(e) => setCliqRef(e.target.value)} placeholder="مثال: رقم العملية..." className="w-full text-xs py-2 px-3 bg-[#141210] border border-[#7FD1A0]/25 rounded-xl" />
-                  </div>
-                </div>
-              )}
+              {cliqSection}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">الاسم الكامل (الرباعي) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
-                    placeholder="مثال: محمد أحمد علي محمود"
-                    className={`w-full text-xs py-2 px-3 bg-[#1C1815] border rounded-xl ${nameError ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
-                  />
+                  <input type="text" required value={name} onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }} placeholder="مثال: محمد أحمد علي محمود" className={`w-full text-xs py-2 px-3 bg-[#1C1815] border rounded-xl ${nameError ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`} />
                   {nameError && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{nameError}</p>}
                 </div>
-
                 <div>
                   <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">رقم الهاتف الأساسي *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={phone1}
-                    onChange={(e) => handlePhone1Change(e.target.value)}
-                    placeholder="07XXXXXXXX"
-                    className={`w-full text-xs py-2 px-3 bg-[#1C1815] border rounded-xl font-mono text-right ${phone1Error ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
-                  />
+                  <input type="tel" required value={phone1} onChange={(e) => handlePhone1Change(e.target.value)} placeholder="07XXXXXXXX" className={`w-full text-xs py-2 px-3 bg-[#1C1815] border rounded-xl font-mono text-right ${phone1Error ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`} />
                   {phone1Error && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{phone1Error}</p>}
                 </div>
-
                 <div>
                   <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">رقم هاتف إضافي (اختياري)</label>
-                  <input
-                    type="tel"
-                    value={phone2}
-                    onChange={(e) => handlePhone2Change(e.target.value)}
-                    placeholder="رقم بديل..."
-                    className={`w-full text-xs py-2 px-3 bg-[#1C1815] border rounded-xl font-mono text-right ${phone2Error ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
-                  />
+                  <input type="tel" value={phone2} onChange={(e) => handlePhone2Change(e.target.value)} placeholder="رقم بديل..." className={`w-full text-xs py-2 px-3 bg-[#1C1815] border rounded-xl font-mono text-right ${phone2Error ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`} />
                   {phone2Error && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{phone2Error}</p>}
                 </div>
               </div>
