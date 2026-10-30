@@ -26,8 +26,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   };
 
   const displayData: any = categoryData || defaultData;
-  
-  // بنجيب الصورة الأساسية
   const bannerImage = displayData.bannerImage || displayData.image || defaultData.bannerImage;
   const badge = String(displayData.badgeText || 'يوجد معاينة').replace(/^[^\p{L}\p{N}]+/u, '');
 
@@ -35,23 +33,28 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
     <section className="relative bg-[#FBFAF7]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-12">
         
-        {/* الحاوية: شلنا الزووم، وخليها أبعاد 16:9 */}
         <div className="relative overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#14110F] shadow-lift ring-1 ring-black/5">
           
-          {/* الصورة الأساسية مباشرة بدون picture tag أو animations */}
+          {/* 💡 هنا التغيير: blur كخلفية، والصورة الأساسية object-contain */}
+          <img
+            src={bannerImage}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-110"
+          />
+          
           <img
             src={bannerImage}
             alt={displayData.title || displayData.name}
             referrerPolicy="no-referrer"
             fetchPriority="high"
             decoding="async"
-            className="absolute inset-0 w-full h-full object-cover object-center"
+            className="absolute inset-0 w-full h-full object-contain z-10" 
+            // object-contain بيجبر الصورة تبان كاملة من غير قص
           />
 
-          {/* تدرج لوني عشان الكلام يبان */}
           <div className="absolute inset-0 z-10 bg-gradient-to-l from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-          {/* الكلام */}
           <div className="absolute inset-0 z-20 flex items-center p-5 sm:p-10 lg:p-16">
             <div className="max-w-2xl text-white">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
