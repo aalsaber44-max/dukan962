@@ -30,13 +30,30 @@ export const JORDAN_GOVERNORATES = [
 export type JordanGovernorate = (typeof JORDAN_GOVERNORATES)[number];
 
 /**
+ * 💡 حد التوصيل المجاني (بالدينار). المصدر الوحيد لهذه القيمة في المشروع:
+ * السلة وإتمام الطلب ورسائل الواتساب كلها تقرأ منه.
+ *  - null  => لا يوجد توصيل مجاني (السياسة الحالية)
+ *  - 150   => التوصيل مجاني للطلبات من 150 د.أ فما فوق
+ */
+export const FREE_DELIVERY_THRESHOLD: number | null = null;
+
+export const DELIVERY_FEE_MIN = 5;   // داخل عمان
+export const DELIVERY_FEE_MAX = 10;  // العقبة
+
+export const isFreeDelivery = (subtotal: number): boolean =>
+  FREE_DELIVERY_THRESHOLD !== null && subtotal >= FREE_DELIVERY_THRESHOLD;
+
+/**
  * Calculates official delivery fee according to store policy:
  * - Inside Amman: 5 JOD
  * - Aqaba: 10 JOD
  * - All other governorates (Outside Amman): 8 JOD
- * (No free delivery)
+ * - Free when subtotal reaches FREE_DELIVERY_THRESHOLD (if enabled)
  */
-export const calculateDeliveryFee = (governorate: string): number => {
+export const calculateDeliveryFee = (governorate: string, subtotal: number = 0): number => {
+  if (isFreeDelivery(subtotal)) {
+    return 0;
+  }
   if (governorate.includes('العقبة')) {
     return 10;
   }
