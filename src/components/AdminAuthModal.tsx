@@ -52,13 +52,13 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[#E9E1D4] overflow-hidden p-6 sm:p-8"
+        className="relative w-full max-w-md bg-[#141210] rounded-3xl shadow-2xl border border-white/10 overflow-hidden p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 p-2 rounded-full text-[#78716C] hover:text-[#1C1917] hover:bg-[#F4EFE6] transition-colors cursor-pointer"
+          className="absolute top-4 left-4 p-2 rounded-full text-[#A39A8B] hover:text-[#F3EEE4] hover:bg-[#26211D] transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -68,13 +68,13 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           <div className="flex justify-center mb-3">
             <DukanLogo variant="dark" className="h-10" />
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#F7F2E9] text-[#8C6D46] flex items-center justify-center mx-auto mb-3 border border-[#E8DFD3]">
+          <div className="w-12 h-12 rounded-2xl bg-[#1C1815] text-[#D4B06A] flex items-center justify-center mx-auto mb-3 border border-white/10">
             <Lock className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-black text-[#1C1917]">
+          <h3 className="text-lg font-black text-[#F3EEE4]">
             لوحة إدارة وتحكم المتجر
           </h3>
-          <p className="text-xs text-[#78716C] mt-1">
+          <p className="text-xs text-[#A39A8B] mt-1">
             منطقة مخصصة لصاحب المتجر لإدارة الأسعار، المنتجات، والطلبات
           </p>
         </div>
@@ -82,7 +82,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
         {/* Password Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-[#1C1917] mb-1.5 text-right">
+            <label className="block text-xs font-bold text-[#F3EEE4] mb-1.5 text-right">
               كلمة مرور الإدارة:
             </label>
             <div className="relative">
@@ -94,20 +94,20 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                   setError('');
                 }}
                 placeholder="أدخل الرمز السري..."
-                className="w-full py-2.5 pr-10 pl-10 bg-[#FAF7F2] border border-[#DDD5C7] rounded-xl text-sm font-mono text-[#1C1917] placeholder-[#A8A29E] focus:outline-hidden focus:border-[#8C6D46]"
+                className="w-full py-2.5 pr-10 pl-10 bg-[#1C1815] border border-white/10 rounded-xl text-sm font-mono text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:border-[#D4B06A]"
                 autoFocus
               />
-              <KeyRound className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+              <KeyRound className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8173]" />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8C827A] hover:text-[#1C1917] cursor-pointer"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8173] hover:text-[#F3EEE4] cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             {error && (
-              <p className="text-[11px] text-rose-600 font-semibold mt-1.5 text-right">
+              <p className="text-[11px] text-rose-400 font-semibold mt-1.5 text-right">
                 {error}
               </p>
             )}
@@ -116,7 +116,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
+            className="w-full py-3 px-4 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
           >
             <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
             <span>{loading ? 'جارٍ التحقق...' : 'فتح لوحة التحكم'}</span>
