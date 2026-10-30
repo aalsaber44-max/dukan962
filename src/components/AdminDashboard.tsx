@@ -67,7 +67,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // 💡 الطلبات الآن تأتي من Firebase مباشرة
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
@@ -117,7 +116,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   }, []);
 
-  // 💡 الاستماع للبيانات (المنتجات، الأقسام، والطلبات) من Firebase مباشرة
   useEffect(() => {
     if (!isOpen) return;
     
@@ -134,7 +132,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setCategories(cats);
     });
 
-    // 💡 جلب الطلبات من Firebase
     const unsubscribeOrders = onSnapshot(collection(db, 'orders'), (snapshot) => {
       const ords: Order[] = [];
       snapshot.forEach((doc) => ords.push({ id: doc.id, ...doc.data() } as Order));
@@ -352,7 +349,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // 💡 تحديث حالة الطلب في Firebase
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, 'orders', orderId), { status: newStatus });
@@ -362,7 +358,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // 💡 حذف الطلب من Firebase
   const handleDeleteOrder = async (orderId: string) => {
     try {
       await deleteDoc(doc(db, 'orders', orderId));
@@ -450,7 +445,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
       <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-[#E8DFD3] overflow-hidden my-6 max-h-[92vh] flex flex-col">
         
-        {/* Header */}
         <div className="p-6 border-b border-[#EAE3D7] flex items-center justify-between bg-[#FAF8F5]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#1C1917] text-[#D4AF37] flex items-center justify-center font-bold">
@@ -474,7 +468,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
         </div>
 
-        {/* Success toast banner */}
         {successToast && (
           <div className="bg-[#EDF4EE] border-b border-[#C5DEC8] px-6 py-2.5 text-xs text-[#2E5339] font-bold flex items-center gap-2">
             <Check className="w-4 h-4 text-[#2E5339]" />
@@ -482,7 +475,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* Sub Navigation Tabs */}
         <div className="px-6 pt-4 border-b border-[#EAE3D7] flex flex-wrap items-center gap-2 sm:gap-4 bg-[#FAF8F5]">
           <button
             onClick={() => setActiveTab('list')}
@@ -553,10 +545,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
         </div>
 
-        {/* Body Content */}
         <div className="flex-1 overflow-y-auto p-6">
           
-          {/* TAB 1: PRODUCTS LIST */}
           {activeTab === 'list' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -678,11 +668,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 2: INCOMING ORDERS */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
               
-              {/* 💡 إحصائيات سريعة */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div className="bg-white p-4 rounded-2xl border border-[#EDE5D8] shadow-xs flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-[#EDF4EE] text-[#2E5339] flex items-center justify-center shrink-0">
@@ -726,7 +714,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <Search className="w-4 h-4 text-[#A8A29E] absolute right-2.5 top-2.5 pointer-events-none" />
                   </div>
 
-                  {/* 💡 زر تصدير الإكسل */}
                   <button
                     onClick={handleExportExcel}
                     className="py-2 px-3 bg-[#FAF7F2] border border-[#DDD5C7] rounded-xl text-xs font-bold text-[#1C1917] hover:bg-[#F2EDE4] flex items-center gap-1.5 cursor-pointer shrink-0"
@@ -736,7 +723,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <span>تصدير</span>
                   </button>
 
-                  {/* (زر التحديث مازال موجوداً هنا، لكن onSnapshot يجلب الطلبات تلقائياً) */}
                   <button
                     disabled={loadingOrders}
                     className="py-2 px-3 bg-[#FAF7F2] border border-[#DDD5C7] rounded-xl text-xs font-bold text-[#1C1917] hover:bg-[#F2EDE4] flex items-center gap-1.5 cursor-pointer shrink-0"
@@ -786,7 +772,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           isUnread ? 'border-rose-300 ring-1 ring-rose-200' : 'border-[#E5DDD0] hover:border-[#8C6D46]'
                         }`}
                       >
-                        {/* Top row */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F2ECE1]">
                           <div className="flex items-center gap-2.5">
                             {isUnread && (
@@ -808,7 +793,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </span>
                           </div>
 
-                          {/* Status changer & Delete */}
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <span className="text-[11px] text-[#78716C]">تغيير الحالة:</span>
                             <select
@@ -851,9 +835,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
                         </div>
 
-                        {/* Middle: Customer details & Items */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 py-3">
-                          {/* Customer info */}
                           <div className="md:col-span-5 space-y-2 text-xs">
                             <p className="font-bold text-[#1C1917] text-sm">
                               {`الزبون: ${order.name}`}
@@ -914,7 +896,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
                           </div>
 
-                          {/* Items ordered list */}
                           <div className="md:col-span-7 bg-[#FAF7F2] p-3 rounded-xl border border-[#EDE5D8] space-y-2">
                             <span className="text-[11px] font-bold text-[#8C6D46] block">
                               القطع المطلوبة (اضغط على الصورة لتكبيرها):
@@ -971,7 +952,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 3: ADD NEW PRODUCT */}
           {activeTab === 'add' && (
             <form onSubmit={handleCreateProduct} className="space-y-6 max-w-3xl mx-auto">
               <div className="bg-[#FAF7F2] p-5 rounded-2xl border border-[#E9E1D4] space-y-4">
@@ -1085,7 +1065,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Dynamic Attributes Section */}
               <div className="bg-[#FAF7F2] p-5 rounded-2xl border border-[#E9E1D4] space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1106,7 +1085,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ))}
               </div>
 
-              {/* Colors & Photos Section */}
               <div className="bg-[#FAF7F2] p-5 rounded-2xl border border-[#E9E1D4] space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1196,7 +1174,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setActiveTab('list')} className="py-2.5 px-5 text-xs font-semibold text-[#57534E] hover:text-[#1C1917] cursor-pointer">إلغاء</button>
                 <button type="submit" className="py-3 px-8 text-xs font-bold text-white bg-[#1C1917] hover:bg-[#332E2B] rounded-xl shadow-md transition-all cursor-pointer">نشر القطعة في متجر دكان 962</button>
@@ -1204,12 +1181,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </form>
           )}
 
-          {/* TAB: CATEGORIES */}
           {activeTab === 'categories' && (
             <CategoryManager />
           )}
 
-          {/* TAB 4: PASSWORD SETTINGS */}
           {activeTab === 'settings' && (
             <div className="max-w-md mx-auto py-4 space-y-6">
               <div className="bg-[#FAF7F2] p-6 rounded-2xl border border-[#E9E1D4] space-y-4">
@@ -1245,7 +1220,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
         </div>
 
-        {/* Edit Product Modal */}
         {editingProduct && (
           <EditProductModal
             product={editingProduct}
@@ -1259,9 +1233,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 };
 
-// ----------------------------------------------------------------------
-// EditProductModal
-// ----------------------------------------------------------------------
 interface EditProductModalProps {
   product: Product;
   categories: Category[];
