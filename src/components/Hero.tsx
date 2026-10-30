@@ -36,7 +36,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-12">
         
         {/* الحاوية: شلنا الزووم، وخليها أبعاد 16:9 */}
-        <div className="relative overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#14110F] shadow-lift ring-1 ring-black/5">
+        <div className="relative overflow-hidden rounded-[4px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#14110F] shadow-lift ring-1 ring-black/5">
           
           {/* الصورة الأساسية مباشرة بدون picture tag أو animations */}
           <img
@@ -49,7 +49,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
           />
 
           {/* تدرج لوني عشان الكلام يبان */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-l from-black/90 via-black/40 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-l from-black/85 via-black/35 to-transparent pointer-events-none" />
 
           {/* الكلام */}
           <div className="absolute inset-0 z-20 flex items-center p-5 sm:p-10 lg:p-16">
@@ -73,7 +73,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               <div className="flex items-center gap-3 sm:gap-4">
                 <button
                   onClick={onExploreClick}
-                  className="group/btn inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full bg-[#E3C16F] text-[#14110F] text-sm sm:text-base font-bold shadow-xl transition-all duration-300 hover:bg-white hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                  className="group/btn inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full bg-[#C6AA72] text-[#171510] text-sm sm:text-base font-bold shadow-xl transition-all duration-300 hover:bg-white hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                 >
                   <span className="relative">{displayData.buttonText || 'استكشف الآن'}</span>
                   <ArrowLeft className="relative w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover/btn:-translate-x-1" />
