@@ -40,7 +40,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="relative overflow-hidden rounded-[28px] sm:rounded-[36px] bg-white ring-1 ring-black/[0.06] shadow-soft px-6 py-14 sm:py-20 text-center"
+      className="relative overflow-hidden rounded-[28px] sm:rounded-[36px] bg-[#141210] ring-1 ring-white/10 shadow-soft px-6 py-14 sm:py-20 text-center"
     >
       {/* هالة ذهبية خفيفة في الخلفية */}
       <div
@@ -49,14 +49,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       />
 
       <div className="relative mx-auto mb-7 grid place-items-center w-36 h-36">
-        <span className="absolute inset-0 rounded-full ring-1 ring-black/[0.05]" />
-        <span className="absolute inset-4 rounded-full ring-1 ring-black/[0.06] bg-[#FBF7EE]/60" />
-        <span className="absolute inset-9 rounded-full bg-gradient-to-br from-[#F7EFD9] to-[#EBD9A8] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_24px_-10px_rgba(140,109,31,0.5)]" />
-        <Icon className="relative w-9 h-9 text-[#6B5217] animate-float-slow" strokeWidth={1.6} />
+        <span className="absolute inset-0 rounded-full ring-1 ring-white/10" />
+        <span className="absolute inset-4 rounded-full ring-1 ring-white/10 bg-[#1C1815]/60" />
+        <span className="absolute inset-9 rounded-full bg-gradient-to-br from-[#4A3A18] to-[#2A2110] ring-1 ring-[#D4B06A]/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_30px_-10px_rgba(212,176,106,0.45)]" />
+        <Icon className="relative w-9 h-9 text-[#D4B06A] animate-float-slow" strokeWidth={1.6} />
       </div>
 
-      <h3 className="relative text-xl sm:text-2xl font-bold font-serif text-[#14110F] mb-2">{title}</h3>
-      <p className="relative text-sm text-[#78716C] leading-relaxed max-w-md mx-auto">{body}</p>
+      <h3 className="relative text-xl sm:text-2xl font-bold font-serif text-[#F3EEE4] mb-2">{title}</h3>
+      <p className="relative text-sm text-[#A39A8B] leading-relaxed max-w-md mx-auto">{body}</p>
 
       {isNoResults && activeFilters.length > 0 && (
         <div className="relative flex flex-wrap items-center justify-center gap-2 mt-6">
@@ -65,7 +65,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
               key={f.key}
               onClick={f.onRemove}
               aria-label={`إزالة فلتر ${f.label}`}
-              className="group/chip inline-flex items-center gap-1.5 h-8 pr-3.5 pl-2 rounded-full bg-[#FBF7EE] ring-1 ring-[#E3D4AE] text-xs font-semibold text-[#5C4713] transition-all hover:bg-[#F4EAD0] active:scale-95 cursor-pointer"
+              className="group/chip inline-flex items-center gap-1.5 h-8 pr-3.5 pl-2 rounded-full bg-[#1C1815] ring-1 ring-[#D4B06A]/30 text-xs font-semibold text-[#D4B06A] transition-all hover:bg-[#26211D] active:scale-95 cursor-pointer"
             >
               <span>{f.label}</span>
               <span className="grid place-items-center w-4 h-4 rounded-full bg-[#5C4713]/10 group-hover/chip:bg-[#5C4713]/20 transition-colors">
@@ -80,14 +80,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <div className="relative flex flex-col sm:flex-row items-center justify-center gap-2.5 mt-8">
           <button
             onClick={onReset}
-            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-[#14110F] text-white text-sm font-bold shadow-[0_10px_24px_-10px_rgba(20,17,15,0.6)] transition-all hover:bg-[#2A2522] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-[#D4B06A] text-[#0B0A09] text-sm font-bold shadow-[0_10px_24px_-10px_rgba(20,17,15,0.6)] transition-all hover:bg-[#E8CC8A] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             إعادة ضبط الفلاتر
           </button>
           <button
             onClick={onBrowseCategories}
-            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-white text-[#14110F] text-sm font-bold ring-1 ring-black/10 transition-all hover:bg-[#FBF7EE] hover:ring-black/20 active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-[#141210] text-[#F3EEE4] text-sm font-bold ring-1 ring-black/10 transition-all hover:bg-[#26211D] hover:ring-black/20 active:scale-95 cursor-pointer"
           >
             <LayoutGrid className="w-4 h-4" />
             تصفح الأقسام
@@ -102,7 +102,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 export const ProductSkeletonGrid: React.FC<{ count?: number }> = ({ count = 6 }) => (
   <div aria-busy="true" aria-label="جاري تحميل المنتجات" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
     {Array.from({ length: count }).map((_, i) => (
-      <div key={i} className="rounded-2xl bg-white ring-1 ring-black/[0.05] overflow-hidden shadow-soft">
+      <div key={i} className="rounded-2xl bg-[#141210] ring-1 ring-white/10 overflow-hidden shadow-soft">
         <div className="aspect-4/3 skeleton-bg animate-skeleton" />
         <div className="p-5 space-y-3">
           <div className="h-3 w-1/3 rounded-full skeleton-bg animate-skeleton" />
