@@ -75,3 +75,106 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ───────── DUKAN 962 · Quiet Luxury storefront layer ───────── */
+:root {
+  color-scheme: light;
+  --dukan-ink: #191713;
+  --dukan-muted: #777168;
+  --dukan-paper: #f7f4ee;
+  --dukan-ivory: #eee8dc;
+  --dukan-gold: #b79a62;
+  --dukan-line: rgba(48, 41, 31, .10);
+}
+html { background: var(--dukan-paper); }
+body {
+  background: var(--dukan-paper);
+  color: var(--dukan-ink);
+  letter-spacing: -.012em;
+}
+::selection { background: #d9c69c; color: #191713; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+img { backface-visibility: hidden; }
+#root > div { background: var(--dukan-paper); }
+#root main#catalog { padding-top: clamp(2.5rem, 6vw, 5.5rem); padding-bottom: clamp(3rem, 7vw, 6rem); }
+#root main#catalog h2 {
+  font-size: clamp(1.65rem, 3vw, 2.65rem);
+  letter-spacing: -.045em;
+  line-height: 1.35;
+}
+#root main#catalog h2::after {
+  content: ""; display: block; width: 54px; height: 2px;
+  margin-top: 14px; background: var(--dukan-gold);
+}
+#root main#catalog > div:first-child p { color: #817a70; letter-spacing: .01em; }
+header.sticky { border-color: transparent; }
+header.sticky > div:first-child { max-width: 1440px; }
+header.sticky nav { background: rgba(30, 27, 22, .035); }
+header.sticky input { border: 1px solid rgba(40,35,27,.08); }
+header.sticky button:focus-visible, #root button:focus-visible { outline-color: var(--dukan-gold); }
+#root section.relative > div.max-w-7xl { padding-top: clamp(12px, 2vw, 24px); }
+#root section.relative .shadow-lift { box-shadow: 0 28px 70px -38px rgba(25,23,19,.42); }
+#root section.relative h1 { max-width: 13ch; font-weight: 600; letter-spacing: -.045em; line-height: 1.28; }
+#root section.relative p { color: rgba(255,255,255,.82); font-weight: 400; }
+#root section.relative button { border-radius: 3px; letter-spacing: .01em; }
+#categories { padding-top: clamp(2.8rem, 6vw, 5.5rem); padding-bottom: clamp(2.8rem, 6vw, 5rem); }
+#categories h2 { font-size: clamp(1.7rem, 3vw, 2.55rem); letter-spacing: -.04em; }
+#categories button[aria-pressed] { border-radius: 4px; }
+#categories .grid > button { border-radius: 5px !important; }
+#categories .grid > button > div:last-child {
+  margin: 12px; border-radius: 3px; background: rgba(18,17,14,.42);
+  border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(12px);
+}
+#categories .grid > button h3 { font-weight: 600; letter-spacing: -.025em; }
+#catalog article.group {
+  border: 1px solid rgba(56,48,36,.10);
+  border-radius: 4px;
+  background: #fffefa;
+  box-shadow: 0 4px 18px rgba(42,35,25,.035);
+  transition: transform .45s cubic-bezier(.2,.75,.25,1), box-shadow .45s, border-color .45s;
+}
+#catalog article.group:hover {
+  transform: translateY(-5px);
+  border-color: rgba(183,154,98,.5);
+  box-shadow: 0 22px 46px -28px rgba(42,35,25,.28);
+}
+#catalog article.group > div:first-child { background: #f0ece4; }
+#catalog article.group > div:first-child img { padding: 0; }
+#catalog article.group > div:last-child { padding: clamp(14px, 2vw, 22px); }
+#catalog article.group h3 { font-size: clamp(.92rem, 1.25vw, 1.08rem); font-weight: 600; }
+#catalog article.group .font-mono { letter-spacing: -.035em; }
+#catalog article.group button[aria-label^="إضافة"] {
+  border-radius: 3px; background: var(--dukan-ink); padding: 10px 14px;
+}
+#catalog article.group button[aria-label^="إضافة"]:hover { background: #3b3428; }
+#catalog article.group button[aria-label*="المفضلة"] { border-radius: 2px; }
+#catalog .bg-white.rounded-2xl.border { border-radius: 4px; border-color: var(--dukan-line); box-shadow: 0 8px 28px rgba(42,35,25,.035); }
+#catalog input[type="range"] { accent-color: var(--dukan-gold); }
+#catalog .active-filter, #catalog [class*="rounded-full"] { }
+#root footer { background: #191713; border-top: 1px solid rgba(183,154,98,.24); }
+#root footer h4 { color: #e8dfce; letter-spacing: .025em; }
+#root footer a, #root footer button { transition: color .25s ease; }
+#root footer .text-\[\#A8A29E\] { color: #aaa398; }
+#root .fixed.inset-0.z-50 > div[class*="max-w"] {
+  border-radius: 5px; border-color: rgba(183,154,98,.25);
+}
+#root .fixed.inset-0.z-50 button { transition: background-color .2s, color .2s, transform .2s; }
+#root .fixed.inset-0.z-50 button:active { transform: scale(.98); }
+@media (min-width: 1024px) {
+  #catalog .grid { column-gap: 22px; row-gap: 28px; }
+  #categories .grid { gap: 18px; }
+}
+@media (max-width: 639px) {
+  #root section.relative .max-w-7xl { padding-inline: 12px; }
+  #root section.relative .aspect-\[4\/3\] { aspect-ratio: 1 / 1.12; }
+  #root section.relative h1 { max-width: 12ch; font-size: clamp(1.7rem, 8vw, 2.45rem); }
+  #root section.relative p { font-size: .84rem; line-height: 1.8; }
+  #categories .grid { grid-auto-rows: 154px; gap: 9px; }
+  #catalog article.group > div:last-child { padding: 12px; }
+  #catalog article.group button[aria-label^="إضافة"] { padding: 9px 10px; }
+  #root footer { padding-top: 2.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}
