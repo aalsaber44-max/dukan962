@@ -1,5 +1,4 @@
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react';
+import React from 'react';
 import { ArrowLeft, Sparkles, ShieldCheck, Truck, Clock } from 'lucide-react';
 import { Category } from '../types/furniture';
 
@@ -15,15 +14,6 @@ const perks = [
   { Icon: Sparkles, title: 'ألوان حصرية', sub: 'تشكيلات متنوعة' },
 ];
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
-};
-const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
-};
-
 export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const defaultData = {
     title: 'دكان 962.. وجهتك الأولى للأثاث والعطور والأحذية',
@@ -36,76 +26,54 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   };
 
   const displayData: any = categoryData || defaultData;
-  const desktopBanner = displayData.bannerImage || displayData.image || defaultData.bannerImage;
-  const mobileBanner = displayData.mobileBannerImage || desktopBanner;
-
+  
+  // بنجيب الصورة الأساسية
+  const bannerImage = displayData.bannerImage || displayData.image || defaultData.bannerImage;
   const badge = String(displayData.badgeText || 'يوجد معاينة').replace(/^[^\p{L}\p{N}]+/u, '');
-
-  const frameRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: frameRef, offset: ['start start', 'end start'] });
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.03]);
 
   return (
     <section className="relative bg-[#FBFAF7]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-12">
-        <div
-          ref={frameRef}
-          className="relative isolate overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] bg-[#14110F] shadow-lift ring-1 ring-black/5"
-        >
-          <motion.div style={reduceMotion ? undefined : { scale }} className="absolute inset-0 will-change-transform">
-            <picture key={desktopBanner}>
-              <source media="(max-width: 639px)" srcSet={mobileBanner} />
-              <source media="(min-width: 640px)" srcSet={desktopBanner} />
-              <img
-                src={desktopBanner}
-                alt={displayData.title || displayData.name}
-                referrerPolicy="no-referrer"
-                fetchPriority="high"
-                decoding="async"
-                className="absolute inset-0 w-full h-full object-cover object-center"
-              />
-            </picture>
-          </motion.div>
+        
+        {/* الحاوية: شلنا الزووم، وخليها أبعاد 16:9 */}
+        <div className="relative overflow-hidden rounded-[22px] sm:rounded-[32px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#14110F] shadow-lift ring-1 ring-black/5">
+          
+          {/* الصورة الأساسية مباشرة بدون picture tag أو animations */}
+          <img
+            src={bannerImage}
+            alt={displayData.title || displayData.name}
+            referrerPolicy="no-referrer"
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
 
-          {/* 💡 التدرج اللوني الذكي: أسود من اليمين، شفاف من الشمال، عشان ميغطيش على الصورة */}
+          {/* تدرج لوني عشان الكلام يبان */}
           <div className="absolute inset-0 z-10 bg-gradient-to-l from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-          {/* الكلام بقى على الصورة مباشرة بدون صندوق زجاجي */}
+          {/* الكلام */}
           <div className="absolute inset-0 z-20 flex items-center p-5 sm:p-10 lg:p-16">
-            <motion.div
-              key={displayData.title}
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="max-w-2xl text-white"
-            >
-              <motion.div variants={item} className="flex items-center gap-2 mb-3 sm:mb-4">
+            <div className="max-w-2xl text-white">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
                   <span className="relative inline-flex rounded-full h-full w-full bg-emerald-400" />
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-emerald-300 drop-shadow-md">{badge}</span>
-              </motion.div>
+              </div>
 
-              <motion.h1
-                variants={item}
-                className="text-2xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.2] mb-3 sm:mb-5 text-balance font-serif drop-shadow-lg"
-              >
+              <h1 className="text-2xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.2] mb-3 sm:mb-5 text-balance font-serif drop-shadow-lg">
                 {displayData.title}
-              </motion.h1>
+              </h1>
 
-              <motion.p
-                variants={item}
-                className="text-sm sm:text-lg text-white/90 leading-relaxed mb-6 sm:mb-8 max-w-xl line-clamp-2 sm:line-clamp-3 drop-shadow-md font-medium"
-              >
+              <p className="text-sm sm:text-lg text-white/90 leading-relaxed mb-6 sm:mb-8 max-w-xl line-clamp-2 sm:line-clamp-3 drop-shadow-md font-medium">
                 {displayData.description}
-              </motion.p>
+              </p>
 
-              <motion.div variants={item} className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <button
                   onClick={onExploreClick}
-                  className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full bg-[#E3C16F] text-[#14110F] text-sm sm:text-base font-bold shadow-xl transition-all duration-300 hover:bg-white hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                  className="group/btn inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full bg-[#E3C16F] text-[#14110F] text-sm sm:text-base font-bold shadow-xl transition-all duration-300 hover:bg-white hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                 >
                   <span className="relative">{displayData.buttonText || 'استكشف الآن'}</span>
                   <ArrowLeft className="relative w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover/btn:-translate-x-1" />
@@ -115,8 +83,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                   <ShieldCheck className="w-5 h-5 text-emerald-300" />
                   يوجد معاينة عند وصول الطلب
                 </span>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           </div>
         </div>
 
