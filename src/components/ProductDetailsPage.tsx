@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { X, ShoppingBag, MessageCircle, Ruler, Shield, Truck, Check, Sparkles, Heart, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, ShoppingBag, MessageCircle, Shield, Truck, Check, Sparkles, Heart, ShieldCheck, ZoomIn, Play, ExternalLink } from 'lucide-react';
 import { Product, ProductColor } from '../types/furniture';
 import { STORE_PHONE_INTL } from '../utils/jordanLocations';
+import { getVideoSource } from '../utils/video';
+import { ImageLightbox } from './ImageLightbox';
 
 interface ProductDetailsPageProps {
   product: Product | null;
@@ -9,16 +11,23 @@ interface ProductDetailsPageProps {
   onToggleWishlist: (product: Product) => void;
   onClose: () => void;
   onAddToCart: (product: Product, selectedColor: ProductColor, quantity: number) => void;
+  relatedProducts?: Product[];
+  onSelectProduct?: (product: Product) => void;
 }
 
-export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
+interface ProductDetailsContentProps extends ProductDetailsPageProps {
+  product: Product;
+}
+
+const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
   product,
   isWishlisted,
   onToggleWishlist,
   onClose,
   onAddToCart,
+  relatedProducts = [],
+  onSelectProduct,
 }) => {
-  if (!product) return null;
 
   const [selectedColor, setSelectedColor] = useState<ProductColor>(
     product.colors[0] || {
@@ -35,8 +44,17 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
 
   const [quantity, setQuantity] = useState(1);
   const [addedNotice, setAddedNotice] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const videoSource = getVideoSource(product.videoUrl);
 
   useEffect(() => {
+    // عند الانتقال لمنتج مشابه: ارجع لأعلى النافذة وصفّر الكمية والفيديو
+    setQuantity(1);
+    setShowVideo(false);
+    setLightboxOpen(false);
+    scrollRef.current?.scrollTo({ top: 0 });
     if (product.colors && product.colors.length > 0) {
       const defaultColor = product.colors[0];
       setSelectedColor(defaultColor);
@@ -82,6 +100,16 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
     }, 850);
   };
 
+  const specRows: { label: string; value: string }[] = [
+    { label: 'رقم القطعة', value: product.itemNumber ? `#${product.itemNumber}` : '' },
+    { label: 'القسم', value: product.categoryLabel || '' },
+    { label: 'الأبعاد والمقاسات', value: product.dimensions || '' },
+    { label: 'الخامة / نوع الخشب', value: product.woodType || '' },
+    { label: 'الألوان المتاحة', value: (product.colors || []).map((c) => c.name).join('، ') },
+    ...(product.attributes || []).map((a) => ({ label: a.name, value: (a.options || []).join('، ') })),
+    { label: 'الضمان', value: product.warranty || '' },
+  ].filter((r) => r.value);
+
   const whatsAppUrl = `https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
     `مرحباً دكان 962 (Dukan 962)،\nأود الاستفسار وتأكيد طلب القطعة التالية:\n\n*القطعة:* ${product.name}\n*اللون المختار:* ${selectedColor.name}\n*السعر:* ${currentPrice.toFixed(2)} دينار أردني\n*الكمية:* ${quantity}\n*الأبعاد:* ${product.dimensions || '-'}\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
   )}`;
@@ -117,7 +145,8 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x lg:divide-x-reverse divide-white/10">
+        <div ref={scrollRef} className="overflow-y-auto flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x lg:divide-x-reverse divide-white/10">
           
           <div className="lg:col-span-6 p-6 sm:p-8 bg-[#1C1815] flex flex-col justify-between">
             <div>
@@ -126,8 +155,18 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                   src={activeImage}
                   alt={`${product.name} - ${selectedColor.name}`}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain object-center p-4 transition-all duration-300"
+                  onClick={() => setLightboxOpen(true)}
+                  className="w-full h-full object-contain object-center p-4 transition-all duration-300 cursor-zoom-in"
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(true)}
+                  aria-label="تكبير الصورة"
+                  className="absolute bottom-3 left-3 z-10 grid place-items-center w-9 h-9 rounded-full bg-[#141210]/85 hover:bg-[#D4B06A] text-[#F3EEE4] hover:text-[#0B0A09] ring-1 ring-white/15 transition-all cursor-pointer active:scale-90"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
 
                 {product.isOffer && (
                   <div className="absolute top-4 right-4 bg-[#2E5339] text-white text-xs font-bold px-3 py-1 rounded-md shadow-none flex items-center gap-1.5 z-10">
@@ -200,7 +239,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                         onClick={() => handleSwitchImage(thumbUrl)}
                         className={`relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
                           activeImage === thumbUrl
-                            ? 'border-white/10 shadow-sm scale-102 ring-2 ring-white/10/30 bg-[#141210]'
+                            ? 'border-[#D4B06A] shadow-sm scale-[1.02] ring-2 ring-[#D4B06A]/30 bg-[#141210]'
                             : 'border-transparent opacity-70 hover:opacity-100 hover:border-white/10 bg-[#141210]'
                         }`}
                         title={`اضغط لرؤية هذه الزاوية وتحديث السعر تلقائياً (${idx + 1})`}
@@ -217,6 +256,55 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                   <p className="text-[10px] text-[#7FD1A0] font-medium mt-0.5">
                     * اضغط على أي صورة أو استخدم الأسهم لتحديث زاوية العرض واللون والسعر تلقائياً.
                   </p>
+                </div>
+              )}
+
+              {videoSource && (
+                <div className="mt-4">
+                  {videoSource.kind === 'link' ? (
+                    <a
+                      href={videoSource.src}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] ring-1 ring-[#D4B06A]/40 text-[#E8CC8A] text-xs font-bold transition-all hover:bg-[#D4B06A] hover:text-[#0B0A09]"
+                    >
+                      <Play className="w-4 h-4" />
+                      <span>شاهد فيديو المنتج</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : !showVideo ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowVideo(true)}
+                      className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] ring-1 ring-[#D4B06A]/40 text-[#E8CC8A] text-xs font-bold transition-all hover:bg-[#D4B06A] hover:text-[#0B0A09] cursor-pointer active:scale-[0.98]"
+                    >
+                      <Play className="w-4 h-4" />
+                      <span>شاهد فيديو المنتج</span>
+                    </button>
+                  ) : (
+                    <div className="relative aspect-video w-full rounded-2xl overflow-hidden ring-1 ring-white/10 bg-black">
+                      {videoSource.kind === 'youtube' ? (
+                        <iframe
+                          src={videoSource.src}
+                          title={`فيديو ${product.name}`}
+                          className="absolute inset-0 w-full h-full"
+                          allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                          allowFullScreen
+                          referrerPolicy="strict-origin-when-cross-origin"
+                        />
+                      ) : (
+                        <video src={videoSource.src} controls autoPlay playsInline className="absolute inset-0 w-full h-full object-contain" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowVideo(false)}
+                        aria-label="إخفاء الفيديو"
+                        className="absolute top-2 left-2 z-10 grid place-items-center w-8 h-8 rounded-full bg-black/70 text-white hover:bg-black cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -279,14 +367,14 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                   </span>
                 )}
                 {Number(selectedColor.price) !== Number(product.basePrice) && (
-                  <span className="text-[11px] bg-[#1C1815] text-[#D4B06A] font-bold px-2 py-0.5 rounded-md border border-white/10/30 mr-auto">
+                  <span className="text-[11px] bg-[#1C1815] text-[#D4B06A] font-bold px-2 py-0.5 rounded-md border border-white/10 mr-auto">
                     سعر هذا اللون
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-[11px] text-[#7FD1A0] bg-[#7FD1A0]/10 px-2.5 py-1 rounded-lg font-medium border border-white/10/25 flex items-center gap-1.5 shadow-none">
+                <span className="text-[11px] text-[#7FD1A0] bg-[#7FD1A0]/10 px-2.5 py-1 rounded-lg font-medium border border-white/10 flex items-center gap-1.5 shadow-none">
                   <Sparkles className="w-3.5 h-3.5 text-[#7FD1A0] shrink-0" />
                   <span>السعر يتغير تلقائياً مع تقليب صور الألوان المختلفة</span>
                 </span>
@@ -298,27 +386,17 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
                 </p>
               </div>
 
-              {(product.dimensions || product.woodType) && (
-                <div className="bg-[#1C1815] p-4 rounded-2xl border border-white/10 mb-6 space-y-2.5">
-                  {product.dimensions && (
-                    <div className="flex items-start gap-2.5 text-xs">
-                      <Ruler className="w-4 h-4 text-[#D4B06A] shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="text-[#F3EEE4]">المقاسات والأبعاد:</strong>{' '}
-                        <span className="text-[#B0A797]">{product.dimensions}</span>
+              {specRows.length > 0 && (
+                <div className="mb-6 rounded-2xl ring-1 ring-white/10 overflow-hidden">
+                  <h3 className="px-4 py-2.5 text-xs font-bold text-[#F3EEE4] bg-[#1C1815]">مواصفات المنتج</h3>
+                  <dl className="divide-y divide-white/10">
+                    {specRows.map((row) => (
+                      <div key={row.label} className="flex items-start justify-between gap-4 px-4 py-2.5 text-xs">
+                        <dt className="text-[#A39A8B] shrink-0">{row.label}</dt>
+                        <dd className="text-[#F3EEE4] font-medium">{row.value}</dd>
                       </div>
-                    </div>
-                  )}
-
-                  {product.woodType && (
-                    <div className="flex items-start gap-2.5 text-xs">
-                      <Shield className="w-4 h-4 text-[#D4B06A] shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="text-[#F3EEE4]">نوعية الخشب:</strong>{' '}
-                        <span className="text-[#B0A797]">{product.woodType}</span>
-                      </div>
-                    </div>
-                  )}
+                    ))}
+                  </dl>
                 </div>
               )}
 
@@ -423,7 +501,56 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({
 
         </div>
 
+        {relatedProducts.length > 0 && onSelectProduct && (
+          <div className="border-t border-white/10 bg-[#0F0D0B] p-6 sm:p-8">
+            <h3 className="text-lg sm:text-xl font-bold font-serif text-[#F3EEE4] mb-4">منتجات مشابهة قد تعجبك</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {relatedProducts.map((p) => {
+                const img = p.colors?.[0]?.image || p.images?.[0] || '';
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => onSelectProduct(p)}
+                    className="group text-right rounded-2xl bg-[#141210] ring-1 ring-white/10 hover:ring-[#D4B06A]/50 transition-all overflow-hidden cursor-pointer active:scale-[0.98]"
+                  >
+                    <div className="aspect-square bg-gradient-to-b from-[#EFE9DE] to-[#DCD4C5]">
+                      <img
+                        src={img}
+                        alt={p.name}
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-xs font-bold text-[#F3EEE4] line-clamp-1 font-serif group-hover:text-[#E8CC8A] transition-colors">{p.name}</p>
+                      <p className="text-sm font-extrabold text-[#E8CC8A] font-mono mt-1">
+                        {Number(p.basePrice || 0).toFixed(2)} <span className="text-[10px] font-bold text-[#A39A8B]">د.أ</span>
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        </div>
+
       </div>
+
+      {lightboxOpen && availableThumbnails.length > 0 && (
+        <ImageLightbox
+          images={availableThumbnails}
+          index={Math.max(0, availableThumbnails.indexOf(activeImage))}
+          alt={product.name}
+          onClose={() => setLightboxOpen(false)}
+          onIndexChange={(i) => handleSwitchImage(availableThumbnails[i])}
+        />
+      )}
     </div>
   );
 };
+
+export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = (props) =>
+  props.product ? <ProductDetailsContent {...props} product={props.product} /> : null;
