@@ -1,128 +1,208 @@
-import React, { useState } from 'react';
-import { X, Lock, KeyRound, ShieldCheck, Eye, EyeOff } from 'lucide-react';
-import { DukanLogo } from './DukanLogo';
+import React, { useMemo, useState } from 'react';
+import { DollarSign, ShoppingBag, Bell, CheckCircle2, XCircle, TrendingUp, CalendarDays, Receipt, Trophy, TrendingDown, MapPin } from 'lucide-react';
+import { Order, Product } from '../types/furniture';
+import { computeOrderStats } from '../utils/orderStats';
 
-interface AdminAuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
+interface AdminStatsProps {
+  orders: Order[];
+  products: Product[];
+  loading?: boolean;
 }
 
-export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
-  if (!isOpen) return null;
+const money = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+const STATUS_ORDER: { key: string; color: string }[] = [
+  { key: 'جديد', color: '#E11D48' },
+  { key: 'جاري التجهيز', color: '#D97706' },
+  { key: 'جاري التوصيل', color: '#2563EB' },
+  { key: 'تم التسليم', color: '#2E5339' },
+  { key: 'ملغي', color: '#A8A29E' },
+];
 
-  // 🔐 كلمة السر الجديدة المعقدة (يمكنك تغييرها من هنا في أي وقت)
-  const SECRET_PASSWORD = "Dukan962@Admin#2024!";
+const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <div className={`bg-white p-4 sm:p-5 rounded-2xl border border-[#EDE5D8] shadow-xs ${className}`}>{children}</div>
+);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!password) {
-      setError('يرجى إدخال كلمة المرور');
-      return;
-    }
+const Kpi: React.FC<{ icon: React.ReactNode; tint: string; label: string; value: string; sub?: string }> = ({ icon, tint, label, value, sub }) => (
+  <Card className="flex items-center gap-3.5">
+    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${tint}`}>{icon}</div>
+    <div className="min-w-0">
+      <p className="text-[11px] text-[#78716C] font-semibold">{label}</p>
+      <p className="text-lg sm:text-xl font-black text-[#1C1917] font-mono truncate">{value}</p>
+      {sub && <p className="text-[10px] text-[#A8A29E] mt-0.5">{sub}</p>}
+    </div>
+  </Card>
+);
 
-    setLoading(true);
-    setError('');
+export const AdminStats: React.FC<AdminStatsProps> = ({ orders, products, loading }) => {
+  const [range, setRange] = useState<'daily' | 'monthly'>('daily');
+  const stats = useMemo(() => computeOrderStats(orders, products), [orders, products]);
 
-    // محاكاة التحميل لإعطاء طابع احترافي
-    setTimeout(() => {
-      if (password === SECRET_PASSWORD) {
-        setPassword('');
-        setError('');
-        onSuccess(); // الدخول ناجح
-      } else {
-        setError('كلمة المرور غير صحيحة، يرجى المحاولة مجدداً');
-      }
-      setLoading(false);
-    }, 800);
-  };
+  if (loading) {
+    return <p className="text-xs text-[#78716C] py-10 text-center">جاري تحميل الإحصائيات...</p>;
+  }
+
+  const series = range === 'daily' ? stats.daily : stats.monthly;
+  const max = Math.max(1, ...series.map((p) => p.total));
+  const seriesTotal = series.reduce((s, p) => s + p.total, 0);
+  const inProgress = (stats.statusCounts['جاري التجهيز'] || 0) + (stats.statusCounts['جاري التوصيل'] || 0);
+  const totalOrders = orders.length;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md bg-[#141210] rounded-3xl shadow-2xl border border-white/10 overflow-hidden p-6 sm:p-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 left-4 p-2 rounded-full text-[#A39A8B] hover:text-[#F3EEE4] hover:bg-[#26211D] transition-colors cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-sm font-bold text-[#1C1917]">نظرة عامة على المتجر</h3>
+        <p className="text-xs text-[#78716C]">
+          المبيعات تشمل رسوم التوصيل وتستثني الطلبات الملغاة.
+        </p>
+      </div>
 
-        {/* Brand & Security Header */}
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-3">
-            <DukanLogo variant="dark" className="h-10" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Kpi icon={<DollarSign className="w-5 h-5" />} tint="bg-[#FAF4E8] text-[#8C6D46]" label="إجمالي المبيعات (د.أ)" value={money(stats.salesTotal)} sub={`${stats.validCount} طلب غير ملغي`} />
+        <Kpi icon={<CalendarDays className="w-5 h-5" />} tint="bg-[#EDF4EE] text-[#2E5339]" label="مبيعات اليوم (د.أ)" value={money(stats.todayTotal)} sub={`${stats.todayCount} طلب اليوم`} />
+        <Kpi icon={<TrendingUp className="w-5 h-5" />} tint="bg-[#EEF2FB] text-[#2563EB]" label="مبيعات هذا الشهر (د.أ)" value={money(stats.monthTotal)} sub={`${stats.monthCount} طلب هذا الشهر`} />
+        <Kpi icon={<Receipt className="w-5 h-5" />} tint="bg-[#F5F0E8] text-[#57534E]" label="متوسط قيمة الطلب (د.أ)" value={money(stats.avgOrder)} />
+        <Kpi icon={<Bell className="w-5 h-5" />} tint="bg-rose-50 text-rose-600" label="طلبات جديدة" value={String(stats.statusCounts['جديد'] || 0)} sub="بانتظار المعالجة" />
+        <Kpi icon={<ShoppingBag className="w-5 h-5" />} tint="bg-amber-50 text-amber-600" label="قيد التنفيذ" value={String(inProgress)} sub="تجهيز أو توصيل" />
+        <Kpi icon={<CheckCircle2 className="w-5 h-5" />} tint="bg-[#EDF4EE] text-[#2E5339]" label="مكتملة" value={String(stats.statusCounts['تم التسليم'] || 0)} sub={`${money(stats.deliveredTotal)} د.أ`} />
+        <Kpi icon={<XCircle className="w-5 h-5" />} tint="bg-stone-100 text-stone-500" label="ملغاة" value={String(stats.cancelledCount)} />
+      </div>
+
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h4 className="text-sm font-bold text-[#1C1917]">المبيعات {range === 'daily' ? 'اليومية (آخر 30 يوماً)' : 'الشهرية (آخر 12 شهراً)'}</h4>
+            <p className="text-[11px] text-[#78716C]">المجموع في الفترة: <strong className="font-mono text-[#1C1917]">{money(seriesTotal)} د.أ</strong></p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#1C1815] text-[#D4B06A] flex items-center justify-center mx-auto mb-3 border border-white/10">
-            <Lock className="w-6 h-6" />
+          <div className="flex items-center gap-1 p-1 bg-[#F5F0E8] rounded-xl">
+            {(['daily', 'monthly'] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${range === r ? 'bg-white text-[#1C1917] shadow-xs' : 'text-[#78716C] hover:text-[#1C1917]'}`}
+              >
+                {r === 'daily' ? 'يومي' : 'شهري'}
+              </button>
+            ))}
           </div>
-          <h3 className="text-lg font-black text-[#F3EEE4]">
-            لوحة إدارة وتحكم المتجر
-          </h3>
-          <p className="text-xs text-[#A39A8B] mt-1">
-            منطقة مخصصة لصاحب المتجر لإدارة الأسعار، المنتجات، والطلبات
-          </p>
         </div>
 
-        {/* Password Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-[#F3EEE4] mb-1.5 text-right">
-              كلمة مرور الإدارة:
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError('');
-                }}
-                placeholder="أدخل الرمز السري..."
-                className="w-full py-2.5 pr-10 pl-10 bg-[#1C1815] border border-white/10 rounded-xl text-sm font-mono text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:border-[#D4B06A]"
-                autoFocus
-              />
-              <KeyRound className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8173]" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8173] hover:text-[#F3EEE4] cursor-pointer"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+        {seriesTotal === 0 ? (
+          <p className="text-xs text-[#A8A29E] text-center py-12">لا توجد مبيعات في هذه الفترة بعد.</p>
+        ) : (
+          <div role="img" aria-label={`رسم بياني للمبيعات ${range === 'daily' ? 'اليومية' : 'الشهرية'}`}>
+            <div className="flex items-end gap-[3px] h-44 border-b border-[#EDE5D8]">
+              {series.map((p) => (
+                <div key={p.key} className="group relative flex-1 min-w-0 h-full flex items-end">
+                  <div
+                    className={`w-full rounded-t-md transition-colors ${p.total > 0 ? 'bg-[#8C6D46] group-hover:bg-[#1C1917]' : 'bg-[#F0EADF]'}`}
+                    style={{ height: p.total > 0 ? `${Math.max(4, (p.total / max) * 100)}%` : '2px' }}
+                  />
+                  <div className="pointer-events-none absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 hidden group-hover:block z-10 whitespace-nowrap rounded-lg bg-[#1C1917] px-2.5 py-1.5 text-[10px] text-white">
+                    <span className="font-mono">{p.label}</span>: <strong className="font-mono">{money(p.total)} د.أ</strong> ({p.count} طلب)
+                  </div>
+                </div>
+              ))}
             </div>
-            {error && (
-              <p className="text-[11px] text-rose-400 font-semibold mt-1.5 text-right">
-                {error}
-              </p>
-            )}
+            <div className="flex gap-[3px] mt-1.5">
+              {series.map((p, i) => (
+                <span key={p.key} className="flex-1 min-w-0 text-center text-[9px] text-[#A8A29E] font-mono overflow-visible whitespace-nowrap">
+                  {range === 'monthly' || i % 5 === 0 || i === series.length - 1 ? p.label : ''}
+                </span>
+              ))}
+            </div>
           </div>
+        )}
+      </Card>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
-          >
-            <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
-            <span>{loading ? 'جارٍ التحقق...' : 'فتح لوحة التحكم'}</span>
-          </button>
-        </form>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <h4 className="text-sm font-bold text-[#1C1917] mb-3">توزيع حالات الطلبات</h4>
+          {totalOrders === 0 ? (
+            <p className="text-xs text-[#A8A29E] py-6 text-center">لا توجد طلبات بعد.</p>
+          ) : (
+            <>
+              <div className="flex h-3 rounded-full overflow-hidden bg-[#F0EADF] mb-4">
+                {STATUS_ORDER.map(({ key, color }) => {
+                  const c = stats.statusCounts[key] || 0;
+                  return c > 0 ? <div key={key} style={{ width: `${(c / totalOrders) * 100}%`, backgroundColor: color }} title={`${key}: ${c}`} /> : null;
+                })}
+              </div>
+              <ul className="space-y-2">
+                {STATUS_ORDER.map(({ key, color }) => {
+                  const c = stats.statusCounts[key] || 0;
+                  return (
+                    <li key={key} className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-2 text-[#57534E]"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />{key}</span>
+                      <span className="font-mono text-[#1C1917]"><strong>{c}</strong> <span className="text-[#A8A29E]">({Math.round((c / totalOrders) * 100)}%)</span></span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </Card>
+
+        <Card>
+          <h4 className="text-sm font-bold text-[#1C1917] mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-[#8C6D46]" />أكثر المحافظات طلباً</h4>
+          {stats.governorates.length === 0 ? (
+            <p className="text-xs text-[#A8A29E] py-6 text-center">لا توجد بيانات بعد.</p>
+          ) : (
+            <ul className="space-y-2.5">
+              {stats.governorates.map((g) => (
+                <li key={g.name} className="text-xs">
+                  <div className="flex justify-between mb-1"><span className="text-[#57534E]">{g.name}</span><strong className="font-mono text-[#1C1917]">{g.count}</strong></div>
+                  <div className="h-1.5 bg-[#F0EADF] rounded-full overflow-hidden"><div className="h-full bg-[#8C6D46] rounded-full" style={{ width: `${(g.count / stats.governorates[0].count) * 100}%` }} /></div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <h4 className="text-sm font-bold text-[#1C1917] mb-3 flex items-center gap-2"><Trophy className="w-4 h-4 text-[#8C6D46]" />الأكثر مبيعاً</h4>
+          {stats.topProducts.length === 0 ? (
+            <p className="text-xs text-[#A8A29E] py-6 text-center">لم تُسجَّل مبيعات بعد.</p>
+          ) : (
+            <ol className="space-y-2.5">
+              {stats.topProducts.map((p, i) => (
+                <li key={p.id} className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-[#FAF4E8] text-[#8C6D46] font-mono font-bold grid place-items-center shrink-0">{i + 1}</span>
+                  <span className="flex-1 min-w-0 truncate text-[#1C1917] font-semibold">{p.name}</span>
+                  <span className="text-[#78716C] font-mono shrink-0">{p.units} قطعة</span>
+                  <span className="text-[#2E5339] font-mono font-bold shrink-0 w-24 text-left">{money(p.revenue)} د.أ</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Card>
+
+        <Card>
+          <h4 className="text-sm font-bold text-[#1C1917] mb-3 flex items-center gap-2"><TrendingDown className="w-4 h-4 text-[#8C6D46]" />الأقل مبيعاً</h4>
+          {stats.bottomProducts.length === 0 ? (
+            <p className="text-xs text-[#A8A29E] py-6 text-center">تظهر هنا عندما يزيد عدد منتجاتك الفعّالة عن 5.</p>
+          ) : (
+            <ol className="space-y-2.5">
+              {stats.bottomProducts.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 text-xs">
+                  <span className="flex-1 min-w-0 truncate text-[#1C1917] font-semibold">{p.name}</span>
+                  {p.units === 0 ? (
+                    <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full shrink-0">لم يُبع بعد</span>
+                  ) : (
+                    <span className="text-[#78716C] font-mono shrink-0">{p.units} قطعة</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </Card>
+      </div>
+
+      <p className="text-[11px] text-[#A8A29E] leading-relaxed">
+        ملاحظة: الأرباح الصافية غير متاحة لأن المنتجات لا تحمل سعر تكلفة. المعروض هو المبيعات (الإيراد) فقط.
+      </p>
     </div>
   );
 };
