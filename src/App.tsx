@@ -5,6 +5,7 @@ import { CategoryBoxes } from './components/CategoryBoxes';
 import { FilterBar } from './components/FilterBar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailsPage } from './components/ProductDetailsPage';
+import { FloatingActions } from './components/FloatingActions';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -232,6 +233,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); 
+  const [sortBy, setSortBy] = useState<'featured' | 'newest' | 'price-asc' | 'price-desc'>('featured');
   const [selectedColor, setSelectedColor] = useState<string>('');
 
   // Modals & Drawers state
@@ -370,7 +372,29 @@ export default function App() {
     return matchesCategory && matchesSearch && matchesPrice && matchesColor;
   });
 
-  filteredProducts.sort((a, b) => Number(b.isBestSeller || false) - Number(a.isBestSeller || false));
+  filteredProducts.sort((a, b) => {
+    if (sortBy === 'price-asc') return Number(a.basePrice) - Number(b.basePrice);
+    if (sortBy === 'price-desc') return Number(b.basePrice) - Number(a.basePrice);
+    if (sortBy === 'newest') {
+      return (
+        String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+        (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
+      );
+    }
+    return Number(b.isBestSeller || false) - Number(a.isBestSeller || false);
+  });
+
+  // منتجات مشابهة لنافذة التفاصيل: نفس القسم أولاً ثم بقية المنتجات الفعّالة (حتى 4)
+  const relatedProducts = selectedProductModal
+    ? products
+        .filter((p) => p.isActive !== false && p.id !== selectedProductModal.id)
+        .sort(
+          (a, b) =>
+            Number(b.categoryId === selectedProductModal.categoryId) -
+            Number(a.categoryId === selectedProductModal.categoryId)
+        )
+        .slice(0, 4)
+    : [];
 
   const cartTotalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -489,6 +513,34 @@ export default function App() {
             onResetFilters={handleResetFilters}
           />
 
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <p className="text-xs text-[#A39A8B]">
+              {productsLoaded ? `${filteredProducts.length} منتج` : ''}
+            </p>
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full">
+              <span className="text-xs font-bold text-[#F3EEE4] shrink-0 ml-1">ترتيب حسب:</span>
+              {([
+                ['featured', 'الأكثر مبيعاً'],
+                ['newest', 'الأحدث'],
+                ['price-asc', 'الأقل سعراً'],
+                ['price-desc', 'الأعلى سعراً'],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setSortBy(value)}
+                  aria-pressed={sortBy === value}
+                  className={`py-1.5 px-3.5 text-xs font-semibold rounded-full transition-all duration-300 cursor-pointer whitespace-nowrap active:scale-95 ${
+                    sortBy === value
+                      ? 'bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] shadow-gold'
+                      : 'bg-white/[0.04] text-[#A39A8B] ring-1 ring-white/10 hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {!productsLoaded ? (
             <ProductSkeletonGrid />
           ) : filteredProducts.length === 0 ? (
@@ -532,6 +584,8 @@ export default function App() {
           onToggleWishlist={handleToggleWishlist}
           onClose={() => setSelectedProductModal(null)}
           onAddToCart={handleAddToCart}
+          relatedProducts={relatedProducts}
+          onSelectProduct={setSelectedProductModal}
         />
 
         <CartDrawer
@@ -577,6 +631,8 @@ export default function App() {
           isOpen={isAdminOpen}
           onClose={() => setIsAdminOpen(false)}
         />
+
+        <FloatingActions />
       </div>
     </ErrorBoundary>
   );
