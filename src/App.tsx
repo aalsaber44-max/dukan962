@@ -6,6 +6,7 @@ import { FilterBar } from './components/FilterBar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailsPage } from './components/ProductDetailsPage';
 import { FloatingActions } from './components/FloatingActions';
+import { availableQty, qtyInCart, reconcileCart } from './utils/inventory';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -282,6 +283,15 @@ export default function App() {
       image: product.images?.[0] || '',
     };
 
+    // 📦 المخزون مشترك بين ألوان المنتج: لا نسمح بتجاوز الكمية المتاحة (بحسب آخر بيانات من السحابة)
+    const live = products.find((p) => p.id === product.id) || product;
+    const canAdd = availableQty(live) - qtyInCart(cart, product.id);
+    if (canAdd <= 0) {
+      showToast(`"${product.name}" نفدت الكمية المتاحة`, { variant: 'warning' });
+      return;
+    }
+    const addQty = Math.min(quantity, canAdd);
+
     setCart((prev) => {
       const existingIdx = prev.findIndex(
         (item) => item.product.id === product.id && item.selectedColor.name === activeColor.name
@@ -291,13 +301,22 @@ export default function App() {
         const next = [...prev];
         next[existingIdx] = {
           ...next[existingIdx],
-          quantity: next[existingIdx].quantity + quantity,
+          quantity: next[existingIdx].quantity + addQty,
         };
         return next;
       } else {
-        return [...prev, { product, quantity, selectedColor: activeColor }];
+        return [...prev, { product, quantity: addQty, selectedColor: activeColor }];
       }
     });
+
+    if (addQty < quantity) {
+      showToast(`تمت إضافة ${addQty} فقط من "${product.name}" (المتاح ${availableQty(live)})`, {
+        variant: 'warning',
+        actionLabel: 'عرض السلة',
+        onAction: () => setIsCartOpen(true),
+      });
+      return;
+    }
 
     showToast(`${product.name} (${activeColor.name})`, {
       variant: 'cart',
@@ -307,6 +326,13 @@ export default function App() {
   };
 
   const handleUpdateCartQuantity = (id: string, colorName: string, delta: number) => {
+    if (delta > 0) {
+      const live = products.find((p) => p.id === id);
+      if (live && availableQty(live) - qtyInCart(cart, id) < delta) {
+        showToast(`الكمية المتاحة من "${live.name}" ${availableQty(live)} فقط`, { variant: 'warning' });
+        return;
+      }
+    }
     setCart((prev) =>
       prev
         .map((item) => {
@@ -595,6 +621,16 @@ export default function App() {
           onUpdateQuantity={handleUpdateCartQuantity}
           onRemoveItem={handleRemoveFromCart}
           onProceedToCheckout={() => {
+            // 📦 قبل الدفع: طابق السلة مع المخزون الحالي، وإن تغيّر شيء يراجعه الزبون أولاً
+            const { cart: reconciled, messages } = reconcileCart(cart, products);
+            if (messages.length > 0) {
+              setCart(reconciled);
+              showToast(
+                messages[0] + (messages.length > 1 ? ` (و${messages.length - 1} تنبيهات أخرى)` : ''),
+                { variant: 'warning' }
+              );
+              return;
+            }
             setIsCartOpen(false);
             setIsCheckoutOpen(true);
           }}
