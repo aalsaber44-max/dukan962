@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingBag, Eye, Heart, Check, Sparkles, ShieldCheck } from 'lucide-react';
 import { Product } from '../types/furniture';
 import { spotlightMove } from '../utils/useSpotlight';
+import { getStockState } from '../utils/inventory';
 
 interface ProductCardProps {
   product: Product;
@@ -33,6 +34,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOut) return;
     onAddToCart(product);
     setAddedAnim(true);
     setTimeout(() => setAddedAnim(false), 1200);
@@ -42,6 +44,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     e.stopPropagation();
     onToggleWishlist(product);
   };
+
+  const stockState = getStockState(product);
+  const isOut = stockState === 'out';
 
   const woodTypeText = product.woodType ? product.woodType.split(' - ')[0] : '';
   const hasDiscount = Number(product.originalPrice) > Number(product.basePrice);
@@ -67,6 +72,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           referrerPolicy="no-referrer"
           className="w-full h-full object-contain object-center p-3 group-hover:scale-[1.07] transition-transform duration-700 ease-out"
         />
+
+        {isOut && (
+          <div className="absolute inset-0 z-[5] grid place-items-center bg-[#0B0A09]/60 backdrop-blur-[1px]">
+            <span className="px-4 py-1.5 rounded-full bg-[#0B0A09] text-rose-300 text-xs font-bold ring-1 ring-rose-400/40">
+              نفدت الكمية
+            </span>
+          </div>
+        )}
 
         {product.isOffer && (
           <div className="absolute top-3 right-3 bg-[#0B0A09] text-[#E8CC8A] text-[11px] font-bold px-2.5 py-1 rounded-full ring-1 ring-[#D4B06A]/40 flex items-center gap-1">
@@ -135,10 +148,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               <span />
             )}
 
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#7FD1A0]">
-              <ShieldCheck className="w-3 h-3" />
-              معاينة عند الوصول
-            </span>
+            {stockState === 'low' ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
+                آخر {product.stock} قطع
+              </span>
+            ) : isOut ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-400">غير متوفر</span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#7FD1A0]">
+                <ShieldCheck className="w-3 h-3" />
+                معاينة عند الوصول
+              </span>
+            )}
           </div>
         </div>
 
@@ -159,14 +180,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           <button
             onClick={handleAdd}
+            disabled={isOut}
             aria-label={`إضافة ${product.name} إلى السلة`}
             className={`relative overflow-hidden h-10 px-4 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-              addedAnim
+              isOut
+                ? 'bg-white/[0.04] text-[#8A8173] ring-1 ring-white/10 cursor-not-allowed'
+                : addedAnim
                 ? 'bg-[#7FD1A0] text-[#0B0A09] ring-1 ring-[#7FD1A0]'
                 : 'bg-white/[0.04] text-[#E8CC8A] ring-1 ring-[#D4B06A]/40 hover:bg-gradient-to-b hover:from-[#E8CC8A] hover:to-[#D4B06A] hover:text-[#0B0A09] hover:ring-[#D4B06A] hover:shadow-gold'
             }`}
           >
-            {addedAnim ? (
+            {isOut ? (
+              <span>غير متوفر</span>
+            ) : addedAnim ? (
               <>
                 <Check className="w-3.5 h-3.5" />
                 <span>أُضيفت</span>
