@@ -52,11 +52,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   const isBase64 = imgUrl.startsWith('data:image');
                   const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)' : imgUrl;
 
-                  return `${idx + 1}. *${it.product.name}*\n   - اللون: ${it.selectedColor.name}\n   - الكمية: ${it.quantity}\n   - السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n   - صورة المنتج: ${imgText}`;
+                  const colorPrice = Number(it.selectedColor?.price);
+                  const basePrice = Number(it.product?.basePrice);
+                  const unitPrice = Number.isFinite(colorPrice) && colorPrice > 0
+                    ? colorPrice
+                    : Number.isFinite(basePrice) && basePrice > 0
+                      ? basePrice
+                      : 0;
+
+                  return `${idx + 1}. *${it.product.name}*\n   - اللون: ${it.selectedColor?.name || 'غير محدد'}\n   - الكمية: ${it.quantity}\n   - السعر: ${(unitPrice * it.quantity).toFixed(2)} د.أ\n   - صورة المنتج: ${imgText}`;
                 }
               )
               .join('\n\n') +
-            `\n\n*المجموع الفرعي:* ${subtotal.toFixed(2)} دينار أردني\n*التوصيل:* ${freeDelivery ? 'مجاني' : 'يُحسب حسب المحافظة (5 د.أ داخل عمان، 8 د.أ خارجها، 10 د.أ العقبة)'}\n*طريقة الدفع:* الدفع عند الاستلام كاش أو بطاقة\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
+            `\n\n*المجموع الفرعي:* ${subtotal.toFixed(2)} دينار أردني\n*التوصيل:* ${freeDelivery ? 'مجاني' : 'يُحسب حسب المحافظة (5 د.أ داخل عمان، 8 د.أ خارجها، 10 د.أ العقبة)'}\n*طريقة الدفع:* الدفع عند الاستلام أو التحويل اليدوي عبر CliQ\n\nيرجى تأكيد موعد التوصيل للمحافظة.`
         )}`
       : '#';
 
