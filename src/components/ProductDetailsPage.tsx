@@ -3,6 +3,7 @@ import { X, ShoppingBag, MessageCircle, Shield, Truck, Check, Sparkles, Heart, S
 import { Product, ProductColor } from '../types/furniture';
 import { STORE_PHONE_INTL } from '../utils/jordanLocations';
 import { getVideoSource } from '../utils/video';
+import { getStockState, availableQty } from '../utils/inventory';
 import { ImageLightbox } from './ImageLightbox';
 
 interface ProductDetailsPageProps {
@@ -92,6 +93,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
   const currentOriginalPrice = Number(selectedColor.originalPrice || product.originalPrice || 0);
 
   const handleAdd = () => {
+    if (isOut) return;
     onAddToCart(product, selectedColor, quantity);
     setAddedNotice(true);
     setTimeout(() => {
@@ -99,6 +101,10 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
       onClose();
     }, 850);
   };
+
+  const stockState = getStockState(product);
+  const maxQty = availableQty(product);
+  const isOut = stockState === 'out';
 
   const specRows: { label: string; value: string }[] = [
     { label: 'رقم القطعة', value: product.itemNumber ? `#${product.itemNumber}` : '' },
@@ -442,6 +448,21 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                 </div>
               )}
 
+              {stockState !== 'untracked' && (
+                <div
+                  className={`mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ring-1 ${
+                    isOut
+                      ? 'bg-rose-500/10 text-rose-400 ring-rose-400/30'
+                      : stockState === 'low'
+                      ? 'bg-amber-500/10 text-amber-300 ring-amber-400/30'
+                      : 'bg-emerald-500/10 text-emerald-300 ring-emerald-400/30'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  {isOut ? 'نفدت الكمية حالياً' : stockState === 'low' ? `آخر ${product.stock} قطع متوفرة` : 'متوفر'}
+                </div>
+              )}
+
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-xs font-bold text-[#F3EEE4]">الكمية المطلوبة:</span>
                 <div className="flex items-center border border-white/10 rounded-xl overflow-hidden bg-[#141210]">
@@ -455,8 +476,9 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                     {quantity}
                   </span>
                   <button
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="px-3 py-1.5 text-base hover:bg-[#26211D] transition-colors cursor-pointer"
+                    onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                    disabled={isOut || quantity >= maxQty}
+                    className="px-3 py-1.5 text-base hover:bg-[#26211D] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     +
                   </button>
@@ -470,7 +492,8 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
             <div className="pt-4 border-t border-white/10 space-y-2.5">
               <button
                 onClick={handleAdd}
-                className="w-full py-3.5 px-6 text-sm font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                disabled={isOut}
+                className="disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#D4B06A] w-full py-3.5 px-6 text-sm font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
                 {addedNotice ? (
                   <>
@@ -480,7 +503,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                 ) : (
                   <>
                     <ShoppingBag className="w-5 h-5" />
-                    <span>أضف إلى السلة 🛒</span>
+                    <span>{isOut ? 'غير متوفر حالياً' : 'أضف إلى السلة 🛒'}</span>
                   </>
                 )}
               </button>
