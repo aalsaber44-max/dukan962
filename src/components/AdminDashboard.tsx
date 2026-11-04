@@ -146,7 +146,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     const unsubscribeOrders = onSnapshot(collection(db, 'orders'), (snapshot) => {
       const ords: Order[] = [];
-      snapshot.forEach((doc) => ords.push({ id: doc.id, ...doc.data() } as Order));
+      snapshot.forEach((orderDoc) => {
+        const data = orderDoc.data();
+        ords.push({
+          ...data,
+          id: typeof data.id === 'string' && data.id ? data.id : orderDoc.id,
+          firestoreId: orderDoc.id,
+        } as Order);
+      });
       setOrders(ords);
       setLoadingOrders(false);
     });
@@ -367,9 +374,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // 📦 المخزون: القرار في planOrderStockChange (utils/inventory.ts) وهنا التنفيذ فقط.
   // يُحفظ ما خُصم فعلياً في الطلب (stockDeductions) ليُرجَع بدقة، ولا يُخصم الطلب مرتين.
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+  const handleUpdateOrderStatus = async (firestoreId: string, newStatus: string) => {
     try {
-      const order = orders.find((o) => o.id === orderId);
+      const order = orders.find((o) => o.firestoreId === firestoreId);
       const batch = writeBatch(db);
       const orderUpdate: Record<string, unknown> = { status: newStatus };
       let stockMsg = '';
@@ -397,7 +404,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
       }
 
-      batch.update(doc(db, 'orders', orderId), orderUpdate);
+      batch.update(doc(db, 'orders', firestoreId), orderUpdate);
       await batch.commit();
       showNotification(`تم تغيير حالة الطلب إلى "${newStatus}"${stockMsg}`);
     } catch (error) {
@@ -406,9 +413,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleDeleteOrder = async (orderId: string) => {
+  const handleDeleteOrder = async (firestoreId: string) => {
     try {
-      await deleteDoc(doc(db, 'orders', orderId));
+      await deleteDoc(doc(db, 'orders', firestoreId));
       setConfirmDeleteOrderId(null);
       showNotification('تم حذف الطلب من السجل نهائياً.');
     } catch (error) {
@@ -438,9 +445,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showNotification('تم تحديث كلمة المرور بنجاح!');
   };
 
-  const handleMarkOrderAsRead = (orderId: string) => {
-    if (!readOrders.includes(orderId)) {
-      const newReadOrders = [...readOrders, orderId];
+  const handleMarkOrderAsRead = (firestoreId: string) => {
+    if (!readOrders.includes(firestoreId)) {
+      const newReadOrders = [...readOrders, firestoreId];
       setReadOrders(newReadOrders);
       localStorage.setItem('dukan962_read_orders', JSON.stringify(newReadOrders));
     }
@@ -460,7 +467,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 
   const totalRevenue = orders.reduce((sum, order) => (order.status === 'ملغي' ? sum : sum + Number(order.total || 0)), 0);
-  const unreadCount = orders.filter(o => !readOrders.includes(o.id)).length;
+  const unreadCount = orders.filter(o => !readOrders.includes(o.firestoreId || o.id)).length;
   const lowStockProducts = products.filter((p) => p.isActive !== false && ['low', 'out'].includes(getStockState(p)));
   
   const handleExportExcel = () => {
@@ -837,7 +844,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               ) : (
                 <div className="space-y-3">
                   {sortedOrders.map((order) => {
-                    const isUnread = !readOrders.includes(order.id);
+                    const orderFirestoreId = order.firestoreId || order.id;
+                    const isUnread = !readOrders.includes(orderFirestoreId);
                     const statusColors: Record<string, string> = {
                       'جديد': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
                       'جاري التجهيز': 'bg-amber-500/10 text-amber-400 border-amber-500/30',
@@ -853,8 +861,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     return (
                       <div
-                        key={order.id}
-                        onClick={() => handleMarkOrderAsRead(order.id)}
+                        key={orderFirestoreId}
+                        onClick={() => handleMarkOrderAsRead(orderFirestoreId)}
                         className={`bg-[#141210] border rounded-2xl p-4 sm:p-5 shadow-soft transition-all cursor-pointer ${
                           isUnread ? 'border-rose-500/40 ring-1 ring-rose-500/30' : 'border-white/10 hover:border-[#D4B06A]/30'
                         }`}
@@ -884,7 +892,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <span className="text-[11px] text-[#A39A8B]">الحالة:</span>
                             <select
                               value={order.status}
-                              onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                              onChange={(e) => handleUpdateOrderStatus(orderFirestoreId, e.target.value)}
                               className="text-xs py-1 px-2.5 bg-[#1C1815] border border-white/10 rounded-lg font-bold text-[#F3EEE4] cursor-pointer focus:outline-none focus:border-[#D4B06A]"
                             >
                               <option value="جديد">جديد</option>
@@ -894,11 +902,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <option value="ملغي">ملغي</option>
                             </select>
 
-                            {confirmDeleteOrderId === order.id ? (
+                            {confirmDeleteOrderId === orderFirestoreId ? (
                               <div className="flex items-center gap-1 bg-rose-500/10 p-1 rounded-lg border border-rose-500/30">
                                 <span className="text-[10px] text-rose-400 font-bold">حذف؟</span>
                                 <button
-                                  onClick={() => handleDeleteOrder(order.id)}
+                                  onClick={() => handleDeleteOrder(orderFirestoreId)}
                                   className="px-1.5 py-0.5 bg-rose-600 text-white rounded text-[10px]"
                                 >
                                   نعم
@@ -912,7 +920,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </div>
                             ) : (
                               <button
-                                onClick={() => setConfirmDeleteOrderId(order.id)}
+                                onClick={() => setConfirmDeleteOrderId(orderFirestoreId)}
                                 className="p-1 text-[#8A8173] hover:text-rose-400 cursor-pointer"
                                 title="حذف الطلب"
                               >
