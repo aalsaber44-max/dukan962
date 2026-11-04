@@ -25,8 +25,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   items,
   onSuccessOrder,
 }) => {
-  if (!isOpen) return null;
-
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'cliq'>('cod');
   const [name, setName] = useState('');
   const [phone1, setPhone1] = useState('');
@@ -49,6 +47,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [autoDetectedGov, setAutoDetectedGov] = useState<string | null>(null);
 
   const isSubmittingRef = useRef(false);
+
+  if (!isOpen) return null;
 
   const subtotal = items.reduce(
     (acc, item) => acc + (Number(item.selectedColor.price) || Number(item.product.basePrice) || 0) * item.quantity,
