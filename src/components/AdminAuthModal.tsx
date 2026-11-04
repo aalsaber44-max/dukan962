@@ -13,12 +13,12 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  if (!isOpen) return null;
-
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  if (!isOpen) return null;
 
   // 🔐 كلمة السر المعقدة (يمكنك تغييرها من هنا في أي وقت)
   const SECRET_PASSWORD = "Dukan962@Admin#2024!";
