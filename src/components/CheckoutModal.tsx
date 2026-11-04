@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, CheckCircle, Truck, ShieldCheck, Copy, Check, MessageCircle, Smartphone } from 'lucide-react';
 import { CartItem } from '../types/furniture';
 import { db } from '../firebase';
@@ -48,10 +48,45 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const isSubmittingRef = useRef(false);
 
+  // ابدأ جلسة دفع نظيفة عند فتح النافذة من جديد، حتى لا يبقى تأكيد الطلب السابق.
+  useEffect(() => {
+    if (!isOpen) return;
+    isSubmittingRef.current = false;
+    setPaymentMethod('cod');
+    setName('');
+    setPhone1('');
+    setPhone2('');
+    setGovernorate('عمان (العاصمة)');
+    setRegion('');
+    setStreet('');
+    setBuilding('');
+    setNotes('');
+    setCliqRef('');
+    setCopiedField(null);
+    setIsSubmitting(false);
+    setOrderConfirmed(false);
+    setOrderNumber('');
+    setFinalWhatsAppUrl('');
+    setNameError(null);
+    setPhone1Error(null);
+    setPhone2Error(null);
+    setAutoDetectedGov(null);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
+  const getItemUnitPrice = (item: CartItem) => {
+    const colorPrice = Number(item.selectedColor?.price);
+    const basePrice = Number(item.product?.basePrice);
+    return Number.isFinite(colorPrice) && colorPrice > 0
+      ? colorPrice
+      : Number.isFinite(basePrice) && basePrice > 0
+        ? basePrice
+        : 0;
+  };
+
   const subtotal = items.reduce(
-    (acc, item) => acc + (Number(item.selectedColor.price) || Number(item.product.basePrice) || 0) * item.quantity,
+    (acc, item) => acc + getItemUnitPrice(item) * Math.max(0, Number(item.quantity) || 0),
     0
   );
 
@@ -97,6 +132,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmittingRef.current) return;
+    if (items.length === 0) {
+      alert('السلة فارغة. أضف المنتجات قبل تأكيد الطلب.');
+      return;
+    }
 
     const nameParts = name.trim().split(/\s+/);
     if (nameParts.length < 4) {
@@ -175,7 +214,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
         const isBase64 = imgUrl.startsWith('data:image');
         const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)' : imgUrl;
-        return `${i + 1}. *${it.product.name}*\n- اللون: ${it.selectedColor.name}\n- الكمية: ${it.quantity}\n- السعر: ${(Number(it.selectedColor.price) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgText}`;
+        return `${i + 1}. *${it.product.name}*\n- اللون: ${it.selectedColor?.name || 'غير محدد'}\n- الكمية: ${it.quantity}\n- السعر: ${(getItemUnitPrice(it) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgText}`;
       }).join('\n\n') +
       `\n\n------------------------\n` +
       `*المجموع الفرعي:* ${subtotal.toFixed(2)} د.أ\n` +
@@ -253,7 +292,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {orderConfirmed ? 'شكراً لاختيارك طاولات دكان 962 للأثاث' : 'التوصيل لجميع المحافظات والدفع عند الاستلام أو كليك'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full bg-[#141210]/10 hover:bg-[#141210]/15 text-[#F3EEE4] transition-colors cursor-pointer">
+          <button onClick={onClose} disabled={isSubmitting} className="p-2 rounded-full bg-[#141210]/10 hover:bg-[#141210]/15 text-[#F3EEE4] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
             <X className="w-5 h-5" />
           </button>
         </div>
