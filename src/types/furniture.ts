@@ -53,6 +53,8 @@ export interface Product {
   isOffer?: boolean;
   categoryLabel?: string;
   dimensions?: string;
+  stock?: number;              // 📦 الكمية المتوفرة (إذا غابت: المخزون غير مُتتبَّع/غير محدود)
+  lowStockThreshold?: number;  // حد التنبيه عند انخفاض المخزون (الافتراضي 3)
 }
 
 // 5. السلة (Cart)
@@ -68,6 +70,8 @@ export interface Order {
   id: string;
   createdAt: string;
   status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
+  stockDeducted?: boolean;                    // هل خُصمت كميات هذا الطلب من المخزون؟
+  stockDeductions?: Record<string, number>;   // ما خُصم فعلياً لكل منتج (للإرجاع بدقة عند الإلغاء)
   name: string;
   phone: string;
   phone2?: string; 
