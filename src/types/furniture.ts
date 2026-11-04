@@ -67,7 +67,8 @@ export interface CartItem {
 
 // 6. الطلبات (Order)
 export interface Order {
-  id: string;
+  id: string; // رقم الطلب الظاهر للعميل (DUKAN-...)
+  firestoreId?: string; // معرّف مستند Firestore الحقيقي المستخدم في التحديث والحذف
   createdAt: string;
   status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
   stockDeducted?: boolean;                    // هل خُصمت كميات هذا الطلب من المخزون؟
