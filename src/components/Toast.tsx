@@ -1,8 +1,8 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ShoppingBag, Heart, HeartOff, CircleCheck, X } from 'lucide-react';
+import { ShoppingBag, Heart, HeartOff, CircleCheck, TriangleAlert, X } from 'lucide-react';
 
-export type ToastVariant = 'cart' | 'wishlist' | 'remove' | 'success';
+export type ToastVariant = 'cart' | 'wishlist' | 'remove' | 'success' | 'warning';
 
 export interface ToastData {
   id: number;
@@ -32,6 +32,11 @@ const variants: Record<ToastVariant, { title: string; Icon: React.ElementType; t
     title: 'أُزيل من المفضلة',
     Icon: HeartOff,
     tile: 'from-white/15 to-white/5 text-white/80 ring-white/20',
+  },
+  warning: {
+    title: 'تنبيه المخزون',
+    Icon: TriangleAlert,
+    tile: 'from-amber-400/30 to-amber-600/30 text-amber-200 ring-amber-300/30',
   },
   success: {
     title: 'تم بنجاح',
