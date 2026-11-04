@@ -26,9 +26,12 @@ import {
 } from 'lucide-react';
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
 import { db } from '../firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore'; 
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, writeBatch, increment, deleteField } from 'firebase/firestore'; 
 import { CategoryManager } from './CategoryManager';
 import { AdminStats } from './AdminStats';
+import { StockBadge } from './StockBadge';
+import { getStockState, planOrderStockChange, DEFAULT_LOW_STOCK } from '../utils/inventory';
+import { stripUndefined, toUpdateData } from '../utils/firestoreData';
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -37,6 +40,11 @@ interface AdminDashboardProps {
 
 const DEFAULT_ADMIN_PASSWORD = 'Dukan962@Admin#2024!';
 const PASSWORD_STORAGE_KEY = 'dukan962_admin_password';
+/** يحوّل نص الحقل إلى عدد صحيح >= 0، أو undefined إذا كان فارغاً (= غير مُتتبَّع) */
+const parseQty = (v: string): number | undefined => {
+  const n = Math.floor(Number(v));
+  return v.trim() !== '' && Number.isFinite(n) ? Math.max(0, n) : undefined;
+};
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80';
 
 const compressImage = (file: File, callback: (base64: string) => void) => {
@@ -91,7 +99,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newDesc, setNewDesc] = useState('');
   const [newWarranty, setNewWarranty] = useState('ضمان سنتين');
   const [newIsBestSeller, setNewIsBestSeller] = useState(false);
-  const [newVideoUrl, setNewVideoUrl] = useState(''); 
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [newStock, setNewStock] = useState('');
+  const [newLowStock, setNewLowStock] = useState(''); 
   const [newAttributes, setNewAttributes] = useState<ProductAttribute[]>([]);
   const [newColors, setNewColors] = useState<ProductColor[]>([
     {
@@ -196,7 +206,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleSaveEditedProduct = async (updated: Product) => {
     try {
       const { id, ...dataToUpdate } = updated;
-      await updateDoc(doc(db, 'products', id), dataToUpdate);
+      await updateDoc(doc(db, 'products', id), toUpdateData(dataToUpdate as Record<string, unknown>));
       setEditingProduct(null);
       showNotification(`تم حفظ وتحديث القطعة "${updated.name}" بنجاح في السحابة!`);
     } catch (error) {
@@ -331,10 +341,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       videoUrl: newVideoUrl.trim() !== '' ? newVideoUrl.trim() : undefined, 
       isActive: true,
       createdAt: new Date().toISOString(),
+      stock: parseQty(newStock),
+      lowStockThreshold: parseQty(newLowStock),
     };
 
     try {
-      await addDoc(collection(db, 'products'), newProd);
+      await addDoc(collection(db, 'products'), stripUndefined(newProd));
       showNotification(`تمت إضافة القطعة "${newName}" ونشرها في السحابة بنجاح!`);
       setActiveTab('list');
 
@@ -345,17 +357,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setNewAttributes([]);
       setNewIsBestSeller(false);
       setNewVideoUrl(''); 
+      setNewStock('');
+      setNewLowStock('');
     } catch (error) {
       alert('حدث خطأ أثناء الإضافة. تأكد من حجم الصور.');
       console.error(error);
     }
   };
 
+  // 📦 المخزون: القرار في planOrderStockChange (utils/inventory.ts) وهنا التنفيذ فقط.
+  // يُحفظ ما خُصم فعلياً في الطلب (stockDeductions) ليُرجَع بدقة، ولا يُخصم الطلب مرتين.
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), { status: newStatus });
-      showNotification(`تم تغيير حالة الطلب إلى "${newStatus}"`);
+      const order = orders.find((o) => o.id === orderId);
+      const batch = writeBatch(db);
+      const orderUpdate: Record<string, unknown> = { status: newStatus };
+      let stockMsg = '';
+
+      if (order) {
+        const plan = planOrderStockChange(order, newStatus, products);
+
+        if (plan.action === 'deduct') {
+          if (plan.shortage.length > 0 && !window.confirm(`المخزون غير كافٍ لبعض القطع:\n${plan.shortage.join('\n')}\n\nسيُخصم المتاح فقط. هل تريد المتابعة؟`)) {
+            return;
+          }
+          Object.entries(plan.deductions).forEach(([pid, qty]) => {
+            batch.update(doc(db, 'products', pid), { stock: increment(-qty) });
+          });
+          orderUpdate.stockDeducted = true;
+          orderUpdate.stockDeductions = plan.deductions;
+          if (Object.keys(plan.deductions).length > 0) stockMsg = ' وتم خصم الكميات من المخزون';
+        } else if (plan.action === 'restore') {
+          Object.entries(plan.restores).forEach(([pid, qty]) => {
+            batch.update(doc(db, 'products', pid), { stock: increment(qty) });
+          });
+          orderUpdate.stockDeducted = false;
+          orderUpdate.stockDeductions = deleteField();
+          if (Object.keys(plan.restores).length > 0) stockMsg = ' وتمت إعادة الكميات إلى المخزون';
+        }
+      }
+
+      batch.update(doc(db, 'orders', orderId), orderUpdate);
+      await batch.commit();
+      showNotification(`تم تغيير حالة الطلب إلى "${newStatus}"${stockMsg}`);
     } catch (error) {
+      console.error(error);
       alert('حدث خطأ أثناء تحديث حالة الطلب');
     }
   };
@@ -415,6 +461,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const totalRevenue = orders.reduce((sum, order) => (order.status === 'ملغي' ? sum : sum + Number(order.total || 0)), 0);
   const unreadCount = orders.filter(o => !readOrders.includes(o.id)).length;
+  const lowStockProducts = products.filter((p) => p.isActive !== false && ['low', 'out'].includes(getStockState(p)));
   
   const handleExportExcel = () => {
     if (orders.length === 0) return alert('لا توجد طلبات لتصديرها');
@@ -571,6 +618,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 أي تعديل على الأسعار أو حذف أو إضافة يُحفظ في السحابة ويظهر فوراً في الموبايل واللابتوب.
               </span>
 
+              {lowStockProducts.length > 0 && (
+                <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4">
+                  <p className="text-xs font-bold text-amber-300 mb-2">
+                    تنبيه المخزون: {lowStockProducts.length} منتج منخفض أو نافد
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {lowStockProducts.slice(0, 8).map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setEditingProduct(p)}
+                        className="inline-flex items-center gap-2 h-8 pr-3 pl-2 rounded-full bg-[#141210] ring-1 ring-white/10 hover:ring-amber-400/50 text-xs text-[#F3EEE4] transition-all cursor-pointer"
+                        title="اضغط لتعديل الكمية"
+                      >
+                        <span className="max-w-[140px] truncate">{p.name}</span>
+                        <StockBadge product={p} />
+                      </button>
+                    ))}
+                    {lowStockProducts.length > 8 && (
+                      <span className="self-center text-[11px] text-[#A39A8B]">و{lowStockProducts.length - 8} أخرى</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {loadingProducts ? (
                 <div className="text-center py-10 font-bold text-[#D4B06A]">جاري تحميل المنتجات من السحابة...</div>
               ) : products.length === 0 ? (
@@ -589,6 +660,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <th className="p-3.5">القسم</th>
                         <th className="p-3.5">مميز</th>
                         <th className="p-3.5">السعر (د.أ)</th>
+                        <th className="p-3.5">المخزون</th>
                         <th className="p-3.5 text-center">إجراءات</th>
                       </tr>
                     </thead>
@@ -635,6 +707,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   </button>
                                 )}
                               </div>
+                            </td>
+                            <td className="p-3.5">
+                              <StockBadge product={p} />
                             </td>
                             <td className="p-3.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
@@ -1049,6 +1124,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
+                <div className="pt-2 border-t border-white/10 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">الكمية المتوفرة (المخزون)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      inputMode="numeric"
+                      value={newStock}
+                      onChange={(e) => setNewStock(e.target.value)}
+                      placeholder="اتركه فارغاً لعدم التتبع"
+                      className="w-full text-xs py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A] font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">تنبيه عند انخفاضه إلى</label>
+                    <input
+                      type="number"
+                      min="0"
+                      inputMode="numeric"
+                      value={newLowStock}
+                      onChange={(e) => setNewLowStock(e.target.value)}
+                      placeholder={`الافتراضي ${DEFAULT_LOW_STOCK}`}
+                      className="w-full text-xs py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A] font-mono"
+                    />
+                  </div>
+                </div>
+
                 <div className="pt-2 border-t border-white/10">
                   <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">رابط فيديو المنتج (اختياري)</label>
                   <input
@@ -1248,6 +1350,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
   const [description, setDescription] = useState(product.description || '');
   const [isBestSeller, setIsBestSeller] = useState(product.isBestSeller || false);
   const [videoUrl, setVideoUrl] = useState(product.videoUrl || ''); 
+  const [stockStr, setStockStr] = useState(typeof product.stock === 'number' ? String(product.stock) : '');
+  const [lowStockStr, setLowStockStr] = useState(typeof product.lowStockThreshold === 'number' ? String(product.lowStockThreshold) : '');
   const [colors, setColors] = useState<ProductColor[]>(product.colors || []);
   const [attributes, setAttributes] = useState<ProductAttribute[]>(product.attributes || []);
   const [tempColorUrls, setTempColorUrls] = useState<Record<number, string>>({});
@@ -1357,6 +1461,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
       isBestSeller,
       images: finalImages,
       videoUrl: videoUrl.trim() !== '' ? videoUrl.trim() : undefined,
+      stock: parseQty(stockStr),
+      lowStockThreshold: parseQty(lowStockStr),
     };
 
     onSave(updated);
@@ -1453,6 +1559,33 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
               onChange={(e) => setDescription(e.target.value)}
               className="w-full text-xs py-2 px-3 bg-[#1C1815] border border-white/10 rounded-xl text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
             />
+          </div>
+
+          <div className="pt-4 border-t border-white/10 grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-[#F3EEE4] mb-1">الكمية المتوفرة (المخزون):</label>
+              <input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                value={stockStr}
+                onChange={(e) => setStockStr(e.target.value)}
+                placeholder="فارغ = غير مُتتبَّع"
+                className="w-full text-xs py-2 px-3 bg-[#1C1815] border border-white/10 rounded-xl text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A] font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#F3EEE4] mb-1">تنبيه عند انخفاضه إلى:</label>
+              <input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                value={lowStockStr}
+                onChange={(e) => setLowStockStr(e.target.value)}
+                placeholder={`الافتراضي ${DEFAULT_LOW_STOCK}`}
+                className="w-full text-xs py-2 px-3 bg-[#1C1815] border border-white/10 rounded-xl text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A] font-mono"
+              />
+            </div>
           </div>
 
           <div className="pt-4 border-t border-white/10">
