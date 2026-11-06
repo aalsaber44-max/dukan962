@@ -53,6 +53,7 @@ export interface Product {
   isOffer?: boolean;
   categoryLabel?: string;
   dimensions?: string;
+  sku?: string;                // رمز المنتج الداخلي (SKU) الفريد
   stock?: number;              // 📦 الكمية المتوفرة (إذا غابت: المخزون غير مُتتبَّع/غير محدود)
   lowStockThreshold?: number;  // حد التنبيه عند انخفاض المخزون (الافتراضي 3)
 }
