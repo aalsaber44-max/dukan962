@@ -226,10 +226,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setFinalWhatsAppUrl(`https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${whatsAppText}`);
 
     try {
-      await addDoc(collection(db, 'orders'), orderPayload);
+      const orderRef = await addDoc(collection(db, 'orders'), orderPayload);
       setIsSubmitting(false);
       setOrderConfirmed(true);
-      onSuccessOrder(orderPayload);
+      // احتفظ برقم الطلب الظاهر للعميل، وأرسل معرّف مستند Firestore الحقيقي منفصلاً.
+      onSuccessOrder({ ...orderPayload, firestoreId: orderRef.id });
     } catch (error) {
       console.error('Error saving order to Firebase:', error);
       setIsSubmitting(false);
