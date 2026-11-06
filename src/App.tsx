@@ -619,10 +619,11 @@ export default function App() {
           onUpdateQuantity={handleUpdateCartQuantity}
           onRemoveItem={handleRemoveFromCart}
           onProceedToCheckout={() => {
-            // 📦 قبل الدفع: طابق السلة مع المخزون الحالي، وإن تغيّر شيء يراجعه الزبون أولاً
+            // 📦 يطابق السلة مع آخر أسعار ومخزون، ويحدّث الحالة دائماً (حتى لو ما في رسائل)
+            // لتجنّب فتح الدفع بأسعار قديمة.
             const { cart: reconciled, messages } = reconcileCart(cart, products);
+            setCart(reconciled);
             if (messages.length > 0) {
-              setCart(reconciled);
               showToast(
                 messages[0] + (messages.length > 1 ? ` (و${messages.length - 1} تنبيهات أخرى)` : ''),
                 { variant: 'warning' }
