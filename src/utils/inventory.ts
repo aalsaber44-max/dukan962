@@ -45,14 +45,24 @@ export const reconcileCart = (cart: CartItem[], products: Product[]): { cart: Ca
 
   cart.forEach((item) => {
     const live = products.find((p) => p.id === item.product.id);
-    if (!live) { out.push(item); return; } // منتج غير موجود بالقائمة (لا نلمسه)
+    if (!live) {
+      messages.push(`"${item.product.name}" لم يعد متوفراً وتمت إزالته من السلة`);
+      return;
+    }
+
+    // حدّث بيانات المنتج والسعر من آخر نسخة وصلت من Firestore، لا من نسخة قديمة مخزنة في المتصفح.
+    const liveColor = live.colors?.find((color) => color.name === item.selectedColor.name)
+      || live.colors?.[0]
+      || item.selectedColor;
+    const refreshedItem: CartItem = { ...item, product: live, selectedColor: liveColor };
     const avail = remaining.has(live.id) ? remaining.get(live.id)! : availableQty(live);
-    if (avail === Infinity) { out.push(item); return; }
+    if (avail === Infinity) { out.push(refreshedItem); return; }
     if (avail <= 0) { messages.push(`"${live.name}" نفدت الكمية وتمت إزالته من السلة`); return; }
-    const q = Math.min(item.quantity, avail);
+    const q = Math.min(Math.max(0, Number(item.quantity) || 0), avail);
+    if (q <= 0) { messages.push(`"${live.name}" تمت إزالة كميته غير الصالحة من السلة`); return; }
     if (q < item.quantity) messages.push(`"${live.name}": المتاح ${avail} فقط، تم تعديل الكمية`);
     remaining.set(live.id, avail - q);
-    out.push({ ...item, quantity: q });
+    out.push({ ...refreshedItem, quantity: q });
   });
 
   return { cart: out, messages };
