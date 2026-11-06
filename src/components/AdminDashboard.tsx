@@ -26,11 +26,11 @@ import {
 } from 'lucide-react';
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
 import { db } from '../firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, writeBatch, increment, deleteField } from 'firebase/firestore'; 
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, increment, deleteField, runTransaction } from 'firebase/firestore'; 
 import { CategoryManager } from './CategoryManager';
 import { AdminStats } from './AdminStats';
 import { StockBadge } from './StockBadge';
-import { getStockState, planOrderStockChange, DEFAULT_LOW_STOCK } from '../utils/inventory';
+import { aggregateItems, getStockState, planOrderStockChange, DEFAULT_LOW_STOCK } from '../utils/inventory';
 import { stripUndefined, toUpdateData } from '../utils/firestoreData';
 
 interface AdminDashboardProps {
@@ -133,14 +133,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
-      snapshot.forEach((doc) => prods.push({ id: doc.id, ...doc.data() } as Product));
+      snapshot.forEach((productDoc) => prods.push({ ...productDoc.data(), id: productDoc.id } as Product));
       setProducts(prods);
       setLoadingProducts(false);
     });
 
     const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
       const cats: Category[] = [];
-      snapshot.forEach((doc) => cats.push({ id: doc.id, ...doc.data() } as Category));
+      snapshot.forEach((categoryDoc) => cats.push({ ...categoryDoc.data(), id: categoryDoc.id } as Category));
       setCategories(cats);
     });
 
@@ -372,54 +372,93 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // 📦 المخزون: القرار في planOrderStockChange (utils/inventory.ts) وهنا التنفيذ فقط.
-  // يُحفظ ما خُصم فعلياً في الطلب (stockDeductions) ليُرجَع بدقة، ولا يُخصم الطلب مرتين.
+  // 📦 تُنفّذ قراءة الطلب والمخزون وتحديثهما داخل Transaction واحدة لمنع تضارب التحديثات المتزامنة.
   const handleUpdateOrderStatus = async (firestoreId: string, newStatus: string) => {
+    const currentOrder = orders.find((o) => o.firestoreId === firestoreId);
+    const preview = currentOrder ? planOrderStockChange(currentOrder, newStatus, products) : null;
+    const allowPartial = Boolean(preview?.shortage.length) && window.confirm(
+      `المخزون غير كافٍ لبعض القطع:\n${preview!.shortage.join('\n')}\n\nسيُخصم المتاح فقط. هل تريد المتابعة؟`
+    );
+    if (preview?.shortage.length && !allowPartial) return;
+
     try {
-      const order = orders.find((o) => o.firestoreId === firestoreId);
-      const batch = writeBatch(db);
-      const orderUpdate: Record<string, unknown> = { status: newStatus };
       let stockMsg = '';
+      await runTransaction(db, async (transaction) => {
+        const orderRef = doc(db, 'orders', firestoreId);
+        const orderSnapshot = await transaction.get(orderRef);
+        if (!orderSnapshot.exists()) throw new Error('ORDER_NOT_FOUND');
 
-      if (order) {
-        const plan = planOrderStockChange(order, newStatus, products);
+        const rawOrder = orderSnapshot.data();
+        const liveOrder = {
+          ...rawOrder,
+          id: typeof rawOrder.id === 'string' && rawOrder.id ? rawOrder.id : firestoreId,
+        } as Order;
+        const productIds = Array.from(aggregateItems(liveOrder.items).keys());
+        const productSnapshots = await Promise.all(
+          productIds.map((productId) => transaction.get(doc(db, 'products', productId)))
+        );
+        const liveProducts: Product[] = productSnapshots
+          .filter((snapshot) => snapshot.exists())
+          .map((snapshot) => ({ ...snapshot.data(), id: snapshot.id } as Product));
+        const plan = planOrderStockChange(liveOrder, newStatus, liveProducts);
+        if (plan.shortage.length > 0 && !allowPartial) throw new Error('STOCK_SHORTAGE');
 
+        const orderUpdate: Record<string, unknown> = { status: newStatus };
         if (plan.action === 'deduct') {
-          if (plan.shortage.length > 0 && !window.confirm(`المخزون غير كافٍ لبعض القطع:\n${plan.shortage.join('\n')}\n\nسيُخصم المتاح فقط. هل تريد المتابعة؟`)) {
-            return;
-          }
-          Object.entries(plan.deductions).forEach(([pid, qty]) => {
-            batch.update(doc(db, 'products', pid), { stock: increment(-qty) });
+          Object.entries(plan.deductions).forEach(([productId, qty]) => {
+            transaction.update(doc(db, 'products', productId), { stock: increment(-qty) });
           });
           orderUpdate.stockDeducted = true;
           orderUpdate.stockDeductions = plan.deductions;
           if (Object.keys(plan.deductions).length > 0) stockMsg = ' وتم خصم الكميات من المخزون';
         } else if (plan.action === 'restore') {
-          Object.entries(plan.restores).forEach(([pid, qty]) => {
-            batch.update(doc(db, 'products', pid), { stock: increment(qty) });
+          Object.entries(plan.restores).forEach(([productId, qty]) => {
+            transaction.update(doc(db, 'products', productId), { stock: increment(qty) });
           });
           orderUpdate.stockDeducted = false;
           orderUpdate.stockDeductions = deleteField();
           if (Object.keys(plan.restores).length > 0) stockMsg = ' وتمت إعادة الكميات إلى المخزون';
         }
-      }
-
-      batch.update(doc(db, 'orders', firestoreId), orderUpdate);
-      await batch.commit();
+        transaction.update(orderRef, orderUpdate);
+      });
       showNotification(`تم تغيير حالة الطلب إلى "${newStatus}"${stockMsg}`);
     } catch (error) {
       console.error(error);
-      alert('حدث خطأ أثناء تحديث حالة الطلب');
+      alert(error instanceof Error && error.message === 'STOCK_SHORTAGE'
+        ? 'تغيّر المخزون أثناء العملية وأصبح غير كافٍ. حدّث المخزون ثم حاول مجدداً.'
+        : 'حدث خطأ أثناء تحديث حالة الطلب');
     }
   };
 
+  // عند حذف طلب سبق خصم مخزونه، أعد الكميات المسجلة فقط وبشكل ذري قبل حذف الطلب.
   const handleDeleteOrder = async (firestoreId: string) => {
     try {
-      await deleteDoc(doc(db, 'orders', firestoreId));
+      await runTransaction(db, async (transaction) => {
+        const orderRef = doc(db, 'orders', firestoreId);
+        const orderSnapshot = await transaction.get(orderRef);
+        if (!orderSnapshot.exists()) return;
+        const orderData = orderSnapshot.data() as Order;
+        const deductions = orderData.stockDeducted ? (orderData.stockDeductions || {}) : {};
+        const productIds = Object.entries(deductions)
+          .filter(([, qty]) => Number(qty) > 0)
+          .map(([productId]) => productId);
+        const productSnapshots = await Promise.all(
+          productIds.map((productId) => transaction.get(doc(db, 'products', productId)))
+        );
+        productSnapshots.forEach((productSnapshot) => {
+          if (!productSnapshot.exists()) return;
+          const qty = Number(deductions[productSnapshot.id]) || 0;
+          if (qty > 0) {
+            transaction.update(doc(db, 'products', productSnapshot.id), { stock: increment(qty) });
+          }
+        });
+        transaction.delete(orderRef);
+      });
       setConfirmDeleteOrderId(null);
-      showNotification('تم حذف الطلب من السجل نهائياً.');
+      showNotification('تم حذف الطلب وإرجاع الكميات المخصومة إلى المخزون إن وُجدت.');
     } catch (error) {
-      alert('حدث خطأ أثناء حذف الطلب');
+      console.error(error);
+      alert('حدث خطأ أثناء حذف الطلب أو إعادة المخزون');
     }
   };
 
