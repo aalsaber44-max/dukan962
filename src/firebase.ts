@@ -1,25 +1,23 @@
-// src/firebase.ts
+import { deleteField } from 'firebase/firestore';
 
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; // هذا السطر هو المسؤول عن السحابة (الحفظ)
-import { getAuth } from "firebase/auth"; // هذا للدخول (لو حبيت تستخدمه لاحقاً)
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && Object.getPrototypeOf(v) === Object.prototype;
 
-// إعدادات مشروعك الخاصة
-const firebaseConfig = {
-  apiKey: "AIzaSyAjTUAL-AwdEh2WiE7B6TP2TsAuNj0ypRM",
-  authDomain: "dukan962-3ea92.firebaseapp.com",
-  projectId: "dukan962-3ea92",
-  storageBucket: "dukan962-3ea92.firebasestorage.app",
-  messagingSenderId: "912187800588",
-  appId: "1:912187800588:web:705f739536dfe1c9a08229",
-  measurementId: "G-5MDVDGWW7W"
+/** يحذف كل قيمة undefined (بعمق) لأن Firestore يرفضها في addDoc / updateDoc */
+export const stripUndefined = <T,>(value: T): T => {
+  if (Array.isArray(value)) return value.map((v) => stripUndefined(v)) as unknown as T;
+  if (isPlainObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, stripUndefined(v)])
+    ) as T;
+  }
+  return value;
 };
 
-// تشغيل Firebase
-const app = initializeApp(firebaseConfig);
-
-// تصدير قاعدة البيانات (db) عشان نستخدمها في لوحة التحكم
-export const db = getFirestore(app);
-
-// تصدير المصادقة (لو احتجتها بعدين)
-export const auth = getAuth(app);
+/** للتعديل: الحقل الذي صار undefined على المستوى الأول يُحذف من المستند فعلاً (deleteField)، والباقي يُنظَّف */
+export const toUpdateData = (data: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(data).map(([k, v]) => [k, v === undefined ? deleteField() : stripUndefined(v)])
+  );
