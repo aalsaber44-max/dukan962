@@ -10,14 +10,14 @@ export const isTracked = (p: Pick<Product, 'stock'>): boolean => typeof p.stock 
 
 export const getStockState = (p: Pick<Product, 'stock' | 'lowStockThreshold'>): StockState => {
   if (typeof p.stock !== 'number') return 'untracked';
-  if (p.stock <= 0) return 'out';
+  if (!Number.isFinite(p.stock) || p.stock <= 0) return 'out';
   const threshold = typeof p.lowStockThreshold === 'number' ? p.lowStockThreshold : DEFAULT_LOW_STOCK;
   return p.stock <= threshold ? 'low' : 'in';
 };
 
 /** الكمية المتاحة للشراء (Infinity لغير المتتبَّع) */
 export const availableQty = (p: Pick<Product, 'stock'>): number =>
-  typeof p.stock === 'number' ? Math.max(0, p.stock) : Infinity;
+  typeof p.stock === 'number' ? (Number.isFinite(p.stock) ? Math.max(0, p.stock) : 0) : Infinity;
 
 /** مجموع كمية المنتج في السلة عبر كل ألوانه (المخزون للمنتج وليس للون) */
 export const qtyInCart = (cart: CartItem[], productId: string): number =>
@@ -29,7 +29,9 @@ export const aggregateItems = (items: { product?: { id?: string }; quantity?: nu
   items.forEach((it) => {
     const id = it.product?.id;
     if (!id) return;
-    m.set(id, (m.get(id) || 0) + (Number(it.quantity) || 1));
+    const quantity = Number(it.quantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) return;
+    m.set(id, (m.get(id) || 0) + quantity);
   });
   return m;
 };
@@ -97,11 +99,20 @@ export const planOrderStockChange = (
     plan.action = 'deduct';
     aggregateItems(order.items).forEach((qty, pid) => {
       const p = products.find((x) => x.id === pid);
-      if (!p || !isTracked(p)) return;
-      const take = Math.min(qty, Math.max(0, p.stock as number));
-      if (take > 0) plan.deductions[pid] = take;
-      if (take < qty) plan.shortage.push(`${p.name} (المطلوب ${qty}، المتاح ${p.stock})`);
+      if (!p) {
+        plan.shortage.push(`منتج محذوف أو غير موجود (المعرّف ${pid})`);
+        return;
+      }
+      if (!isTracked(p)) return;
+      const available = Math.max(0, Number(p.stock) || 0);
+      if (available < qty) {
+        plan.shortage.push(`${p.name} (المطلوب ${qty}، المتاح ${available})`);
+        return;
+      }
+      if (qty > 0) plan.deductions[pid] = qty;
     });
+    // لا تخصم جزءاً من الطلب: إما تتوفر كل الكميات أو يبقى الطلب دون تغيير.
+    if (plan.shortage.length > 0) plan.deductions = {};
   } else if (was && !will && order.stockDeducted) {
     plan.action = 'restore';
     Object.entries(order.stockDeductions || {}).forEach(([pid, qty]) => {
