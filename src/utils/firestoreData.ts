@@ -1,23 +1,92 @@
-import { deleteField } from 'firebase/firestore';
+// src/types/furniture.ts
 
-const isPlainObject = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && Object.getPrototypeOf(v) === Object.prototype;
+// 1. شكل القسم (Category)
+export interface Category {
+  id: string;
+  name: string;
+  image: string; 
+  bannerImage: string; 
+  mobileBannerImage?: string; 
+  title: string;
+  description: string;
+  buttonText: string;
+  badgeText: string;
+  isActive: boolean;
+  order: number;
+}
 
-/** يحذف كل قيمة undefined (بعمق) لأن Firestore يرفضها في addDoc / updateDoc */
-export const stripUndefined = <T,>(value: T): T => {
-  if (Array.isArray(value)) return value.map((v) => stripUndefined(v)) as unknown as T;
-  if (isPlainObject(value)) {
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, stripUndefined(v)])
-    ) as T;
-  }
-  return value;
-};
+// 2. الخصائص الديناميكية
+export interface ProductAttribute {
+  name: string; 
+  options: string[]; 
+}
 
-/** للتعديل: الحقل الذي صار undefined على المستوى الأول يُحذف من المستند فعلاً (deleteField)، والباقي يُنظَّف */
-export const toUpdateData = (data: Record<string, unknown>): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(data).map(([k, v]) => [k, v === undefined ? deleteField() : stripUndefined(v)])
-  );
+// 3. ألوان المنتج
+export interface ProductColor {
+  name: string;
+  hex: string;
+  price: number; 
+  originalPrice?: number; 
+  image: string; 
+  additionalImages?: string[]; 
+}
+
+// 4. المنتج (Product)
+export interface Product {
+  id: string;
+  itemNumber: number; 
+  sku?: string; // رمز مخزون فريد للمنتج
+  name: string;
+  nameEn?: string;
+  categoryId: string; 
+  basePrice: number; 
+  originalPrice?: number; 
+  description: string;
+  warranty: string; 
+  images: string[];
+  colors: ProductColor[];
+  attributes?: ProductAttribute[]; 
+  isBestSeller?: boolean; 
+  isActive: boolean; 
+  createdAt?: string;
+  videoUrl?: string; // 💡 تمت إضافة هذا الحقل لرابط الفيديو
+  woodType?: string;
+  isOffer?: boolean;
+  categoryLabel?: string;
+  dimensions?: string;
+  stock?: number;              // 📦 الكمية المتوفرة (إذا غابت: المخزون غير مُتتبَّع/غير محدود)
+  lowStockThreshold?: number;  // حد التنبيه عند انخفاض المخزون (الافتراضي 3)
+}
+
+// 5. السلة (Cart)
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedColor: ProductColor;
+  selectedAttributes?: Record<string, string>; 
+}
+
+// 6. الطلبات (Order)
+export interface Order {
+  id: string; // رقم الطلب الظاهر للعميل (DUKAN-...)
+  firestoreId?: string; // معرّف مستند Firestore الحقيقي المستخدم في التحديث والحذف
+  createdAt: string;
+  status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
+  stockDeducted?: boolean;                    // هل خُصمت كميات هذا الطلب من المخزون؟
+  stockDeductions?: Record<string, number>;   // ما خُصم فعلياً لكل منتج (للإرجاع بدقة عند الإلغاء)
+  name: string;
+  phone: string;
+  phone2?: string; 
+  governorate: string;
+  address: string;
+  region?: string; 
+  street?: string; 
+  building?: string; 
+  notes?: string;
+  paymentMethod: 'cod' | 'cliq'; 
+  cliqRef?: string;
+  items: CartItem[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+}
