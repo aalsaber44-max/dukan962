@@ -9,9 +9,15 @@ export const CategoryManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [successToast, setSuccessToast] = useState('');
   
-  // فورم إضافة قسم جديد
   const [newName, setNewName] = useState('');
   const [newImage, setNewImage] = useState('');
+  
+  const [newBannerImage, setNewBannerImage] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newButtonText, setNewButtonText] = useState('');
+  const [newBadge, setNewBadge] = useState('');
+  
   const [isAdding, setIsAdding] = useState(false);
 
   const showNotification = (msg: string) => {
@@ -19,35 +25,40 @@ export const CategoryManager: React.FC = () => {
     setTimeout(() => setSuccessToast(''), 3000);
   };
 
-  // جلب الأقسام من Firebase
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'categories'), (snapshot) => {
       const cats: Category[] = [];
       snapshot.forEach((doc) => {
-        cats.push({ id: doc.id, ...doc.data() } as Category);
+        cats.push({ ...doc.data(), id: doc.id } as Category);
       });
-      // ترتيب الأقسام حسب حقل الترتيب (order)
       setCategories(cats.sort((a, b) => (a.order || 0) - (b.order || 0)));
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // إضافة قسم جديد
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName || !newImage) return alert('يرجى تعبئة اسم القسم ورابط الصورة');
+    if (!newName || !newImage) return alert('يرجى تعبئة اسم القسم ورابط صورة الكارت على الأقل');
 
     setIsAdding(true);
     try {
       await addDoc(collection(db, 'categories'), {
         name: newName,
         image: newImage,
-        isActive: true, // يبدأ مفعل تلقائياً
+        bannerImage: newBannerImage || newImage,
+        mobileBannerImage: newBannerImage || newImage,
+        title: newTitle || newName,
+        description: newDesc || '',
+        buttonText: newButtonText || 'استكشف الآن',
+        badgeText: newBadge || '✨ جودة ممتازة',
+        isActive: true,
         order: categories.length + 1,
       });
-      setNewName('');
-      setNewImage('');
+      
+      setNewName(''); setNewImage(''); setNewBannerImage(''); 
+      setNewTitle(''); setNewDesc(''); setNewButtonText(''); setNewBadge('');
+      
       showNotification('تمت إضافة القسم بنجاح! سيظهر فوراً في المتجر.');
     } catch (error) {
       alert('حدث خطأ أثناء إضافة القسم');
@@ -56,7 +67,6 @@ export const CategoryManager: React.FC = () => {
     }
   };
 
-  // تفعيل / إخفاء القسم (بدل الحذف عشان زينة رمضان)
   const toggleCategoryStatus = async (id: string, currentStatus: boolean) => {
     try {
       await updateDoc(doc(db, 'categories', id), { isActive: !currentStatus });
@@ -66,7 +76,6 @@ export const CategoryManager: React.FC = () => {
     }
   };
 
-  // حذف قسم نهائياً
   const handleDeleteCategory = async (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا القسم نهائياً؟ (المنتجات بداخله لن تُحذف ولكنها ستبقى مخفية)')) {
       try {
@@ -81,82 +90,157 @@ export const CategoryManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {successToast && (
-        <div className="bg-[#EDF4EE] text-[#2E5339] p-3 rounded-lg text-sm font-bold flex items-center gap-2 border border-[#C5DEC8]">
+        <div className="bg-[#7FD1A0]/10 text-[#7FD1A0] p-3 rounded-lg text-sm font-bold flex items-center gap-2 border border-[#7FD1A0]/25">
           <Check className="w-4 h-4" /> {successToast}
         </div>
       )}
 
       {/* فورم إضافة قسم */}
-      <div className="bg-[#FAF7F2] p-5 rounded-2xl border border-[#E9E1D4]">
-        <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-[#8C6D46]" /> إضافة قسم جديد
+      <div className="bg-[#141210] p-5 rounded-2xl border border-white/10">
+        <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-[#F3EEE4]">
+          <Plus className="w-5 h-5 text-[#D4B06A]" /> إضافة قسم جديد (وصفحة بانر خاصة به)
         </h3>
-        <form onSubmit={handleAddCategory} className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="اسم القسم (مثال: أحذية)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="w-full sm:w-1/3 text-sm py-2 px-3 border rounded-lg bg-white"
-            required
-          />
-          <input
-            type="text"
-            placeholder="رابط صورة القسم (URL)"
-            value={newImage}
-            onChange={(e) => setNewImage(e.target.value)}
-            className="w-full sm:w-1/2 text-sm py-2 px-3 border rounded-lg bg-white"
-            dir="ltr"
-            required
-          />
+        
+        <form onSubmit={handleAddCategory} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">اسم القسم *</label>
+              <input
+                type="text"
+                placeholder="مثال: أحذية"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="w-full text-sm py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">رابط صورة القسم (للكارت) *</label>
+              <input
+                type="text"
+                placeholder="https://example.com/image.jpg"
+                value={newImage}
+                onChange={(e) => setNewImage(e.target.value)}
+                className="w-full text-sm py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                dir="ltr"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#1C1815] p-4 rounded-xl border border-white/10">
+            <div className="md:col-span-2">
+              <h4 className="text-xs font-bold text-[#D4B06A] mb-3 border-b border-white/10 pb-2">بيانات البانر الرئيسي (يظهر في أعلى الصفحة)</h4>
+            </div>
+            
+            <div>
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">رابط صورة البانر الكبيرة (اختياري)</label>
+              <input
+                type="text"
+                placeholder="اتركه فارغاً لاستخدام صورة الكارت"
+                value={newBannerImage}
+                onChange={(e) => setNewBannerImage(e.target.value)}
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">عنوان البانر</label>
+              <input
+                type="text"
+                placeholder="مثال: أحدث صيحات الأحذية"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">وصف البانر</label>
+              <textarea
+                placeholder="خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق..."
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                rows={2}
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">نص زر البانر</label>
+              <input
+                type="text"
+                placeholder="مثال: استكشف الأحذية الآن"
+                value={newButtonText}
+                onChange={(e) => setNewButtonText(e.target.value)}
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">نص الشارة (Badge)</label>
+              <input
+                type="text"
+                placeholder="مثال: ✨ خامات أصلية"
+                value={newBadge}
+                onChange={(e) => setNewBadge(e.target.value)}
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={isAdding}
-            className="bg-[#1C1917] text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#332E2B] disabled:opacity-50"
+            className="w-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] px-5 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:from-[#E8CC8A] hover:to-[#E8CC8A] shadow-gold disabled:opacity-50 cursor-pointer transition-all"
           >
-            {isAdding ? 'جاري الإضافة...' : 'إضافة القسم'}
+            {isAdding ? 'جاري الإضافة...' : 'حفظ وإضافة القسم'}
           </button>
         </form>
       </div>
 
       {/* جدول عرض الأقسام */}
-      <div className="bg-white border border-[#E5DDD0] rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-[#141210] border border-white/10 rounded-2xl overflow-hidden shadow-soft">
         <table className="w-full text-right text-sm">
-          <thead className="bg-[#FAF7F2] text-[#78716C] border-b border-[#E5DDD0]">
+          <thead className="bg-[#1C1815] text-[#A39A8B] border-b border-white/10">
             <tr>
               <th className="p-4">صورة القسم</th>
-              <th className="p-4">اسم القسم</th>
+              <th className="p-4">اسم القسم / البانر</th>
               <th className="p-4">الحالة</th>
               <th className="p-4 text-center">إجراءات</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F2ECE1]">
+          <tbody className="divide-y divide-white/10">
             {loading ? (
-              <tr><td colSpan={4} className="p-4 text-center">جاري تحميل الأقسام من السحابة...</td></tr>
+              <tr><td colSpan={4} className="p-4 text-center text-[#A39A8B]">جاري تحميل الأقسام من السحابة...</td></tr>
             ) : categories.length === 0 ? (
-              <tr><td colSpan={4} className="p-4 text-center text-gray-500">لا توجد أقسام مضافة حتى الآن. أضف قسمك الأول من الأعلى.</td></tr>
+              <tr><td colSpan={4} className="p-4 text-center text-[#8A8173]">لا توجد أقسام مضافة حتى الآن. أضف قسمك الأول من الأعلى.</td></tr>
             ) : (
               categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-[#FAF8F5]">
+                <tr key={cat.id} className="hover:bg-white/[0.02]">
                   <td className="p-4">
-                    <img src={cat.image} alt={cat.name} className="w-20 h-14 object-cover rounded-lg border" />
+                    <img src={cat.image} alt={cat.name} className="w-20 h-14 object-cover rounded-lg border border-white/10 bg-[#1C1815]" />
                   </td>
-                  <td className="p-4 font-bold text-[#1C1917]">{cat.name}</td>
                   <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${cat.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                    <p className="font-bold text-[#F3EEE4] mb-1">{cat.name}</p>
+                    {cat.title && <p className="text-[11px] text-[#D4B06A]">عنوان البانر: {cat.title}</p>}
+                  </td>
+                  <td className="p-4">
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ring-1 ${cat.isActive ? 'bg-[#7FD1A0]/10 text-[#7FD1A0] ring-[#7FD1A0]/30' : 'bg-rose-500/10 text-rose-400 ring-rose-500/30'}`}>
                       {cat.isActive ? 'ظاهر في المتجر' : 'مخفي'}
                     </span>
                   </td>
                   <td className="p-4 text-center space-x-2">
                     <button
                       onClick={() => toggleCategoryStatus(cat.id, cat.isActive)}
-                      className={`text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 inline-flex ${cat.isActive ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+                      className={`text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 inline-flex transition-colors cursor-pointer ${
+                        cat.isActive 
+                          ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 ring-1 ring-amber-500/30' 
+                          : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 ring-1 ring-emerald-500/30'
+                      }`}
                     >
                       {cat.isActive ? <><EyeOff className="w-3 h-3" /> إخفاء</> : <><Eye className="w-3 h-3" /> إظهار</>}
                     </button>
                     <button
                       onClick={() => handleDeleteCategory(cat.id)}
-                      className="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg inline-flex"
+                      className="text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg inline-flex cursor-pointer transition-colors"
                       title="حذف القسم نهائياً"
                     >
                       <Trash2 className="w-4 h-4" />
