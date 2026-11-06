@@ -18,17 +18,15 @@ import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Toast, ToastData, ToastVariant } from './components/Toast';
 import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
 
-// استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from './firebase';
 
-// 💡 بيانات الصفحة الرئيسية الافتراضية (تم تحديث الروابط إلى Postimages)
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
   image: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
-  bannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png', // 💻 كمبيوتر
-  mobileBannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png', // 📱 هاتف
+  bannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  mobileBannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
   title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
   description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
@@ -38,14 +36,11 @@ const homeCategoryData: Category = {
 };
 
 export default function App() {
-  // 1. حالات المنتجات والأقسام
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
 
-  // 2. جلب المنتجات والأقسام من السحابة (Live Sync)
   useEffect(() => {
-    // جلب المنتجات
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
       snapshot.forEach((doc) => {
@@ -66,7 +61,6 @@ export default function App() {
       setProductsLoaded(true);
     });
 
-    // جلب الأقسام
     const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
       const cats: Category[] = [];
       snapshot.forEach((doc) => {
@@ -81,7 +75,6 @@ export default function App() {
     };
   }, []);
 
-  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور
   useEffect(() => {
     const seedCategories = async () => {
       try {
@@ -167,7 +160,6 @@ export default function App() {
     seedCategories();
   }, []);
 
-  // 4. كود ترحيل المنتجات القديمة من المتصفح إلى السحابة
   useEffect(() => {
     const migrateOldProducts = async () => {
       const savedOldProducts = localStorage.getItem('dukan962_products_v3');
@@ -199,7 +191,6 @@ export default function App() {
     setTimeout(migrateOldProducts, 1500); 
   }, []);
 
-  // Cart state
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem('dukan962_cart');
@@ -208,7 +199,6 @@ export default function App() {
     return [];
   });
 
-  // Wishlist state
   const [wishlist, setWishlist] = useState<Product[]>(() => {
     try {
       const saved = localStorage.getItem('dukan962_wishlist');
@@ -217,28 +207,23 @@ export default function App() {
     return [];
   });
 
-  // Filtering state
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); 
   const [sortBy, setSortBy] = useState<'featured' | 'newest' | 'price-asc' | 'price-desc'>('featured');
   const [selectedColor, setSelectedColor] = useState<string>('');
 
-  // Modals & Drawers state
   const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
-  // Admin Security & Dashboard state
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  // Toast feedback
   const [toast, setToast] = useState<ToastData | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cart & Wishlist persistence
   useEffect(() => {
     localStorage.setItem('dukan962_cart', JSON.stringify(cart));
   }, [cart]);
@@ -261,7 +246,6 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
-  // Add to cart with color & quantity
   const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
     const activeColor = chosenColor || product.colors?.[0] || {
       name: 'افتراضي',
@@ -270,7 +254,6 @@ export default function App() {
       image: product.images?.[0] || '',
     };
 
-    // 📦 المخزون مشترك بين ألوان المنتج: لا نسمح بتجاوز الكمية المتاحة (بحسب آخر بيانات من السحابة)
     const live = products.find((p) => p.id === product.id) || product;
     const canAdd = availableQty(live) - qtyInCart(cart, product.id);
     if (canAdd <= 0) {
@@ -339,7 +322,6 @@ export default function App() {
     );
   };
 
-  // Wishlist toggle
   const handleToggleWishlist = (product: Product) => {
     setWishlist((prev) => {
       const exists = prev.some((p) => p.id === product.id);
@@ -364,7 +346,6 @@ export default function App() {
     setSelectedColor('');
   };
 
-  // Filtered Products logic
   const filteredProducts = products.filter((prod) => {
     if (prod.isActive === false) return false; 
     
@@ -397,7 +378,6 @@ export default function App() {
     return Number(b.isBestSeller || false) - Number(a.isBestSeller || false);
   });
 
-  // منتجات مشابهة لنافذة التفاصيل: نفس القسم أولاً ثم بقية المنتجات الفعّالة (حتى 4)
   const relatedProducts = selectedProductModal
     ? products
         .filter((p) => p.isActive !== false && p.id !== selectedProductModal.id)
@@ -422,7 +402,6 @@ export default function App() {
     document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // الفلاتر النشطة (تظهر كشرائح قابلة للإزالة في حالة عدم وجود نتائج)
   const activeFilters: ActiveFilter[] = [];
   if (selectedCategory !== 'all') {
     activeFilters.push({
@@ -455,7 +434,6 @@ export default function App() {
         
         <Toast toast={toast} onDismiss={dismissToast} />
 
-        {/* Top Banner Notice */}
         <aside aria-label="شريط العروض" className="relative bg-[#080706] text-[#A39A8B] text-[11px] sm:text-xs py-2.5 px-4 text-center">
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
             <span className="text-[#E8CC8A] font-semibold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
@@ -467,7 +445,6 @@ export default function App() {
           <div aria-hidden="true" className="absolute bottom-0 inset-x-0 gold-rule opacity-60" />
         </aside>
 
-        {/* Navigation Header */}
         <Navbar
           categories={categories}
           currentCategoryData={currentCategoryData}
@@ -484,10 +461,8 @@ export default function App() {
           }}
         />
 
-        {/* Hero Section */}
         <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
 
-        {/* Categories Visual Section */}
         <CategoryBoxes
           categories={categories}
           selectedCategory={selectedCategory}
@@ -497,7 +472,6 @@ export default function App() {
           }}
         />
 
-        {/* Catalog & Shop Section */}
         <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
@@ -580,7 +554,6 @@ export default function App() {
           )}
         </main>
 
-        {/* Footer */}
         <Footer
           categories={categories}
           currentCategoryData={currentCategoryData}
@@ -608,10 +581,11 @@ export default function App() {
           onUpdateQuantity={handleUpdateCartQuantity}
           onRemoveItem={handleRemoveFromCart}
           onProceedToCheckout={() => {
-            // 📦 قبل الدفع: طابق السلة مع المخزون الحالي، وإن تغيّر شيء يراجعه الزبون أولاً
+            // 📦 يطابق السلة مع آخر أسعار ومخزون، ويحدّث الحالة دائماً (حتى لو ما في رسائل)
+            // لتجنّب فتح الدفع بأسعار قديمة.
             const { cart: reconciled, messages } = reconcileCart(cart, products);
+            setCart(reconciled);
             if (messages.length > 0) {
-              setCart(reconciled);
               showToast(
                 messages[0] + (messages.length > 1 ? ` (و${messages.length - 1} تنبيهات أخرى)` : ''),
                 { variant: 'warning' }
