@@ -21,7 +21,10 @@ export const availableQty = (p: Pick<Product, 'stock'>): number =>
 
 /** مجموع كمية المنتج في السلة عبر كل ألوانه (المخزون للمنتج وليس للون) */
 export const qtyInCart = (cart: CartItem[], productId: string): number =>
-  cart.filter((i) => i.product.id === productId).reduce((s, i) => s + i.quantity, 0);
+  cart.filter((i) => i.product.id === productId).reduce((sum, item) => {
+    const quantity = Number(item.quantity);
+    return sum + (Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 0);
+  }, 0);
 
 /** يجمع كميات بنود الطلب لكل منتج */
 export const aggregateItems = (items: { product?: { id?: string }; quantity?: number }[] = []): Map<string, number> => {
@@ -53,16 +56,25 @@ export const reconcileCart = (cart: CartItem[], products: Product[]): { cart: Ca
     }
 
     // حدّث بيانات المنتج والسعر من آخر نسخة وصلت من Firestore، لا من نسخة قديمة مخزنة في المتصفح.
-    const liveColor = live.colors?.find((color) => color.name === item.selectedColor.name)
-      || live.colors?.[0]
-      || item.selectedColor;
+    const matchingColor = live.colors?.find((color) => color.name === item.selectedColor?.name);
+    const liveColor = matchingColor || live.colors?.[0] || {
+      name: item.selectedColor?.name || 'افتراضي',
+      hex: item.selectedColor?.hex || '#3E2723',
+      price: Number(live.basePrice) || 0,
+      image: live.images?.[0] || '',
+    };
     const refreshedItem: CartItem = { ...item, product: live, selectedColor: liveColor };
+    const requestedQuantity = Number(item.quantity);
+    const safeQuantity = Number.isFinite(requestedQuantity) ? Math.floor(requestedQuantity) : 0;
+    if (safeQuantity <= 0) {
+      messages.push(`"${live.name}" تمت إزالة كميته غير الصالحة من السلة`);
+      return;
+    }
     const avail = remaining.has(live.id) ? remaining.get(live.id)! : availableQty(live);
-    if (avail === Infinity) { out.push(refreshedItem); return; }
+    if (avail === Infinity) { out.push({ ...refreshedItem, quantity: safeQuantity }); return; }
     if (avail <= 0) { messages.push(`"${live.name}" نفدت الكمية وتمت إزالته من السلة`); return; }
-    const q = Math.min(Math.max(0, Number(item.quantity) || 0), avail);
-    if (q <= 0) { messages.push(`"${live.name}" تمت إزالة كميته غير الصالحة من السلة`); return; }
-    if (q < item.quantity) messages.push(`"${live.name}": المتاح ${avail} فقط، تم تعديل الكمية`);
+    const q = Math.min(safeQuantity, avail);
+    if (q < safeQuantity) messages.push(`"${live.name}": المتاح ${avail} فقط، تم تعديل الكمية`);
     remaining.set(live.id, avail - q);
     out.push({ ...refreshedItem, quantity: q });
   });
