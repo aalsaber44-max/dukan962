@@ -29,10 +29,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   if (!isOpen) return null;
 
   // 💡 تأمين حساب الأسعار
-  const subtotal = items.reduce(
-    (acc, item) => acc + (Number(item.selectedColor.price) || Number(item.product.basePrice) || 0) * item.quantity,
-    0
-  );
+  const subtotal = items.reduce((acc, item) => {
+    const colorPrice = Number(item.selectedColor?.price);
+    const basePrice = Number(item.product?.basePrice);
+    const unitPrice = Number.isFinite(colorPrice) && colorPrice > 0
+      ? colorPrice
+      : Number.isFinite(basePrice) && basePrice > 0 ? basePrice : 0;
+    return acc + unitPrice * Math.max(0, Number(item.quantity) || 0);
+  }, 0);
 
   // 💡 التوصيل يُحسب حسب المحافظة في صفحة إتمام الطلب، والسلة تعرض نفس السياسة بدون تضارب
   const freeThreshold = FREE_DELIVERY_THRESHOLD;
