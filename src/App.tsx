@@ -619,8 +619,13 @@ export default function App() {
           onUpdateQuantity={handleUpdateCartQuantity}
           onRemoveItem={handleRemoveFromCart}
           onProceedToCheckout={() => {
-            // 📦 يطابق السلة مع آخر أسعار ومخزون، ويحدّث الحالة دائماً (حتى لو ما في رسائل)
-            // لتجنّب فتح الدفع بأسعار قديمة.
+            // لا نتحقق من السلة قبل اكتمال قراءة المنتجات من Firestore.
+            if (!productsLoaded) {
+              showToast('انتظر لحظة حتى يتم تحديث بيانات المنتجات والمخزون', { variant: 'warning' });
+              return;
+            }
+
+            // 📦 قبل الدفع: طابق السلة مع المخزون وحدّث الأسعار والبيانات دائماً من أحدث نسخة.
             const { cart: reconciled, messages } = reconcileCart(cart, products);
             setCart(reconciled);
             if (messages.length > 0) {
