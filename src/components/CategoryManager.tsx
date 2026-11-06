@@ -32,7 +32,7 @@ export const CategoryManager: React.FC = () => {
     const unsubscribe = onSnapshot(collection(db, 'categories'), (snapshot) => {
       const cats: Category[] = [];
       snapshot.forEach((doc) => {
-        cats.push({ id: doc.id, ...doc.data() } as Category);
+        cats.push({ ...doc.data(), id: doc.id } as Category);
       });
       // ترتيب الأقسام حسب حقل الترتيب (order)
       setCategories(cats.sort((a, b) => (a.order || 0) - (b.order || 0)));
