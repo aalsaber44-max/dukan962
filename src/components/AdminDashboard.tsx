@@ -375,11 +375,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // 📦 تُنفّذ قراءة الطلب والمخزون وتحديثهما داخل Transaction واحدة لمنع تضارب التحديثات المتزامنة.
   const handleUpdateOrderStatus = async (firestoreId: string, newStatus: string) => {
     const currentOrder = orders.find((o) => o.firestoreId === firestoreId);
+    if (currentOrder?.status === 'تم التسليم' && newStatus !== 'تم التسليم') {
+      alert('لا يمكن إرجاع طلب تم تسليمه إلى حالة سابقة تلقائياً. راجع المخزون يدوياً إذا تم استرجاع البضاعة فعلياً.');
+      return;
+    }
     const preview = currentOrder ? planOrderStockChange(currentOrder, newStatus, products) : null;
-    const allowPartial = Boolean(preview?.shortage.length) && window.confirm(
-      `المخزون غير كافٍ لبعض القطع:\n${preview!.shortage.join('\n')}\n\nسيُخصم المتاح فقط. هل تريد المتابعة؟`
-    );
-    if (preview?.shortage.length && !allowPartial) return;
+    if (preview?.shortage.length) {
+      alert(`لا يمكن تغيير حالة الطلب لأن المخزون غير كافٍ أو أحد المنتجات غير موجود:\n${preview.shortage.join('\n')}\n\nحدّث المخزون أو راجع المنتجات ثم أعد المحاولة.`);
+      return;
+    }
 
     try {
       let stockMsg = '';
@@ -393,6 +397,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           ...rawOrder,
           id: typeof rawOrder.id === 'string' && rawOrder.id ? rawOrder.id : firestoreId,
         } as Order;
+        if (liveOrder.status === 'تم التسليم' && newStatus !== 'تم التسليم') {
+          throw new Error('DELIVERED_ORDER_LOCKED');
+        }
         const productIds = Array.from(aggregateItems(liveOrder.items).keys());
         const productSnapshots = await Promise.all(
           productIds.map((productId) => transaction.get(doc(db, 'products', productId)))
@@ -401,7 +408,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           .filter((snapshot) => snapshot.exists())
           .map((snapshot) => ({ ...snapshot.data(), id: snapshot.id } as Product));
         const plan = planOrderStockChange(liveOrder, newStatus, liveProducts);
-        if (plan.shortage.length > 0 && !allowPartial) throw new Error('STOCK_SHORTAGE');
+        if (plan.shortage.length > 0) throw new Error('STOCK_SHORTAGE');
 
         const orderUpdate: Record<string, unknown> = { status: newStatus };
         if (plan.action === 'deduct') {
@@ -425,8 +432,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } catch (error) {
       console.error(error);
       alert(error instanceof Error && error.message === 'STOCK_SHORTAGE'
-        ? 'تغيّر المخزون أثناء العملية وأصبح غير كافٍ. حدّث المخزون ثم حاول مجدداً.'
-        : 'حدث خطأ أثناء تحديث حالة الطلب');
+        ? 'تغيّر المخزون أثناء العملية وأصبح غير كافٍ. لم يتم تغيير حالة الطلب؛ حدّث المخزون ثم حاول مجدداً.'
+        : error instanceof Error && error.message === 'DELIVERED_ORDER_LOCKED'
+          ? 'لا يمكن إرجاع طلب تم تسليمه إلى حالة سابقة.'
+          : 'حدث خطأ أثناء تحديث حالة الطلب');
     }
   };
 
@@ -438,7 +447,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         const orderSnapshot = await transaction.get(orderRef);
         if (!orderSnapshot.exists()) return;
         const orderData = orderSnapshot.data() as Order;
-        const deductions = orderData.stockDeducted ? (orderData.stockDeductions || {}) : {};
+        // لا نعيد مخزون طلب تم تسليمه لمجرد حذف سجله؛ الحذف ليس إثباتاً لاسترجاع البضاعة.
+        const canRestore = orderData.status !== 'تم التسليم' && orderData.stockDeducted;
+        const deductions = canRestore ? (orderData.stockDeductions || {}) : {};
         const productIds = Object.entries(deductions)
           .filter(([, qty]) => Number(qty) > 0)
           .map(([productId]) => productId);
@@ -1061,7 +1072,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </div>
                                   </div>
                                   <span className="font-mono font-bold text-[#E8CC8A]">
-                                    {`${((it.selectedColor?.price || 0) * (it.quantity || 1)).toFixed(2)} د.أ`}
+                                    {`${(((Number(it.selectedColor?.price) > 0 ? Number(it.selectedColor.price) : Number(it.product?.basePrice) || 0) * (it.quantity || 1))).toFixed(2)} د.أ`}
                                   </span>
                                 </div>
                               ))}
