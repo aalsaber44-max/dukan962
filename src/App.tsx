@@ -51,12 +51,12 @@ export default function App() {
       snapshot.forEach((doc) => {
         const data = doc.data();
         prods.push({ 
+          ...data,
           id: doc.id, 
           name: data.name || 'منتج بدون اسم',
           description: data.description || 'لا يوجد وصف',
           basePrice: Number(data.basePrice) || 0,
           originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
-          ...data 
         } as Product);
       });
       setProducts(prods);
@@ -70,7 +70,7 @@ export default function App() {
     const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
       const cats: Category[] = [];
       snapshot.forEach((doc) => {
-        cats.push({ id: doc.id, ...doc.data() } as Category);
+        cats.push({ ...doc.data(), id: doc.id } as Category);
       });
       setCategories(cats.filter(c => c.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)));
     });
@@ -142,34 +142,21 @@ export default function App() {
           }
         ];
 
-        if (snapshot.empty) {
-          for (const cat of defaultCategories) {
-            await setDoc(doc(db, 'categories', cat.id), cat);
+        for (const defaultCat of defaultCategories) {
+          const existingDoc = snapshot.docs.find((d) => d.id === defaultCat.id);
+          if (!existingDoc) {
+            await setDoc(doc(db, 'categories', defaultCat.id), defaultCat);
+            continue;
           }
-          console.log('✅ تمت إضافة الأقسام الافتراضية بنجاح!');
-        } else {
-          for (const defaultCat of defaultCategories) {
-            const existingDoc = snapshot.docs.find(d => d.id === defaultCat.id);
-            if (existingDoc) {
-              const currentData = existingDoc.data();
-              if (
-                currentData.image !== defaultCat.image || 
-                currentData.bannerImage !== defaultCat.bannerImage || 
-                currentData.mobileBannerImage !== defaultCat.mobileBannerImage ||
-                currentData.title !== defaultCat.title ||
-                currentData.description !== defaultCat.description
-              ) {
-                await setDoc(doc(db, 'categories', defaultCat.id), {
-                  ...currentData,
-                  image: defaultCat.image,
-                  bannerImage: defaultCat.bannerImage,
-                  mobileBannerImage: defaultCat.mobileBannerImage,
-                  title: defaultCat.title,
-                  description: defaultCat.description
-                });
-                console.log(`✅ تم تحديث صورة قسم ${defaultCat.name} بنجاح!`);
-              }
-            }
+
+          const currentData = existingDoc.data();
+          const missingDefaults = Object.fromEntries(
+            Object.entries(defaultCat).filter(([key]) =>
+              currentData[key] === undefined || currentData[key] === null || currentData[key] === ''
+            )
+          );
+          if (Object.keys(missingDefaults).length > 0) {
+            await setDoc(doc(db, 'categories', defaultCat.id), missingDefaults, { merge: true });
           }
         }
       } catch (error) {
