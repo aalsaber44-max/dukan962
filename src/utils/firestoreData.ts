@@ -4,7 +4,13 @@ const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && Object.getPrototypeOf(v) === Object.prototype;
 
 export const stripUndefined = <T,>(value: T): T => {
-  if (Array.isArray(value)) return value.map((v) => stripUndefined(v)) as unknown as T;
+  // داخل المصفوفات: عناصر undefined تُزال (Firestore يرفض undefined في أي موضع،
+  // والمواضع الفارغة في مصفوفات مثل الصور لا معنى لها أصلاً)
+  if (Array.isArray(value)) {
+    return value
+      .filter((v) => v !== undefined)
+      .map((v) => stripUndefined(v)) as unknown as T;
+  }
   if (isPlainObject(value)) {
     return Object.fromEntries(
       Object.entries(value)
