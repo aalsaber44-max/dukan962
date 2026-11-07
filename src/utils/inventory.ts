@@ -82,6 +82,28 @@ export const reconcileCart = (cart: CartItem[], products: Product[]): { cart: Ca
   return { cart: out, messages };
 };
 
+/**
+ * يحدّث بيانات المنتجات داخل السلة (السعر، الصور، الاسم، اللون) من أحدث نسخة وصلت من
+ * Firestore دون حذف أي بند ودون تغيير الكميات. يُستدعى تلقائياً عند تحدث بيانات المنتجات،
+ * حتى يبقى ما يدفعه الزبون دائماً مطابقاً لآخر بيانات المتجر حتى لحظة إتمام الطلب.
+ */
+export const refreshCartData = (cart: CartItem[], products: Product[]): CartItem[] => {
+  if (cart.length === 0 || products.length === 0) return cart;
+  let changed = false;
+  const next = cart.map((item) => {
+    const live = products.find((p) => p.id === item.product.id);
+    if (!live) return item;
+    const matchingColor = live.colors?.find((color) => color.name === item.selectedColor?.name);
+    const liveColor = matchingColor || item.selectedColor;
+    const sameProduct = item.product === live;
+    const sameColor = item.selectedColor === liveColor;
+    if (sameProduct && sameColor) return item;
+    changed = true;
+    return { ...item, product: live, selectedColor: liveColor };
+  });
+  return changed ? next : cart;
+};
+
 /** الحالات التي يكون فيها مخزون الطلب مخصوماً */
 export const DEDUCT_STATES = ['جاري التجهيز', 'جاري التوصيل', 'تم التسليم'];
 
