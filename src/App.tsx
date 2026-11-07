@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
@@ -6,11 +6,10 @@ import { FilterBar } from './components/FilterBar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailsPage } from './components/ProductDetailsPage';
 import { FloatingActions } from './components/FloatingActions';
-import { availableQty, qtyInCart, reconcileCart } from './utils/inventory';
+import { availableQty, qtyInCart, reconcileCart, refreshCartData } from './utils/inventory';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
-import { AdminDashboard } from './components/AdminDashboard';
 import { AdminAuthModal } from './components/AdminAuthModal';
 import { Footer } from './components/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -20,7 +19,22 @@ import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/Empt
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, testFirestoreConnection } from './firebase';
+
+// ⚡ تحميل كسول للوحة التحكم: ملف كبير (إدارة كاملة) لا يحتاجه الزائر العادي أبداً،
+// فيُقسَّم إلى حزمة منفصلة تُحمَّل فقط عند فتح لوحة الإدارة — يخفف حجم التحميل الأول للمتجر.
+const AdminDashboard = lazy(() =>
+  import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+
+const AdminDashboardFallback = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
+    <div className="flex items-center gap-3 text-sm font-bold text-[#E8CC8A]">
+      <span className="w-5 h-5 rounded-full border-2 border-[#D4B06A]/30 border-t-[#E8CC8A] animate-spin" />
+      جارٍ تحميل لوحة التحكم...
+    </div>
+  </div>
+);
 
 // 💡 بيانات الصفحة الرئيسية الافتراضية (تم تحديث الروابط إلى Postimages)
 const homeCategoryData: Category = {
@@ -80,6 +94,19 @@ export default function App() {
       unsubscribeCategories();
     };
   }, []);
+
+  // 🩺 اختبار الاتصال بقاعدة Firestore عند إقلاع المتجر (يظهر النتيجة في Console فقط)
+  useEffect(() => {
+    testFirestoreConnection();
+  }, []);
+
+  // 🔄 عند أي تغيّر في بيانات المنتجات (سعر/صور/اسم/ألوان) حدّث السلة تلقائياً بأحدث نسخة،
+  // حتى يبقى الزبون يدفع دائماً السعر والبيانات الحالية ولا تبقى نسخة قديمة مخزنة في المتصفح.
+  // (لا تحذف بنوداً هنا؛ التخفيض/الحذف يتم عند إتمام الطلب برسالة واضحة للزبون.)
+  useEffect(() => {
+    if (!productsLoaded || products.length === 0 || cart.length === 0) return;
+    setCart((prev) => refreshCartData(prev, products));
+  }, [products, productsLoaded]);
 
   // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور
   useEffect(() => {
@@ -375,52 +402,63 @@ export default function App() {
     setSelectedColor('');
   };
 
-  // Filtered Products logic
-  const filteredProducts = products.filter((prod) => {
-    if (prod.isActive === false) return false; 
-    
-    const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
-    
-    const matchesSearch =
-      searchQuery.trim() === '' ||
-      prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prod.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(prod.itemNumber).includes(searchQuery.trim());
+  // Filtered Products logic (useMemo حتى لا يُعاد الفلترة والترتيب مع كل رسمة إعادة غير متعلقة بهما)
+  const filteredProducts = useMemo(() => {
+    const filtered = products.filter((prod) => {
+      if (prod.isActive === false) return false;
 
-    const matchesPrice = prod.basePrice >= priceRange[0] && prod.basePrice <= priceRange[1];
+      const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
 
-    const matchesColor =
-      selectedColor === '' ||
-      prod.colors?.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
+      const matchesSearch =
+        searchQuery.trim() === '' ||
+        prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prod.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(prod.itemNumber).includes(searchQuery.trim());
 
-    return matchesCategory && matchesSearch && matchesPrice && matchesColor;
-  });
+      const matchesPrice = prod.basePrice >= priceRange[0] && prod.basePrice <= priceRange[1];
 
-  filteredProducts.sort((a, b) => {
-    if (sortBy === 'price-asc') return Number(a.basePrice) - Number(b.basePrice);
-    if (sortBy === 'price-desc') return Number(b.basePrice) - Number(a.basePrice);
-    if (sortBy === 'newest') {
-      return (
-        String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
-        (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
-      );
-    }
-    return Number(b.isBestSeller || false) - Number(a.isBestSeller || false);
-  });
+      const matchesColor =
+        selectedColor === '' ||
+        prod.colors?.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
+
+      return matchesCategory && matchesSearch && matchesPrice && matchesColor;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy === 'price-asc') return Number(a.basePrice) - Number(b.basePrice);
+      if (sortBy === 'price-desc') return Number(b.basePrice) - Number(a.basePrice);
+      if (sortBy === 'newest') {
+        return (
+          String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+          (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
+        );
+      }
+      return Number(b.isBestSeller || false) - Number(a.isBestSeller || false);
+    });
+
+    return filtered;
+  }, [products, selectedCategory, searchQuery, priceRange, selectedColor, sortBy]);
 
   // منتجات مشابهة لنافذة التفاصيل: نفس القسم أولاً ثم بقية المنتجات الفعّالة (حتى 4)
-  const relatedProducts = selectedProductModal
-    ? products
-        .filter((p) => p.isActive !== false && p.id !== selectedProductModal.id)
-        .sort(
-          (a, b) =>
-            Number(b.categoryId === selectedProductModal.categoryId) -
-            Number(a.categoryId === selectedProductModal.categoryId)
-        )
-        .slice(0, 4)
-    : [];
+  const relatedProducts = useMemo(
+    () =>
+      selectedProductModal
+        ? products
+            .filter((p) => p.isActive !== false && p.id !== selectedProductModal.id)
+            .sort(
+              (a, b) =>
+                Number(b.categoryId === selectedProductModal.categoryId) -
+                Number(a.categoryId === selectedProductModal.categoryId)
+            )
+            .slice(0, 4)
+        : [],
+    [products, selectedProductModal]
+  );
 
-  const cartTotalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartTotalCount = useMemo(
+    () => cart.reduce((sum, item) => sum + item.quantity, 0),
+    [cart]
+  );
 
   const scrollToCatalog = () => {
     const el = document.getElementById('catalog');
@@ -459,6 +497,43 @@ export default function App() {
   const currentCategoryData = selectedCategory === 'all' 
     ? homeCategoryData 
     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
+
+  // 🔎 SEO ديناميكي: عنوان ووصف الصفحة يتبعان القسم المفتوح أو نافذة تفاصيل المنتج،
+  // فيحصل كل قسم/منتج على عنوان ووصف خاصين عند المشاركة والبحث.
+  useEffect(() => {
+    const setMetaDescription = (content: string) => {
+      let tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.name = 'description';
+        document.head.appendChild(tag);
+      }
+      tag.content = content;
+    };
+
+    if (selectedProductModal) {
+      const price = Number(selectedProductModal.basePrice || 0).toFixed(2);
+      document.title = `${selectedProductModal.name} | ${price} د.أ | دكان 962`;
+      setMetaDescription(
+        `${selectedProductModal.name} بسعر ${price} دينار أردني — ${selectedProductModal.description?.slice(0, 120) || 'منتج مختار بعناية من تشكيلات دكان 962 مع معاينة عند الاستلام والتوصيل لجميع المحافظات.'}`
+      );
+      return;
+    }
+
+    if (selectedCategory !== 'all' && currentCategoryData) {
+      document.title = `${currentCategoryData.name} | دكان 962 للأثاث`;
+      setMetaDescription(
+        currentCategoryData.description ||
+          `تشكيلة ${currentCategoryData.name} المميزة في دكان 962 — جودة عالية وأسعار منافسة والتوصيل لجميع محافظات المملكة بالدينار الأردني.`
+      );
+      return;
+    }
+
+    document.title = 'دكان 962 للأثاث | DUKAN 962 - طاولات وعفش فاخر';
+    setMetaDescription(
+      'دكان 962 للأثاث - تشكيلة طاولات وسط وصالون، طاولات شاشة وتلفزيون ومدافئ ديكور خشب تايلندي ثقيل. توصيل لكافة المحافظات بالدينار الأردني.'
+    );
+  }, [selectedCategory, selectedProductModal, currentCategoryData]);
 
   return (
     <ErrorBoundary>
@@ -652,6 +727,8 @@ export default function App() {
           isOpen={isCheckoutOpen}
           onClose={() => setIsCheckoutOpen(false)}
           items={cart}
+          products={products}
+          onCartChange={setCart}
           onSuccessOrder={() => {
             setCart([]);
             localStorage.removeItem('dukan962_cart');
@@ -667,10 +744,12 @@ export default function App() {
           }}
         />
 
-        <AdminDashboard
-          isOpen={isAdminOpen}
-          onClose={() => setIsAdminOpen(false)}
-        />
+        <Suspense fallback={<AdminDashboardFallback />}>
+          <AdminDashboard
+            isOpen={isAdminOpen}
+            onClose={() => setIsAdminOpen(false)}
+          />
+        </Suspense>
 
         <FloatingActions />
       </div>
