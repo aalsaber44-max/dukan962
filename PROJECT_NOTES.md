@@ -40,6 +40,16 @@
 **المرحلة 3:** (11) التقييمات ❌ · (12) المقارنة ❌ · (13) شوهد مؤخراً ❌ · (14) مشاركة المنتج ❌ (يحتاج روابط حقيقية) · (15) صفحات المعلومات ❌
 **المرحلة 4:** (16) SEO ❌ (يحتاج React Router) · (17) robots ✅ / sitemap ❌ · (18) إدارة الصفحة الرئيسية ❌ · (19) الموبايل (لم يُختبر بمتصفح) · (20) اختبار شامل ❌
 
+## ما نُفّذ في جولة "تدقيق الدفع + الأداء + SEO" (2026-11-07)
+- **CheckoutModal**: أخطاء مضمّنة لكل الحقول (الاسم/الهاتفان/المنطقة/الشارع/العمارة) مع تركيز أول خطأ ومنع الإرسال الناقص؛ نافذة alert الوحيدة الباقية أزيلت. **فحص مخزون نهائي لحظة الإرسال**: `reconcileCart(items, products)` داخل handleSubmit — إن تغيّر شيء تُحدَّث السلة وتظهر رسائل مراجعة بدل إرسال كميات غير متوفرة. ملخص نجاح (عدد القطع + الإجمالي) في شاشة التأكيد. حقول الهاتف `dir=ltr` + `inputMode=tel` + `autoComplete`.
+- **App.tsx**: السلة تتحدث صامتاً بأحدث بيانات/أسعار المنتجات فور وصولها من Firestore (`refreshCartData` — جديد في inventory.ts). `useMemo` للفلترة/الترتيب/المنتجات المشابهة/عدّاد السلة. **AdminDashboard أصبح lazy** (حزمة منفصلة ~89KB تُحمَّل عند فتح اللوحة فقط). SEO ديناميكي: `document.title` + meta description يتبعان القسم/نافذة المنتج.
+- **firebase.ts**: حارس `getApps()` ضد التهيئة المكررة + `testFirestoreConnection()` تُستدعى عند الإقلاع وتسجّل نجاح/فشل الاتصال في Console.
+- **firestoreData.ts**: إصلاح `stripUndefined` — كان يترك `undefined` داخل المصفوفات (Firestore يرفضها). الآن يُزال من المواضع كلها.
+- **SEO ثابت**: index.html فيه JSON-LD (FurnitureStore) وog:image وog:locale وrobots meta. `public/robots.txt` و`public/sitemap.xml` أُنشئا (⚠️ الدومين المستخدم `dukan962-3ea92.web.app` — استبدله بالدومين النهائي عند توفره، هنا وفي robots.txt).
+- **الأقسام/البطاقات**: alt وصفي لصور الأقسام، `React.memo` على ProductCard، lazy/async decoding مكتمل.
+- **التحقق**: build ناجح، 21 اختبار منطقي ناجح (inventory/jordanLocations/firestoreData)، فحص متصفح: 0 أخطاء Console، لا فيض أفقي على 390px، التحميل ~0.3s للهيكل. اتصال Firestore من بيئة الاختبار كان محدوداً (شبكة Sandbox) لكن قناة الاستماع فُتحت والتشخيص سجّل الفشل كما صُمم.
+- ملفات الجولة: index.html, public/robots.txt, public/sitemap.xml, src/firebase.ts, src/utils/inventory.ts, src/utils/firestoreData.ts, src/App.tsx, src/components/CheckoutModal.tsx, src/components/ProductCard.tsx, src/components/CategoryBoxes.tsx, src/components/AdminDashboard.tsx
+
 ## تعديلات مؤجلة بقرار المالك
 - **الأمان** (Firebase Auth + `firestore.rules` + تنظيف `server.ts`): الحزمة جاهزة سابقاً ولم تُطبَّق. كلمة مرور الأدمن ما زالت مكتوبة داخل كود المتصفح، والواجهة لا تستخدم `server.ts` أصلاً (مسارات `/api` ميّتة).
 - الإجمالي ورسوم التوصيل تُحسب في متصفح الزبون وتُخزَّن في الطلب.
