@@ -12,7 +12,7 @@ interface ProductCardProps {
   onQuickView: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({
+export const ProductCard: React.FC<ProductCardProps> = React.memo(({
   product,
   isWishlisted,
   onToggleWishlist,
@@ -208,4 +208,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
     </article>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
