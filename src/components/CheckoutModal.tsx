@@ -278,10 +278,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       `*طريقة الدفع:* ${paymentLabel}\n\n` +
       `*تفاصيل المنتجات المطلوبة:*\n` +
       finalCart.map((it, i) => {
-        const imgUrl = it.selectedColor?.image || it.product.images?.[0] || '';
+        const imgUrl = it.selectedColor?.image || it.product?.images?.[0] || '';
         const isBase64 = imgUrl.startsWith('data:image');
         const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)' : imgUrl;
-        return `${i + 1}. *${it.product.name}*\n- اللون: ${it.selectedColor?.name || 'غير محدد'}\n- الكمية: ${it.quantity}\n- السعر: ${(getItemUnitPrice(it) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgText}`;
+        return `${i + 1}. *${it.product?.name || 'قطعة'}*\n- اللون: ${it.selectedColor?.name || 'غير محدد'}\n- الكمية: ${it.quantity}\n- السعر: ${(getItemUnitPrice(it) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgText}`;
       }).join('\n\n') +
       `\n\n------------------------\n` +
       `*المجموع الفرعي:* ${finalSubtotal.toFixed(2)} د.أ\n` +
