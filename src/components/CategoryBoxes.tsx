@@ -83,8 +83,9 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
               >
                 <img
                   src={getThumbnail(cat.image)}
-                  alt=""
+                  alt={`قسم ${cat.name} - دكان 962`}
                   loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer"
                   className="absolute inset-0 -z-10 w-full h-full object-cover object-center transition-transform duration-[1400ms] ease-out group-hover:scale-[1.06]"
                 />
