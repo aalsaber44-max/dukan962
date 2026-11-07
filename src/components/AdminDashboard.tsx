@@ -571,7 +571,7 @@
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm overflow-y-auto">
         <div className="relative w-full max-w-5xl bg-[#0B0A09] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,176,106,0.25)] border border-white/10 overflow-hidden my-6 max-h-[92vh] flex flex-col">
           
-          <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#1C1815]">
+          <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between bg-[#1C1815]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] flex items-center justify-center font-bold shadow-gold">
                 👑
@@ -580,7 +580,7 @@
                 <h2 className="text-base sm:text-lg font-black text-[#F3EEE4] font-serif">
                   لوحة تحكم إدارة دكان 962
                 </h2>
-                <p className="text-xs text-[#A39A8B]">
+                <p className="text-xs text-[#A39A8B] hidden sm:block">
                   إدارة طلبات الزبائن، الأسعار، الصور والألوان، والمزامنة السحابية الدائمة
                 </p>
               </div>
