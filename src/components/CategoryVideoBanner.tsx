@@ -37,7 +37,19 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
 
   return (
     <div className="relative mb-6 sm:mb-8 rounded-[22px] sm:rounded-[28px] overflow-hidden ring-1 ring-white/10 shadow-lift bg-[#0B0A09]">
-      <div className="relative w-full aspect-[16/9] sm:aspect-[21/9]">
+      <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] flex items-center justify-center overflow-hidden">
+        
+        {/* 1. الخلفية الضبابية للفيديو (تملأ الفراغات للفيديوهات الرأسية) */}
+        <video
+          src={videoUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110"
+        />
+
+        {/* 2. الفيديو الأساسي (يظهر كاملاً بدون زووم) */}
         <video
           ref={videoRef}
           src={videoUrl}
@@ -48,17 +60,33 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
           playsInline
           preload="metadata"
           aria-label={`فيديو قسم ${title}`}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="relative z-10 w-full h-full object-contain"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
           onError={() => setHasError(true)}
           onLoadedData={() => setHasError(false)}
         />
 
-        {/* تدرج سفلي */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+        {/* 3. زر تشغيل كبير في المنتصف (يظهر فقط عند التوقف) */}
+        {!isPlaying && !hasError && (
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors cursor-pointer group/play"
+            aria-label="تشغيل الفيديو"
+          >
+            <span className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-md ring-2 ring-white/50 flex items-center justify-center group-hover/play:scale-110 transition-transform">
+              <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white ml-1" />
+            </span>
+          </button>
+        )}
+
+        {/* تدرج سفلي لتحسين قراءة الشريط */}
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
         {/* رسالة خطأ عند فشل تحميل الفيديو */}
         {hasError && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/85 text-center p-4">
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/85 text-center p-4">
             <AlertTriangle className="w-10 h-10 text-amber-400" />
             <p className="text-sm font-bold text-[#F3EEE4]">تعذّر تحميل الفيديو</p>
             <p className="text-xs text-[#A39A8B] max-w-md">
@@ -67,9 +95,9 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
           </div>
         )}
 
-        {/* شريط التحكم */}
-        <div className="absolute bottom-0 inset-x-0 p-3 sm:p-5 flex items-center justify-between gap-3 z-10">
-          <span className="text-[10px] sm:text-xs font-bold text-[#E8CC8A] bg-black/50 backdrop-blur-md ring-1 ring-[#D4B06A]/30 px-3 py-1.5 rounded-full pointer-events-none">
+        {/* شريط التحكم السفلي */}
+        <div className="absolute bottom-0 inset-x-0 p-3 sm:p-5 flex items-center justify-between gap-3 z-20">
+          <span className="text-[10px] sm:text-xs font-bold text-[#E8CC8A] bg-black/60 backdrop-blur-md ring-1 ring-[#D4B06A]/30 px-3 py-1.5 rounded-full pointer-events-none">
             🎬 فيديو {title}
           </span>
 
