@@ -459,6 +459,13 @@ export default function App() {
     [cart]
   );
 
+  // ✅ عند اختيار قسم: الصعود لأعلى الصفحة لرؤية بانر القسم الجديد في Hero
+  //    بدلاً من القفز إلى منطقة الكتالوج (حيث يظهر الفيديو أولاً).
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 🎯 يُستخدم فقط في زر "استكشف تشكيلاتنا الآن" داخل Hero — يريد الزائر رؤية المنتجات فعلاً.
   const scrollToCatalog = () => {
     const el = document.getElementById('catalog');
     if (el) {
@@ -564,7 +571,8 @@ export default function App() {
           onSearchChange={setSearchQuery}
           onSelectCategory={(cat) => {
             setSelectedCategory(cat);
-            scrollToCatalog();
+            // ✅ الصعود لأعلى الصفحة بدلاً من القفز إلى الكتالوج/الفيديو
+            scrollToTop();
           }}
         />
 
@@ -577,7 +585,8 @@ export default function App() {
           selectedCategory={selectedCategory}
           onSelectCategory={(cat) => {
             setSelectedCategory(cat);
-            scrollToCatalog();
+            // ✅ الصعود لأعلى الصفحة بدلاً من القفز إلى الكتالوج/الفيديو
+            scrollToTop();
           }}
         />
 
@@ -679,7 +688,8 @@ export default function App() {
           currentCategoryData={currentCategoryData}
           onSelectCategory={(cat) => {
             setSelectedCategory(cat);
-            scrollToCatalog();
+            // ✅ الصعود لأعلى الصفحة بدلاً من القفز إلى الكتالوج/الفيديو
+            scrollToTop();
           }}
           onOpenAdmin={() => setIsAdminAuthOpen(true)}
         />
