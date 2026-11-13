@@ -1,45 +1,94 @@
+// src/types/furniture.ts
 
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, getDocFromServer, doc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+// 1. شكل القسم (Category)
+export interface Category {
+  id: string;
+  name: string;
+  image: string; 
+  bannerImage: string; 
+  mobileBannerImage?: string; 
+  title: string;
+  description: string;
+  buttonText: string;
+  badgeText: string;
+  isActive: boolean;
+  order: number;
+  /** 🎬 رابط فيديو بانر القسم (URL مباشر: Cloudinary / ImgBB / أي استضافة) */
+  videoUrl?: string;
+}
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAjTUAL-AwdEh2WiE7B6TP2TsAuNj0ypRM",
-  authDomain: "dukan962-3ea92.firebaseapp.com",
-  projectId: "dukan962-3ea92",
-  storageBucket: "dukan962-3ea92.firebasestorage.app",
-  messagingSenderId: "912187800588",
-  appId: "1:912187800588:web:705f739536dfe1c9a08229",
-  measurementId: "G-5MDVDGWW7W"
-};
+// 2. الخصائص الديناميكية
+export interface ProductAttribute {
+  name: string; 
+  options: string[]; 
+}
 
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// 3. ألوان المنتج
+export interface ProductColor {
+  name: string;
+  hex: string;
+  price: number; 
+  originalPrice?: number; 
+  image: string; 
+  additionalImages?: string[]; 
+}
 
-export const db = getFirestore(app);
+// 4. المنتج (Product)
+export interface Product {
+  id: string;
+  itemNumber: number; 
+  name: string;
+  nameEn?: string;
+  categoryId: string; 
+  basePrice: number; 
+  originalPrice?: number; 
+  description: string;
+  warranty: string; 
+  images: string[];
+  colors: ProductColor[];
+  attributes?: ProductAttribute[]; 
+  isBestSeller?: boolean; 
+  isActive: boolean; 
+  createdAt?: string;
+  videoUrl?: string;
+  woodType?: string;
+  isOffer?: boolean;
+  categoryLabel?: string;
+  dimensions?: string;
+  sku?: string;
+  stock?: number;
+  lowStockThreshold?: number;
+}
 
-export const auth = getAuth(app);
+// 5. السلة (Cart)
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedColor: ProductColor;
+  selectedAttributes?: Record<string, string>; 
+}
 
-export const testFirestoreConnection = async (): Promise<boolean> => {
-  try {
-    const snapshot = await getDocFromServer(doc(db, "__health__", "ping"));
-    console.info(
-      snapshot.exists()
-        ? "[Dukan962] الاتصال بقاعدة Firestore يعمل بنجاح ✓"
-        : "[Dukan962] الاتصال بقاعدة Firestore يعمل بنجاح ✓ (مستند الفحص غير موجود، لكن الاتصال والصلاحيات سليمة)"
-    );
-    return true;
-  } catch (error) {
-    const code = (error as { code?: string })?.code || "unknown";
-    const hint =
-      code === "unavailable"
-        ? "تعذّر الوصول لسيرفر Firestore — تحقّق من الاتصال بالإنترنت أو من حظر المتصفح/الامتدادات (AdBlock, Privacy extensions)."
-        : code === "permission-denied"
-          ? "صلاحيات القراءة مرفوضة في Firestore Rules — افتح القراءة للمسار __health__ أو استخدم مستنداً مسموحاً بقراءته لجميع الزوار."
-          : code === "failed-precondition"
-            ? "قاعدة البيانات غير مهيأة بعد، أو تحتاج خطوات إعداد إضافية من لوحة Firebase."
-            : "خطأ غير متوقع أثناء اختبار الاتصال.";
-
-    console.error(`[Dukan962] فشل اختبار Firestore (${code}): ${hint}`, error);
-    return false;
-  }
-};
+// 6. الطلبات (Order)
+export interface Order {
+  id: string;
+  firestoreId?: string;
+  createdAt: string;
+  status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
+  stockDeducted?: boolean;
+  stockDeductions?: Record<string, number>;
+  name: string;
+  phone: string;
+  phone2?: string; 
+  governorate: string;
+  address: string;
+  region?: string; 
+  street?: string; 
+  building?: string; 
+  notes?: string;
+  paymentMethod: 'cod' | 'cliq'; 
+  cliqRef?: string;
+  items: CartItem[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+}
