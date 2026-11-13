@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Volume2, VolumeX, Play, Pause, AlertTriangle } from 'lucide-react';
 
 interface CategoryVideoBannerProps {
@@ -14,47 +14,115 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
 }) => {
   const mainVideoRef = useRef<HTMLVideoElement>(null);
   const bgVideoRef = useRef<HTMLVideoElement>(null);
-  const [isMuted, setIsMuted] = useState(true);
+  // ✅ يبدأ غير مكتوم — أول تشغيل بضغطة المستخدم = صوت مسموح
+  const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasError, setHasError] = useState(false);
 
+  // ⛔ منع أي تشغيل تلقائي: نتأكد أن الفيديوهين متوقفان فور التحميل
+  useEffect(() => {
+    const main = mainVideoRef.current;
+    const bg = bgVideoRef.current;
+    main?.pause();
+    bg?.pause();
+    setIsPlaying(false);
+  }, []);
+
+  // ✅ مزامنة حالة isMuted مع الحالة الفعلية لعنصر الفيديو
+  const syncMutedState = () => {
+    const main = mainVideoRef.current;
+    if (main) setIsMuted(main.muted);
+  };
+
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!mainVideoRef.current) return;
-    const newMuted = !mainVideoRef.current.muted;
-    mainVideoRef.current.muted = newMuted;
-    if (bgVideoRef.current) bgVideoRef.current.muted = newMuted;
+    const main = mainVideoRef.current;
+    if (!main) return;
+    const newMuted = !main.muted;
+    main.muted = newMuted;
+    // الخلفية تبقى صامتة دائماً لتجنّب تكرار الصوت
+    if (bgVideoRef.current) bgVideoRef.current.muted = true;
     setIsMuted(newMuted);
   };
 
-  // ✅ مزامنة الفيديو الأساسي مع الخلفية
-  const handlePlayPause = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
+  /** يشغّل الفيديوهين معاً، مع مزامنة الزمن وضمان صمت الخلفية */
+  const playBoth = async () => {
     const main = mainVideoRef.current;
     const bg = bgVideoRef.current;
     if (!main) return;
 
+    try {
+      // ضغط المستخدم = user gesture، فيسمح المتصفح بالصوت
+      await main.play();
+    } catch {
+      // لو رفض المتصفح التشغيل بالصوت، نرجع للكتم بدلاً من الفشل الصامت
+      main.muted = true;
+      setIsMuted(true);
+      try {
+        await main.play();
+      } catch (err) {
+        console.error('Video play failed:', err);
+        setHasError(true);
+        return;
+      }
+    }
+
+    if (bg) {
+      bg.muted = true; // الخلفية صامتة دائماً
+      // مزامنة الزمن لتفادي انحراف الخلفية عن الفيديو الأساسي
+      if (Math.abs(bg.currentTime - main.currentTime) > 0.3) {
+        try { bg.currentTime = main.currentTime; } catch {}
+      }
+      try { await bg.play(); } catch {}
+    }
+  };
+
+  const pauseBoth = () => {
+    mainVideoRef.current?.pause();
+    bgVideoRef.current?.pause();
+  };
+
+  const handlePlayPause = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const main = mainVideoRef.current;
+    if (!main) return;
+
     if (main.paused) {
-      // تشغيل الاثنين معاً
-      Promise.all([
-        main.play().catch(() => {}),
-        bg?.play().catch(() => {}),
-      ]).then(() => {
-        setIsPlaying(true);
-      });
+      await playBoth();
+      setIsPlaying(true);
     } else {
-      // إيقاف الاثنين معاً
-      main.pause();
-      bg?.pause();
+      pauseBoth();
       setIsPlaying(false);
     }
+  };
+
+  // ✅ أي حدث تشغيل على الفيديو الأساسي = شغّل الخلفية فوراً
+  const handleMainPlay = () => {
+    setIsPlaying(true);
+    const main = mainVideoRef.current;
+    const bg = bgVideoRef.current;
+    if (!main || !bg) return;
+
+    bg.muted = true;
+    if (Math.abs(bg.currentTime - main.currentTime) > 0.3) {
+      try { bg.currentTime = main.currentTime; } catch {}
+    }
+    if (bg.paused) {
+      bg.play().catch(() => {});
+    }
+  };
+
+  // ✅ أي إيقاف للفيديو الأساسي = أوقف الخلفية أيضاً (يُصلح المشكلة)
+  const handleMainPause = () => {
+    setIsPlaying(false);
+    bgVideoRef.current?.pause();
   };
 
   return (
     <div className="relative mb-6 sm:mb-8 rounded-[22px] sm:rounded-[28px] overflow-hidden ring-1 ring-white/10 shadow-lift bg-[#0B0A09]">
       <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] flex items-center justify-center overflow-hidden">
-        
-        {/* الخلفية الضبابية — بدون autoPlay */}
+
+        {/* الخلفية الضبابية — muted دائماً، تُشغَّل/تُوقَف فقط بالتبعية */}
         <video
           ref={bgVideoRef}
           src={videoUrl}
@@ -63,27 +131,28 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
           loop
           playsInline
           preload="metadata"
-          className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110"
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none"
         />
 
-        {/* الفيديو الأساسي — بدون autoPlay */}
+        {/* الفيديو الأساسي — بدون muted ليبدأ بالصوت عند أول تشغيل */}
         <video
           ref={mainVideoRef}
           src={videoUrl}
           poster={poster}
-          muted
           loop
           playsInline
           preload="metadata"
           aria-label={`فيديو قسم ${title}`}
-          className="relative z-10 w-full h-full object-contain"
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          className="relative z-10 w-full h-full object-contain bg-black"
+          onPlay={handleMainPlay}
+          onPause={handleMainPause}
+          onVolumeChange={syncMutedState}
           onError={() => setHasError(true)}
           onLoadedData={() => setHasError(false)}
         />
 
-        {/* زر تشغيل كبير في المنتصف — يظهر فقط قبل التشغيل أو عند التوقف */}
+        {/* زر تشغيل كبير في المنتصف */}
         {!isPlaying && !hasError && (
           <button
             type="button"
