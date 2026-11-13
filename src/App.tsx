@@ -21,8 +21,7 @@ import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/Empt
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, testFirestoreConnection } from './firebase';
 
-// ⚡ تحميل كسول للوحة التحكم: ملف كبير (إدارة كاملة) لا يحتاجه الزائر العادي أبداً،
-// فيُقسَّم إلى حزمة منفصلة تُحمَّل فقط عند فتح لوحة الإدارة — يخفف حجم التحميل الأول للمتجر.
+// ⚡ تحميل كسول للوحة التحكم: ملف كبير لا يحتاجه الزائر العادي، فيُقسَّم لحزمة منفصلة.
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 );
@@ -36,13 +35,13 @@ const AdminDashboardFallback = () => (
   </div>
 );
 
-// 💡 بيانات الصفحة الرئيسية الافتراضية (تم تحديث الروابط إلى Postimages)
+// 💡 بيانات الصفحة الرئيسية الافتراضية
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
   image: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
-  bannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png', // 💻 كمبيوتر
-  mobileBannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png', // 📱 هاتف
+  bannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  mobileBannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
   title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
   description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
@@ -59,7 +58,6 @@ export default function App() {
 
   // 2. جلب المنتجات والأقسام من السحابة (Live Sync)
   useEffect(() => {
-    // جلب المنتجات
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
       snapshot.forEach((doc) => {
@@ -80,7 +78,6 @@ export default function App() {
       setProductsLoaded(true);
     });
 
-    // جلب الأقسام
     const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
       const cats: Category[] = [];
       snapshot.forEach((doc) => {
@@ -95,20 +92,19 @@ export default function App() {
     };
   }, []);
 
-  // 🩺 اختبار الاتصال بقاعدة Firestore عند إقلاع المتجر (يظهر النتيجة في Console فقط)
+  // 🩺 اختبار الاتصال بقاعدة Firestore عند الإقلاع
   useEffect(() => {
     testFirestoreConnection();
   }, []);
 
-  // 🔄 عند أي تغيّر في بيانات المنتجات (سعر/صور/اسم/ألوان) حدّث السلة تلقائياً بأحدث نسخة،
-  // حتى يبقى الزبون يدفع دائماً السعر والبيانات الحالية ولا تبقى نسخة قديمة مخزنة في المتصفح.
-  // (لا تحذف بنوداً هنا؛ التخفيض/الحذف يتم عند إتمام الطلب برسالة واضحة للزبون.)
+  // 🔄 تحديث بيانات السلة تلقائياً عند أي تغيّر في المنتجات
   useEffect(() => {
     if (!productsLoaded || products.length === 0 || cart.length === 0) return;
     setCart((prev) => refreshCartData(prev, products));
   }, [products, productsLoaded]);
 
-  // 💡 3. كود زراعة الأقسام (Auto-Seeding) + التحديث الإجباري لجميع الصور
+  // 💡 3. زراعة الأقسام الافتراضية — فقط عند أول تشغيل (مجموعة فارغة)
+  //     بعد ذلك، أي قسم يحذفه المدير يبقى محذوفاً نهائياً ولا يُعاد إنشاؤه.
   useEffect(() => {
     const seedCategories = async () => {
       try {
@@ -169,12 +165,20 @@ export default function App() {
           }
         ];
 
+        // 🌱 أول تشغيل فقط: المجموعة فارغة تماماً → نزرع الأقسام الافتراضية.
+        // بعد ذلك، لا نُعيد إنشاء أي قسم محذوف.
+        if (snapshot.empty) {
+          for (const defaultCat of defaultCategories) {
+            await setDoc(doc(db, 'categories', defaultCat.id), defaultCat);
+          }
+          return;
+        }
+
+        // للمجموعة الموجودة: نملأ فقط الحقول الفارغة في الأقسام الموجودة.
+        // الأقسام المحذوفة (غير الموجودة في snapshot) لا تُلمس — تبقى محذوفة.
         for (const defaultCat of defaultCategories) {
           const existingDoc = snapshot.docs.find((d) => d.id === defaultCat.id);
-          if (!existingDoc) {
-            await setDoc(doc(db, 'categories', defaultCat.id), defaultCat);
-            continue;
-          }
+          if (!existingDoc) continue;  // ← محذوف؟ لا نُعيده
 
           const currentData = existingDoc.data();
           const missingDefaults = Object.fromEntries(
@@ -194,7 +198,7 @@ export default function App() {
     seedCategories();
   }, []);
 
-  // 4. كود ترحيل المنتجات القديمة من المتصفح إلى السحابة
+  // 4. ترحيل المنتجات القديمة من المتصفح إلى السحابة
   useEffect(() => {
     const migrateOldProducts = async () => {
       const savedOldProducts = localStorage.getItem('dukan962_products_v3');
@@ -290,7 +294,6 @@ export default function App() {
 
   // Add to cart with color & quantity
   const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
-    // استخدم أحدث نسخة وصلت من Firestore، ولا تسمح بإضافة منتج حُذف بعد فتح تفاصيله.
     const liveProduct = products.find((p) => p.id === product.id);
     if (productsLoaded && !liveProduct) {
       showToast('هذا المنتج لم يعد متوفراً في المتجر', { variant: 'warning' });
@@ -402,7 +405,7 @@ export default function App() {
     setSelectedColor('');
   };
 
-  // Filtered Products logic (useMemo حتى لا يُعاد الفلترة والترتيب مع كل رسمة إعادة غير متعلقة بهما)
+  // Filtered Products logic
   const filteredProducts = useMemo(() => {
     const filtered = products.filter((prod) => {
       if (prod.isActive === false) return false;
@@ -439,7 +442,7 @@ export default function App() {
     return filtered;
   }, [products, selectedCategory, searchQuery, priceRange, selectedColor, sortBy]);
 
-  // منتجات مشابهة لنافذة التفاصيل: نفس القسم أولاً ثم بقية المنتجات الفعّالة (حتى 4)
+  // منتجات مشابهة لنافذة التفاصيل
   const relatedProducts = useMemo(
     () =>
       selectedProductModal
@@ -471,7 +474,7 @@ export default function App() {
     document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // الفلاتر النشطة (تظهر كشرائح قابلة للإزالة في حالة عدم وجود نتائج)
+  // الفلاتر النشطة
   const activeFilters: ActiveFilter[] = [];
   if (selectedCategory !== 'all') {
     activeFilters.push({
@@ -498,8 +501,7 @@ export default function App() {
     ? homeCategoryData 
     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
-  // 🔎 SEO ديناميكي: عنوان ووصف الصفحة يتبعان القسم المفتوح أو نافذة تفاصيل المنتج،
-  // فيحصل كل قسم/منتج على عنوان ووصف خاصين عند المشاركة والبحث.
+  // 🔎 SEO ديناميكي
   useEffect(() => {
     const setMetaDescription = (content: string) => {
       let tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
@@ -694,13 +696,10 @@ export default function App() {
           onUpdateQuantity={handleUpdateCartQuantity}
           onRemoveItem={handleRemoveFromCart}
           onProceedToCheckout={() => {
-            // لا نتحقق من السلة قبل اكتمال قراءة المنتجات من Firestore.
             if (!productsLoaded) {
               showToast('انتظر لحظة حتى يتم تحديث بيانات المنتجات والمخزون', { variant: 'warning' });
               return;
             }
-
-            // 📦 قبل الدفع: طابق السلة مع المخزون وحدّث الأسعار والبيانات دائماً من أحدث نسخة.
             const { cart: reconciled, messages } = reconcileCart(cart, products);
             setCart(reconciled);
             if (messages.length > 0) {
