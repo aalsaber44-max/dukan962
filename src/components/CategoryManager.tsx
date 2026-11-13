@@ -70,7 +70,7 @@ export const CategoryManager: React.FC = () => {
       setNewName(''); setNewImage(''); setNewBannerImage('');
       setNewTitle(''); setNewDesc(''); setNewButtonText(''); setNewBadge(''); setNewVideoUrl('');
 
-      showNotification('تمت إضافة القسم بنجاح! سيظهر فوراً في المتجر.');
+      showNotification('تمت إضافة القسم بنجاح!');
     } catch (error) {
       alert('حدث خطأ أثناء إضافة القسم');
     } finally {
@@ -81,7 +81,7 @@ export const CategoryManager: React.FC = () => {
   const toggleCategoryStatus = async (id: string, currentStatus: boolean) => {
     try {
       await updateDoc(doc(db, 'categories', id), { isActive: !currentStatus });
-      showNotification(!currentStatus ? 'تم إظهار القسم في المتجر' : 'تم إخفاء القسم من المتجر');
+      showNotification(!currentStatus ? 'تم إظهار القسم' : 'تم إخفاء القسم');
     } catch (error) {
       alert('حدث خطأ أثناء تعديل حالة القسم');
     }
@@ -110,8 +110,10 @@ export const CategoryManager: React.FC = () => {
     setVideoError(null);
   };
 
-  const handleSaveVideoUrl = async (cat: Category) => {
-    const url = videoUrlDraft.trim();
+  // ✅ الدالة تستقبل الرابط كمعامل مباشر (لحل مشكلة الحذف)
+  const saveVideoUrl = async (cat: Category, rawUrl: string) => {
+    const url = rawUrl.trim();
+
     if (url && !/^https?:\/\/.+/i.test(url)) {
       setVideoError('الرابط يجب أن يبدأ بـ http:// أو https://');
       return;
@@ -152,10 +154,9 @@ export const CategoryManager: React.FC = () => {
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">اسم القسم *</label>
               <input
                 type="text"
-                placeholder="مثال: أحذية"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="w-full text-sm py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                className="w-full text-sm py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
                 required
               />
             </div>
@@ -163,10 +164,9 @@ export const CategoryManager: React.FC = () => {
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">رابط صورة القسم *</label>
               <input
                 type="text"
-                placeholder="https://example.com/image.jpg"
                 value={newImage}
                 onChange={(e) => setNewImage(e.target.value)}
-                className="w-full text-sm py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                className="w-full text-sm py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
                 dir="ltr"
                 required
               />
@@ -184,10 +184,9 @@ export const CategoryManager: React.FC = () => {
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">رابط صورة البانر</label>
               <input
                 type="text"
-                placeholder="اتركه فارغاً لاستخدام صورة الكارت"
                 value={newBannerImage}
                 onChange={(e) => setNewBannerImage(e.target.value)}
-                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
                 dir="ltr"
               />
             </div>
@@ -195,40 +194,36 @@ export const CategoryManager: React.FC = () => {
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">عنوان البانر</label>
               <input
                 type="text"
-                placeholder="مثال: أحدث صيحات الأحذية"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
               />
             </div>
             <div className="md:col-span-2">
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">وصف البانر</label>
               <textarea
-                placeholder="خامات عالية الجودة وتصاميم عصرية..."
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
                 rows={2}
-                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
               />
             </div>
             <div>
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">نص زر البانر</label>
               <input
                 type="text"
-                placeholder="مثال: استكشف الآن"
                 value={newButtonText}
                 onChange={(e) => setNewButtonText(e.target.value)}
-                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">نص الشارة (Badge)</label>
+              <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">نص الشارة</label>
               <input
                 type="text"
-                placeholder="مثال: ✨ خامات أصلية"
                 value={newBadge}
                 onChange={(e) => setNewBadge(e.target.value)}
-                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
+                className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A]"
               />
             </div>
 
@@ -239,14 +234,14 @@ export const CategoryManager: React.FC = () => {
               </label>
               <input
                 type="text"
-                placeholder="https://res.cloudinary.com/.../video.mp4"
                 value={newVideoUrl}
                 onChange={(e) => setNewVideoUrl(e.target.value)}
+                placeholder="https://res.cloudinary.com/.../video/upload/.../file.mp4"
                 className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
                 dir="ltr"
               />
               <p className="text-[10px] text-[#8A8173] mt-1">
-                ارفع الفيديو على Cloudinary (مجاني) ثم الصق الرابط
+                ⚠️ يجب أن يكون رابط فيديو مباشر (يحتوي <code className="text-[#E8CC8A]">/video/upload/</code> في Cloudinary)
               </p>
             </div>
           </div>
@@ -254,20 +249,20 @@ export const CategoryManager: React.FC = () => {
           <button
             type="submit"
             disabled={isAdding}
-            className="w-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] px-5 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-gold disabled:opacity-50 cursor-pointer transition-all"
+            className="w-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] px-5 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-gold disabled:opacity-50 cursor-pointer"
           >
             {isAdding ? 'جاري الإضافة...' : 'حفظ وإضافة القسم'}
           </button>
         </form>
       </div>
 
-      {/* جدول عرض الأقسام */}
+      {/* جدول الأقسام */}
       <div className="bg-[#141210] border border-white/10 rounded-2xl overflow-hidden shadow-soft">
         <table className="w-full text-right text-sm">
           <thead className="bg-[#1C1815] text-[#A39A8B] border-b border-white/10">
             <tr>
               <th className="p-4">صورة القسم</th>
-              <th className="p-4">اسم القسم / البانر</th>
+              <th className="p-4">اسم القسم</th>
               <th className="p-4">الفيديو</th>
               <th className="p-4">الحالة</th>
               <th className="p-4 text-center">إجراءات</th>
@@ -275,9 +270,9 @@ export const CategoryManager: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-white/10">
             {loading ? (
-              <tr><td colSpan={5} className="p-4 text-center text-[#A39A8B]">جاري تحميل الأقسام...</td></tr>
+              <tr><td colSpan={5} className="p-4 text-center text-[#A39A8B]">جاري التحميل...</td></tr>
             ) : categories.length === 0 ? (
-              <tr><td colSpan={5} className="p-4 text-center text-[#8A8173]">لا توجد أقسام. أضف قسمك الأول من الأعلى.</td></tr>
+              <tr><td colSpan={5} className="p-4 text-center text-[#8A8173]">لا توجد أقسام.</td></tr>
             ) : (
               categories.map((cat) => (
                 <React.Fragment key={cat.id}>
@@ -287,7 +282,7 @@ export const CategoryManager: React.FC = () => {
                     </td>
                     <td className="p-4">
                       <p className="font-bold text-[#F3EEE4] mb-1">{cat.name}</p>
-                      {cat.title && <p className="text-[11px] text-[#D4B06A]">عنوان البانر: {cat.title}</p>}
+                      {cat.title && <p className="text-[11px] text-[#D4B06A]">{cat.title}</p>}
                     </td>
                     <td className="p-4">
                       {cat.videoUrl ? (
@@ -307,20 +302,20 @@ export const CategoryManager: React.FC = () => {
                       <div className="flex items-center justify-center gap-1.5 flex-wrap">
                         <button
                           onClick={() => editingVideoId === cat.id ? closeVideoEditor() : openVideoEditor(cat)}
-                          className="text-xs px-2.5 py-1.5 rounded-lg font-bold inline-flex items-center gap-1 bg-white/[0.04] text-[#E8CC8A] hover:bg-[#D4B06A]/15 ring-1 ring-[#D4B06A]/30 cursor-pointer transition-colors"
+                          className="text-xs px-2.5 py-1.5 rounded-lg font-bold inline-flex items-center gap-1 bg-white/[0.04] text-[#E8CC8A] hover:bg-[#D4B06A]/15 ring-1 ring-[#D4B06A]/30 cursor-pointer"
                         >
                           <Video className="w-3.5 h-3.5" />
                           {editingVideoId === cat.id ? 'إغلاق' : 'فيديو'}
                         </button>
                         <button
                           onClick={() => toggleCategoryStatus(cat.id, cat.isActive)}
-                          className={`text-xs px-2.5 py-1.5 rounded-lg font-bold inline-flex items-center gap-1 transition-colors cursor-pointer ${cat.isActive ? 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30'}`}
+                          className={`text-xs px-2.5 py-1.5 rounded-lg font-bold inline-flex items-center gap-1 cursor-pointer ${cat.isActive ? 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30'}`}
                         >
                           {cat.isActive ? <><EyeOff className="w-3 h-3" /> إخفاء</> : <><Eye className="w-3 h-3" /> إظهار</>}
                         </button>
                         <button
                           onClick={() => handleDeleteCategory(cat.id)}
-                          className="text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg inline-flex cursor-pointer transition-colors"
+                          className="text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg inline-flex cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -328,7 +323,6 @@ export const CategoryManager: React.FC = () => {
                     </td>
                   </tr>
 
-                  {/* محرر الفيديو (inline) */}
                   {editingVideoId === cat.id && (
                     <tr>
                       <td colSpan={5} className="p-4 bg-[#0B0A09] border-t border-white/10">
@@ -362,17 +356,15 @@ export const CategoryManager: React.FC = () => {
                               value={videoUrlDraft}
                               onChange={(e) => setVideoUrlDraft(e.target.value)}
                               dir="ltr"
-                              placeholder="https://res.cloudinary.com/.../video.mp4"
+                              placeholder="https://res.cloudinary.com/.../video/upload/.../file.mp4"
                               className="w-full text-xs py-2 px-3 bg-[#1C1815] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
                             />
-                            <p className="text-[10px] text-[#8A8173] mt-1 leading-relaxed">
-                              ارفع الفيديو على <a href="https://cloudinary.com" target="_blank" rel="noopener noreferrer" className="text-[#E8CC8A] underline">Cloudinary</a> (مجاني) ثم الصق الرابط.
-                            </p>
                           </div>
 
                           <div className="flex gap-2">
+                            {/* ✅ إصلاح: تمرير الرابط الحالي مباشرة */}
                             <button
-                              onClick={() => handleSaveVideoUrl(cat)}
+                              onClick={() => saveVideoUrl(cat, videoUrlDraft)}
                               disabled={savingVideo}
                               className="flex-1 py-2 px-3 text-xs font-bold text-[#0B0A09] bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] rounded-lg inline-flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                             >
@@ -380,8 +372,9 @@ export const CategoryManager: React.FC = () => {
                               {savingVideo ? 'جاري الحفظ...' : 'حفظ'}
                             </button>
                             {cat.videoUrl && (
+                              /* ✅ إصلاح: تمرير '' مباشرة بدل الاعتماد على setState */
                               <button
-                                onClick={() => { setVideoUrlDraft(''); handleSaveVideoUrl({ ...cat, videoUrl: undefined } as Category); }}
+                                onClick={() => saveVideoUrl(cat, '')}
                                 disabled={savingVideo}
                                 className="py-2 px-3 text-xs font-bold text-rose-400 bg-rose-500/10 ring-1 ring-rose-500/30 rounded-lg inline-flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                               >
