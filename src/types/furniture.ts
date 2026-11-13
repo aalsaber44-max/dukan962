@@ -13,6 +13,8 @@ export interface Category {
   badgeText: string;
   isActive: boolean;
   order: number;
+  /** 🎬 رابط فيديو بانر القسم (URL مباشر: Cloudinary / ImgBB / أي استضافة) */
+  videoUrl?: string;
 }
 
 // 2. الخصائص الديناميكية
@@ -48,14 +50,14 @@ export interface Product {
   isBestSeller?: boolean; 
   isActive: boolean; 
   createdAt?: string;
-  videoUrl?: string; // 💡 تمت إضافة هذا الحقل لرابط الفيديو
+  videoUrl?: string;
   woodType?: string;
   isOffer?: boolean;
   categoryLabel?: string;
   dimensions?: string;
-  sku?: string;                // رمز المنتج الداخلي (SKU) الفريد
-  stock?: number;              // 📦 الكمية المتوفرة (إذا غابت: المخزون غير مُتتبَّع/غير محدود)
-  lowStockThreshold?: number;  // حد التنبيه عند انخفاض المخزون (الافتراضي 3)
+  sku?: string;
+  stock?: number;
+  lowStockThreshold?: number;
 }
 
 // 5. السلة (Cart)
@@ -68,12 +70,12 @@ export interface CartItem {
 
 // 6. الطلبات (Order)
 export interface Order {
-  id: string; // رقم الطلب الظاهر للعميل (DUKAN-...)
-  firestoreId?: string; // معرّف مستند Firestore الحقيقي المستخدم في التحديث والحذف
+  id: string;
+  firestoreId?: string;
   createdAt: string;
   status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
-  stockDeducted?: boolean;                    // هل خُصمت كميات هذا الطلب من المخزون؟
-  stockDeductions?: Record<string, number>;   // ما خُصم فعلياً لكل منتج (للإرجاع بدقة عند الإلغاء)
+  stockDeducted?: boolean;
+  stockDeductions?: Record<string, number>;
   name: string;
   phone: string;
   phone2?: string; 
