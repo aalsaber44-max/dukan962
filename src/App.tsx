@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'rea
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
+import { CategoryVideoBanner } from './components/CategoryVideoBanner';
 import { FilterBar } from './components/FilterBar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailsPage } from './components/ProductDetailsPage';
@@ -21,7 +22,7 @@ import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/Empt
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, testFirestoreConnection } from './firebase';
 
-// ⚡ تحميل كسول للوحة التحكم: ملف كبير لا يحتاجه الزائر العادي، فيُقسَّم لحزمة منفصلة.
+// ⚡ تحميل كسول للوحة التحكم
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 );
@@ -104,7 +105,6 @@ export default function App() {
   }, [products, productsLoaded]);
 
   // 💡 3. زراعة الأقسام الافتراضية — فقط عند أول تشغيل (مجموعة فارغة)
-  //     بعد ذلك، أي قسم يحذفه المدير يبقى محذوفاً نهائياً ولا يُعاد إنشاؤه.
   useEffect(() => {
     const seedCategories = async () => {
       try {
@@ -165,8 +165,6 @@ export default function App() {
           }
         ];
 
-        // 🌱 أول تشغيل فقط: المجموعة فارغة تماماً → نزرع الأقسام الافتراضية.
-        // بعد ذلك، لا نُعيد إنشاء أي قسم محذوف.
         if (snapshot.empty) {
           for (const defaultCat of defaultCategories) {
             await setDoc(doc(db, 'categories', defaultCat.id), defaultCat);
@@ -174,11 +172,9 @@ export default function App() {
           return;
         }
 
-        // للمجموعة الموجودة: نملأ فقط الحقول الفارغة في الأقسام الموجودة.
-        // الأقسام المحذوفة (غير الموجودة في snapshot) لا تُلمس — تبقى محذوفة.
         for (const defaultCat of defaultCategories) {
           const existingDoc = snapshot.docs.find((d) => d.id === defaultCat.id);
-          if (!existingDoc) continue;  // ← محذوف؟ لا نُعيده
+          if (!existingDoc) continue;
 
           const currentData = existingDoc.data();
           const missingDefaults = Object.fromEntries(
@@ -602,6 +598,15 @@ export default function App() {
               الأسعار بالدينار الأردني (د.أ) فقط
             </div>
           </div>
+
+          {/* 🎬 بانر فيديو القسم — يظهر فقط عند اختيار قسم (ليس "الكل") ولديه فيديو */}
+          {selectedCategory !== 'all' && currentCategoryData.videoUrl && (
+            <CategoryVideoBanner
+              videoUrl={currentCategoryData.videoUrl}
+              poster={currentCategoryData.image}
+              title={currentCategoryData.name}
+            />
+          )}
 
           <FilterBar
             categories={categories}
