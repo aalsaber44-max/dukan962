@@ -1,94 +1,81 @@
-// src/types/furniture.ts
+// src/firebase.ts
 
-// 1. شكل القسم (Category)
-export interface Category {
-  id: string;
-  name: string;
-  image: string; 
-  bannerImage: string; 
-  mobileBannerImage?: string; 
-  title: string;
-  description: string;
-  buttonText: string;
-  badgeText: string;
-  isActive: boolean;
-  order: number;
-  /** 🎬 رابط فيديو بانر القسم (URL مباشر: Cloudinary / ImgBB / أي استضافة) */
-  videoUrl?: string;
-}
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, getDocFromServer, doc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-// 2. الخصائص الديناميكية
-export interface ProductAttribute {
-  name: string; 
-  options: string[]; 
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyAjTUAL-AwdEh2WiE7B6TP2TsAuNj0ypRM",
+  authDomain: "dukan962-3ea92.firebaseapp.com",
+  projectId: "dukan962-3ea92",
+  storageBucket: "dukan962-3ea92.firebasestorage.app",
+  messagingSenderId: "912187800588",
+  appId: "1:912187800588:web:705f739536dfe1c9a08229",
+  measurementId: "G-5MDVDGWW7W"
+};
 
-// 3. ألوان المنتج
-export interface ProductColor {
-  name: string;
-  hex: string;
-  price: number; 
-  originalPrice?: number; 
-  image: string; 
-  additionalImages?: string[]; 
-}
+// حارس ضد التهيئة المكررة (HMR / إعادة تحميل)
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// 4. المنتج (Product)
-export interface Product {
-  id: string;
-  itemNumber: number; 
-  name: string;
-  nameEn?: string;
-  categoryId: string; 
-  basePrice: number; 
-  originalPrice?: number; 
-  description: string;
-  warranty: string; 
-  images: string[];
-  colors: ProductColor[];
-  attributes?: ProductAttribute[]; 
-  isBestSeller?: boolean; 
-  isActive: boolean; 
-  createdAt?: string;
-  videoUrl?: string;
-  woodType?: string;
-  isOffer?: boolean;
-  categoryLabel?: string;
-  dimensions?: string;
-  sku?: string;
-  stock?: number;
-  lowStockThreshold?: number;
-}
+// قاعدة البيانات + المصادقة
+// ملاحظة: لا نُهيّئ Storage هنا لأن فيديوهات الأقسام تُرفع على Cloudinary (مجاناً)
+export const db = getFirestore(app);
+export const auth = getAuth(app);
 
-// 5. السلة (Cart)
-export interface CartItem {
-  product: Product;
-  quantity: number;
-  selectedColor: ProductColor;
-  selectedAttributes?: Record<string, string>; 
-}
+/**
+ * اختبار صحة الاتصال بـ Firestore، مع تفريق واضح بين الأخطاء:
+ *   - permission-denied : قواعد Firestore Rules ترفض القراءة.
+ *   - unavailable       : تعذّر الوصول للسيرفر (شبكة / AdBlock / VPN).
+ *   - not-found         : المسار أو قاعدة البيانات نفسها غير موجودة.
+ *   - failed-precondition: قاعدة البيانات غير مهيأة بالكامل.
+ *   - unauthenticated   : الطلب غير مصادق (القواعد تشترط auth).
+ *   - deadline-exceeded : انتهت مهلة الطلب.
+ *
+ * النتيجة تُسجَّل في Console فقط، ولا تعطّل المتجر.
+ */
+export const testFirestoreConnection = async (): Promise<boolean> => {
+  try {
+    const snapshot = await getDocFromServer(doc(db, "__health__", "ping"));
+    console.info(
+      snapshot.exists()
+        ? "[Dukan962] الاتصال بقاعدة Firestore يعمل بنجاح ✓"
+        : "[Dukan962] الاتصال بقاعدة Firestore يعمل بنجاح ✓ (مستند الفحص غير موجود، لكن الاتصال والصلاحيات سليمة)"
+    );
+    return true;
+  } catch (error) {
+    const code = (error as { code?: string })?.code || "unknown";
+    const rawMessage = (error as Error)?.message || "";
 
-// 6. الطلبات (Order)
-export interface Order {
-  id: string;
-  firestoreId?: string;
-  createdAt: string;
-  status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
-  stockDeducted?: boolean;
-  stockDeductions?: Record<string, number>;
-  name: string;
-  phone: string;
-  phone2?: string; 
-  governorate: string;
-  address: string;
-  region?: string; 
-  street?: string; 
-  building?: string; 
-  notes?: string;
-  paymentMethod: 'cod' | 'cliq'; 
-  cliqRef?: string;
-  items: CartItem[];
-  subtotal: number;
-  deliveryFee: number;
-  total: number;
-}
+    const diagnostics: Record<string, string> = {
+      "permission-denied":
+        "🔒 [permission-denied] قواعد Firestore Rules ترفض قراءة المسار __health__/ping. " +
+        "افتح القراءة لهذا المسار في القواعد (allow read: if true).",
+      "unavailable":
+        "🌐 [unavailable] تعذّر الوصول إلى سيرفر Firestore. " +
+        "تحقّق من اتصال الإنترنت، أو من حظر الطلبات بواسطة AdBlock / VPN / جدار حماية.",
+      "not-found":
+        "📂 [not-found] المسار أو قاعدة البيانات نفسها غير موجودة. " +
+        "تحقّق من projectId في firebaseConfig.",
+      "failed-precondition":
+        "⚙️ [failed-precondition] قاعدة البيانات غير مهيأة بالكامل. " +
+        "أكمل خطوات إعداد Firestore من لوحة Firebase.",
+      "unauthenticated":
+        "🔑 [unauthenticated] الطلب غير مصادق. " +
+        "إن كانت القواعد تشترط auth، سجّل الدخول أولاً.",
+      "deadline-exceeded":
+        "⏱️ [deadline-exceeded] انتهت مهلة الطلب. الشبكة بطيئة أو محجوبة.",
+      "cancelled": "🚫 [cancelled] أُلغي الطلب.",
+      "resource-exhausted":
+        "📊 [resource-exhausted] تم تجاوز حصة المشروع. راجع Quotas في Firebase.",
+      "invalid-argument": "❓ [invalid-argument] معامل غير صالح.",
+    };
+
+    const hint = diagnostics[code] ?? `خطأ غير متوقع أثناء اختبار الاتصال (code: ${code}).`;
+
+    console.error(
+      `[Dukan962] فشل اختبار Firestore [${code}]: ${hint}`,
+      { code, message: rawMessage, error }
+    );
+    return false;
+  }
+};
