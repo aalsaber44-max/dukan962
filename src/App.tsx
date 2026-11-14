@@ -20,6 +20,10 @@ import { Toast, ToastData, ToastVariant } from './components/Toast';
 import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
 import { STORE_PHONE_INTL } from './utils/jordanLocations';
 
+// 💡 استيراد الميزات الجديدة
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { RecentlyViewed } from './components/RecentlyViewed';
+
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, testFirestoreConnection } from './firebase';
@@ -310,6 +314,15 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
+  // 💡 دالة حفظ المنتج في "شوهد مؤخراً"
+  const saveToRecentlyViewed = (product: Product) => {
+    try {
+      const savedIds: string[] = JSON.parse(localStorage.getItem('dukan962_recently_viewed') || '[]');
+      const newIds = [product.id, ...savedIds.filter(id => id !== product.id)].slice(0, 6); // نحتفظ بآخر 6 منتجات فقط
+      localStorage.setItem('dukan962_recently_viewed', JSON.stringify(newIds));
+    } catch {}
+  };
+
   // Add to cart with color & quantity
   const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
     const liveProduct = products.find((p) => p.id === product.id);
@@ -580,8 +593,9 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      {/* 💡 تمت إضافة pb-16 للموبايل و md:pb-0 للكمبيوتر لكي لا يغطي الشريط السفلي المحتوى */}
       <div 
-        className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden"
+        className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden pb-16 md:pb-0"
         data-theme={isLightTheme ? 'light' : 'dark'}
       >
         
@@ -732,6 +746,16 @@ export default function App() {
             </div>
           </div>
 
+          {/* 💡 إضافة قسم شوهد مؤخراً هنا */}
+          <RecentlyViewed 
+            products={products} 
+            cart={cart} 
+            onQuickView={(p) => {
+              saveToRecentlyViewed(p);
+              setSelectedProductModal(p);
+            }} 
+          />
+
           {!productsLoaded ? (
             <ProductSkeletonGrid />
           ) : filteredProducts.length === 0 ? (
@@ -751,7 +775,10 @@ export default function App() {
                   isWishlisted={wishlist.some((w) => w.id === product.id)}
                   onToggleWishlist={handleToggleWishlist}
                   onAddToCart={(p) => handleAddToCart(p)}
-                  onQuickView={(p) => setSelectedProductModal(p)}
+                  onQuickView={(p) => {
+                    saveToRecentlyViewed(p);
+                    setSelectedProductModal(p);
+                  }}
                 />
               ))}
             </div>
@@ -776,7 +803,10 @@ export default function App() {
           onClose={() => setSelectedProductModal(null)}
           onAddToCart={handleAddToCart}
           relatedProducts={relatedProducts}
-          onSelectProduct={setSelectedProductModal}
+          onSelectProduct={(p) => {
+            saveToRecentlyViewed(p);
+            setSelectedProductModal(p);
+          }}
         />
 
         <CartDrawer
@@ -826,6 +856,16 @@ export default function App() {
 
         <FloatingActions />
         
+        {/* 💡 شريط التنقل السفلي للموبايل */}
+        <MobileBottomNav
+          cartCount={cartTotalCount}
+          wishlistCount={wishlist.length}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onScrollToTop={scrollToTop}
+          onScrollToCategories={scrollToCategories}
+        />
+
         <AdminAuthModal
           isOpen={isAdminAuthOpen}
           onClose={() => setIsAdminAuthOpen(false)}
