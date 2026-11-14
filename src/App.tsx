@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
-import { Sparkles, MessageCircle } from 'lucide-react';
+import { Sparkles, MessageCircle, Flame, Clock } from 'lucide-react'; // 💡 أيقونات جديدة للأقسام
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
@@ -23,7 +23,7 @@ import { STORE_PHONE_INTL } from './utils/jordanLocations';
 // 💡 استيراد الميزات
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { RecentlyViewed } from './components/RecentlyViewed';
-import { OrderTrackingModal } from './components/OrderTrackingModal'; // 💡 نافذة تتبع الطلبات
+import { OrderTrackingModal } from './components/OrderTrackingModal';
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
@@ -221,8 +221,6 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  
-  // 💡 حالة نافذة تتبع الطلبات
   const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
 
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
@@ -441,6 +439,24 @@ export default function App() {
     [products, selectedProductModal]
   );
 
+  // 💡 استخراج المنتجات للعروض والمنتجات الجديدة (تظهر فقط في الصفحة الرئيسية)
+  const offersProducts = useMemo(() => {
+    return products
+      .filter((p) => p.isActive !== false && Number(p.originalPrice) > Number(p.basePrice))
+      .slice(0, 4);
+  }, [products]);
+
+  const newArrivalsProducts = useMemo(() => {
+    return [...products]
+      .filter((p) => p.isActive !== false)
+      .sort(
+        (a, b) =>
+          String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+          (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
+      )
+      .slice(0, 4);
+  }, [products]);
+
   const cartTotalCount = useMemo(
     () => cart.reduce((sum, item) => sum + item.quantity, 0),
     [cart]
@@ -571,7 +587,70 @@ export default function App() {
           }}
         />
 
-        <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        {/* 💡 الأقسام الجديدة تظهر فقط في الصفحة الرئيسية */}
+        {selectedCategory === 'all' && (
+          <>
+            {offersProducts.length > 0 && (
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-[#F3EEE4] tracking-tight font-serif flex items-center gap-2">
+                      <Flame className="w-6 h-6 text-rose-500" />
+                      عروض وخصومات
+                    </h2>
+                    <p className="text-sm text-[#A39A8B] mt-2">أفضل العروض المختارة لك بأسعار لا تقاوم.</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {offersProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isWishlisted={wishlist.some((w) => w.id === product.id)}
+                      onToggleWishlist={handleToggleWishlist}
+                      onAddToCart={(p) => handleAddToCart(p)}
+                      onQuickView={(p) => {
+                        saveToRecentlyViewed(p);
+                        setSelectedProductModal(p);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {newArrivalsProducts.length > 0 && (
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-[#F3EEE4] tracking-tight font-serif flex items-center gap-2">
+                      <Clock className="w-6 h-6 text-[#7FD1A0]" />
+                      وصل حديثاً
+                    </h2>
+                    <p className="text-sm text-[#A39A8B] mt-2">أحدث المنتجات التي أضفناها للمتجر مؤخراً.</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {newArrivalsProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isWishlisted={wishlist.some((w) => w.id === product.id)}
+                      onToggleWishlist={handleToggleWishlist}
+                      onAddToCart={(p) => handleAddToCart(p)}
+                      onQuickView={(p) => {
+                        saveToRecentlyViewed(p);
+                        setSelectedProductModal(p);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
               <h2 className="text-2xl sm:text-4xl font-bold text-[#F3EEE4] tracking-tight font-serif">
@@ -707,7 +786,6 @@ export default function App() {
           )}
         </main>
 
-        {/* 💡 تم تمرير onOpenTracking للفوتر */}
         <Footer
           categories={categories}
           currentCategoryData={currentCategoryData}
@@ -777,16 +855,13 @@ export default function App() {
           }}
         />
 
-        {/* 💡 نافذة تتبع الطلبات */}
         <OrderTrackingModal
           isOpen={isOrderTrackingOpen}
           onClose={() => setIsOrderTrackingOpen(false)}
         />
 
-        {/* 💡 تم تمرير onOpenTracking للزر العائم */}
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
         
-        {/* 💡 تم تمرير onOpenTracking للشريط السفلي */}
         <MobileBottomNav
           cartCount={cartTotalCount}
           wishlistCount={wishlist.length}
