@@ -125,3 +125,178 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* ───────────────────────────────────────────
+   وضع Warm Luxury — المتجر فقط
+   يتم تفعيله عبر data-theme على غلاف المتجر،
+   ولا يؤثر على لوحة الإدارة.
+   ─────────────────────────────────────────── */
+.storefront-theme {
+  min-height: 100vh;
+  transition: background-color .28s ease, color .28s ease;
+}
+
+.storefront-theme[data-theme="light"] {
+  color: #25231F;
+  background:
+    radial-gradient(1000px 420px at 50% -160px, rgb(168 137 98 / .10), transparent 72%),
+    #FAF8F4;
+  color-scheme: light;
+}
+
+.storefront-theme[data-theme="light"] :where(input, textarea, select) {
+  color: #25231F;
+}
+
+.storefront-theme[data-theme="light"] :where(input, textarea, select)::placeholder {
+  color: #91877A;
+}
+
+/* خلفيات الواجهة والبطاقات الداكنة */
+.storefront-theme[data-theme="light"] [class~="bg-[#080706]"],
+.storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]"],
+.storefront-theme[data-theme="light"] [class~="bg-[#0F0D0B]"],
+.storefront-theme[data-theme="light"] [class~="bg-[#141210]"],
+.storefront-theme[data-theme="light"] [class~="bg-[#1C1815]"],
+.storefront-theme[data-theme="light"] [class~="bg-[#1E1A17]"] {
+  background-color: #FFFFFF !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="bg-[#26211D]"] {
+  background-color: #EFEAE2 !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="bg-white/[0.02]"],
+.storefront-theme[data-theme="light"] [class~="bg-white/[0.03]"],
+.storefront-theme[data-theme="light"] [class~="bg-white/[0.04]"],
+.storefront-theme[data-theme="light"] [class~="bg-white/[0.05]"],
+.storefront-theme[data-theme="light"] [class~="bg-white/[0.06]"],
+.storefront-theme[data-theme="light"] [class~="bg-white/[0.07]"] {
+  background-color: #EFEAE2 !important;
+}
+
+/* ألوان النصوص */
+.storefront-theme[data-theme="light"] [class~="text-[#F3EEE4]"],
+.storefront-theme[data-theme="light"] [class~="text-[#CFC7B8]"],
+.storefront-theme[data-theme="light"] [class~="text-white"] {
+  color: #25231F !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="text-[#A39A8B]"],
+.storefront-theme[data-theme="light"] [class~="text-[#8A8173]"],
+.storefront-theme[data-theme="light"] [class~="text-[#B9B0A0]"],
+.storefront-theme[data-theme="light"] [class~="text-[#78716C]"],
+.storefront-theme[data-theme="light"] [class~="placeholder-[#8A8173]"] {
+  color: #776F64 !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="text-[#D4B06A]"],
+.storefront-theme[data-theme="light"] [class~="text-[#E8CC8A]"] {
+  color: #A88962 !important;
+}
+
+/* الأزرار والعناصر الذهبية */
+.storefront-theme[data-theme="light"] [class~="bg-[#D4B06A]"],
+.storefront-theme[data-theme="light"] [class~="bg-[#E8CC8A]"] {
+  background-color: #A88962 !important;
+  color: #FFFFFF !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="from-[#E8CC8A]"],
+.storefront-theme[data-theme="light"] [class~="from-[#D4B06A]"],
+.storefront-theme[data-theme="light"] [class~="from-[#E3C16F]"] {
+  --tw-gradient-from: #B99B73 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(185 155 115 / 0) var(--tw-gradient-to-position) !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="to-[#D4B06A]"],
+.storefront-theme[data-theme="light"] [class~="to-[#E8CC8A]"],
+.storefront-theme[data-theme="light"] [class~="to-[#B8923A]"] {
+  --tw-gradient-to: #A88962 var(--tw-gradient-to-position) !important;
+}
+
+/* حدود، فواصل، حلقات التركيز */
+.storefront-theme[data-theme="light"] [class~="border-white/10"],
+.storefront-theme[data-theme="light"] [class~="border-white/15"],
+.storefront-theme[data-theme="light"] [class~="border-white/20"],
+.storefront-theme[data-theme="light"] [class~="ring-white/10"],
+.storefront-theme[data-theme="light"] [class~="ring-white/15"],
+.storefront-theme[data-theme="light"] [class~="ring-white/20"],
+.storefront-theme[data-theme="light"] [class~="divide-white/10"] {
+  border-color: #DCD5CA !important;
+  --tw-ring-color: #DCD5CA !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="border-[#D4B06A]"],
+.storefront-theme[data-theme="light"] [class~="ring-[#D4B06A]"] {
+  border-color: #C8B394 !important;
+  --tw-ring-color: #C8B394 !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="ring-offset-[#141210]"] {
+  --tw-ring-offset-color: #FFFFFF !important;
+}
+
+/* درجات الحالة تبقى واضحة في الوضعين */
+.storefront-theme[data-theme="light"] [class~="text-[#7FD1A0]"] {
+  color: #39734D !important;
+}
+.storefront-theme[data-theme="light"] [class~="bg-[#7FD1A0]"] {
+  background-color: #DCEBDD !important;
+  color: #285B39 !important;
+}
+.storefront-theme[data-theme="light"] [class~="bg-[#7FD1A0]/10"] {
+  background-color: #EAF2E8 !important;
+}
+.storefront-theme[data-theme="light"] [class~="text-rose-400"],
+.storefront-theme[data-theme="light"] [class~="text-rose-300"] {
+  color: #C24152 !important;
+}
+
+/* ظلال أخف لتناسب الأسطح الفاتحة */
+.storefront-theme[data-theme="light"] .shadow-soft,
+.storefront-theme[data-theme="light"] .shadow-lift,
+.storefront-theme[data-theme="light"] .shadow-glass {
+  box-shadow: 0 12px 32px -18px rgb(68 52 32 / .20), 0 1px 0 rgb(255 255 255 / .8) inset !important;
+}
+
+.storefront-theme[data-theme="light"] .gold-rule {
+  background: linear-gradient(90deg, transparent, rgb(168 137 98 / .45), transparent);
+}
+
+.storefront-theme[data-theme="light"] :focus-visible {
+  outline-color: #A88962;
+}
+
+.storefront-theme[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #FAF8F4;
+}
+.storefront-theme[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #DCD5CA;
+  border-color: #FAF8F4;
+}
+
+/* تحسين خلفيات الصور داخل بطاقات المنتجات */
+.storefront-theme[data-theme="light"] [class~="bg-gradient-to-b"] {
+  --tw-gradient-from: #F2EDE4 var(--tw-gradient-from-position);
+  --tw-gradient-to: #E9E1D4 var(--tw-gradient-to-position);
+}
+
+/* تبديل الألوان بسلاسة دون التأثير على الصور */
+.storefront-theme[data-theme="light"] :where(button, a, article, input, section, aside) {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 220ms;
+}
+
+
+.storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]/70"],
+.storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]/0"] {
+  background-color: rgb(250 248 244 / .92) !important;
+}
+.storefront-theme[data-theme="light"] [class~="bg-black/70"] {
+  background-color: rgb(37 35 31 / .42) !important;
+}
+.storefront-theme[data-theme="light"] [class~="text-[#D6D0C7]"] {
+  color: #776F64 !important;
+}
