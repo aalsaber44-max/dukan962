@@ -6,7 +6,7 @@ interface MobileBottomNavProps {
   wishlistCount: number;
   onOpenCart: () => void;
   onOpenWishlist: () => void;
-  onScrollToTop: () => void;
+  onGoHome: () => void; // 💡 تم تغيير الاسم ليعبر عن العودة للرئيسية
   onScrollToCategories: () => void;
 }
 
@@ -15,7 +15,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   wishlistCount,
   onOpenCart,
   onOpenWishlist,
-  onScrollToTop,
+  onGoHome,
   onScrollToCategories,
 }) => {
   return (
@@ -24,7 +24,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         
         {/* الرئيسية */}
         <button
-          onClick={onScrollToTop}
+          onClick={onGoHome}
           className="flex flex-col items-center justify-center w-full h-full gap-1 text-[#A39A8B] hover:text-[#E8CC8A] active:scale-95 transition-all"
         >
           <Home className="w-5 h-5" />
