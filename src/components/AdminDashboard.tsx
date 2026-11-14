@@ -1,4 +1,4 @@
-  import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
   import {
     X,
     Plus,
@@ -84,6 +84,9 @@
     const [orders, setOrders] = useState<Order[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(true);
     const [orderSearchQuery, setOrderSearchQuery] = useState('');
+    
+    // 💡 حالة جديدة لتصفية الإحصائيات
+    const [statsTimeFilter, setStatsTimeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
 
     const [readOrders, setReadOrders] = useState<string[]>(() => {
       try {
@@ -567,6 +570,82 @@
       document.body.removeChild(link);
     };
 
+    // 💡 دالة تصفية الإحصائيات
+    const getFilteredStatsOrders = () => {
+      if (statsTimeFilter === 'all') return orders;
+      
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      
+      return orders.filter(order => {
+        const orderTime = new Date(order.createdAt || Date.now()).getTime();
+        
+        if (statsTimeFilter === 'today') {
+          return orderTime >= startOfToday;
+        }
+        if (statsTimeFilter === 'week') {
+          const weekAgo = startOfToday - (7 * 24 * 60 * 60 * 1000);
+          return orderTime >= weekAgo;
+        }
+        if (statsTimeFilter === 'month') {
+          const monthAgo = startOfToday - (30 * 24 * 60 * 60 * 1000);
+          return orderTime >= monthAgo;
+        }
+        return true;
+      });
+    };
+
+    const statsFilteredOrders = getFilteredStatsOrders();
+
+    // 💡 دالة تصدير الإحصائيات (Excel أو TXT)
+    const handleExportStats = (format: 'csv' | 'txt') => {
+      if (statsFilteredOrders.length === 0) return alert('لا توجد طلبات لتصديرها في هذه الفترة');
+      
+      let content = '';
+      let mimeType = '';
+      let ext = '';
+      
+      if (format === 'csv') {
+        const headers = ['رقم الطلب', 'الاسم', 'الهاتف', 'المحافظة', 'الإجمالي (د.أ)', 'طريقة الدفع', 'الحالة', 'التاريخ'];
+        const rows = statsFilteredOrders.map(o => [
+          o.id, o.name, o.phone, o.governorate, o.total, 
+          o.paymentMethod === 'cod' ? 'كاش' : 'كليك', o.status, 
+          new Date(o.createdAt || Date.now()).toLocaleDateString('ar-JO')
+        ]);
+        content = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
+        mimeType = 'text/csv;charset=utf-8;';
+        ext = 'csv';
+      } else {
+        const totalRev = statsFilteredOrders.reduce((sum, o) => o.status === 'ملغي' ? sum : sum + Number(o.total || 0), 0);
+        content = `تقرير إحصائيات دكان 962\n`;
+        content += `التاريخ: ${new Date().toLocaleString('ar-JO')}\n`;
+        content += `الفترة: ${
+          statsTimeFilter === 'today' ? 'اليوم' : 
+          statsTimeFilter === 'week' ? 'آخر 7 أيام' : 
+          statsTimeFilter === 'month' ? 'آخر 30 يوم' : 'كل الفترات'
+        }\n`;
+        content += `----------------------------------------\n`;
+        content += `إجمالي الطلبات: ${statsFilteredOrders.length}\n`;
+        content += `إجمالي المبيعات: ${totalRev.toFixed(2)} د.أ\n`;
+        content += `----------------------------------------\n\n`;
+        content += `تفاصيل الطلبات:\n`;
+        statsFilteredOrders.forEach(o => {
+          content += `الطلب: ${o.id} | الزبون: ${o.name} | المبلغ: ${o.total} د.أ | الحالة: ${o.status}\n`;
+        });
+        mimeType = 'text/plain;charset=utf-8;';
+        ext = 'txt';
+      }
+      
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `stats_${statsTimeFilter}_${new Date().toISOString().split('T')[0]}.${ext}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm overflow-y-auto">
         <div className="relative w-full max-w-5xl bg-[#0B0A09] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,176,106,0.25)] border border-white/10 overflow-hidden my-6 max-h-[92vh] flex flex-col">
@@ -685,8 +764,44 @@
 
           <div className="flex-1 overflow-y-auto p-6">
             
+            {/* 💡 تعديل تبويب الإحصائيات لإضافة التصفية والتصدير */}
             {activeTab === 'stats' && (
-              <AdminStats orders={orders} products={products} loading={loadingOrders} />
+              <div className="space-y-4">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#141210] p-4 rounded-2xl border border-white/10 shadow-soft">
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <span className="text-xs font-bold text-[#F3EEE4] whitespace-nowrap">تصفية حسب:</span>
+                    <select
+                      value={statsTimeFilter}
+                      onChange={(e) => setStatsTimeFilter(e.target.value as any)}
+                      className="w-full md:w-auto text-xs py-2 px-3 bg-[#1C1815] border border-white/10 rounded-xl font-bold text-[#F3EEE4] focus:outline-none focus:border-[#D4B06A] cursor-pointer"
+                    >
+                      <option value="all">كل الفترات</option>
+                      <option value="today">اليوم</option>
+                      <option value="week">آخر 7 أيام</option>
+                      <option value="month">آخر 30 يوم</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 w-full md:w-auto">
+                    <button
+                      onClick={() => handleExportStats('csv')}
+                      className="flex-1 md:flex-none py-2 px-4 bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>تصدير Excel</span>
+                    </button>
+                    <button
+                      onClick={() => handleExportStats('txt')}
+                      className="flex-1 md:flex-none py-2 px-4 bg-white/5 hover:bg-white/10 border border-white/10 text-[#F3EEE4] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>تصدير TXT</span>
+                    </button>
+                  </div>
+                </div>
+
+                <AdminStats orders={statsFilteredOrders} products={products} loading={loadingOrders} />
+              </div>
             )}
 
             {activeTab === 'list' && (
