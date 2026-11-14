@@ -92,3 +92,13 @@ export interface Order {
   deliveryFee: number;
   total: number;
 }
+
+// 7. تقييمات العملاء (Review)
+export interface Review {
+  id?: string;
+  productId: string;
+  name: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
