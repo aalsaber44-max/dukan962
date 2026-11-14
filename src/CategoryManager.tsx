@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Check, Eye, EyeOff, Save, X, Video } from 'lucide-react';
-import { db } from '../firebase';
+import { db } from './firebase'; // 💡 تم تصحيح المسار
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-import { Category } from '../types/furniture';
+import { Category } from './types/furniture'; // 💡 تم تصحيح المسار
 
 export const CategoryManager: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
