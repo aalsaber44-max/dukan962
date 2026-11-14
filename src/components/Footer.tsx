@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, MapPin, ShieldCheck } from 'lucide-react';
+import { MessageCircle, MapPin, ShieldCheck, Truck } from 'lucide-react'; // 💡 تمت إضافة Truck
 import { DukanLogo } from './DukanLogo';
 import { Category } from '../types/furniture';
 import { STORE_PHONE_INTL, STORE_WHATSAPP_HANDLE } from '../utils/jordanLocations';
@@ -9,13 +9,15 @@ interface FooterProps {
   currentCategoryData?: Category | null; 
   onSelectCategory: (cat: string) => void;
   onOpenAdmin: () => void;
+  onOpenTracking: () => void; // 💡 خاصية جديدة
 }
 
 export const Footer: React.FC<FooterProps> = ({ 
   categories, 
   currentCategoryData, 
   onSelectCategory, 
-  onOpenAdmin 
+  onOpenAdmin,
+  onOpenTracking // 💡 استلام الدالة
 }) => {
   
   const aboutText = currentCategoryData && currentCategoryData.id !== 'all' 
@@ -79,18 +81,27 @@ export const Footer: React.FC<FooterProps> = ({
                 <span>عمان - المملكة الأردنية الهاشمية</span>
               </p>
               
-              {/* 💡 تم إزالة رقم الهاتف هنا واستبداله بحساب الواتساب فقط */}
-              <div className="pt-2">
+              <div className="pt-2 flex flex-col gap-2">
                 <a 
                   href={`https://wa.me/${STORE_PHONE_INTL}`} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="inline-flex items-center gap-2 bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] px-5 py-2.5 rounded-full text-xs font-bold shadow-gold transition-all hover:-translate-y-0.5 active:scale-95"
+                  className="inline-flex items-center gap-2 bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] px-5 py-2.5 rounded-full text-xs font-bold shadow-gold transition-all hover:-translate-y-0.5 active:scale-95 w-fit"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>تواصل عبر واتساب: {STORE_WHATSAPP_HANDLE}</span>
                 </a>
+
+                {/* 💡 زر تتبع الطلب الجديد */}
+                <button
+                  onClick={onOpenTracking}
+                  className="inline-flex items-center gap-2 bg-[#1C1815] hover:bg-[#26211D] border border-[#D4B06A]/30 text-[#E8CC8A] px-5 py-2.5 rounded-full text-xs font-bold transition-all w-fit active:scale-95"
+                >
+                  <Truck className="w-4 h-4" />
+                  <span>تتبع حالة طلبك</span>
+                </button>
               </div>
+
               <div className="mt-4 pt-4 border-t border-white/10">
                 <p className="text-[10px] text-[#8A8173] mb-2">✨ يوجد معاينة عند وصول الطلب قبل الدفع</p>
                 <p className="text-[10px] text-[#8A8173]">فعال: شحن سريع لجميع المناطق</p>
