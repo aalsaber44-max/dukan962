@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { ShoppingBag, Search, Heart, X } from 'lucide-react';
+import { ShoppingBag, Search, Heart, X, Sun, Moon } from 'lucide-react';
 import { DukanLogo } from './DukanLogo';
 import { Category } from '../types/furniture';
 
@@ -15,6 +15,8 @@ interface NavbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSelectCategory: (category: string) => void;
+  isLightTheme: boolean;
+  onToggleTheme: () => void;
 }
 
 /** شارة العدّاد: تقفز قفزة صغيرة كل ما تغيّر الرقم */
@@ -41,6 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   onSearchChange,
   onSelectCategory,
+  isLightTheme,
+  onToggleTheme,
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -92,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="shrink-0 flex items-center cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-95 text-right"
           title="شعار دكان 962"
         >
-          <DukanLogo variant="light" className="h-9 sm:h-12" subtitle={logoSubtitle} />
+          <DukanLogo variant={isLightTheme ? "dark" : "light"} className="h-9 sm:h-12" subtitle={logoSubtitle} />
         </button>
 
         {/* روابط الكمبيوتر مع مؤشر منزلق للقسم النشط */}
@@ -155,6 +159,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             className={`${iconBtn} md:hidden`}
           >
             {mobileSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={isLightTheme ? 'تفعيل الوضع الليلي' : 'تفعيل الوضع الصباحي'}
+            aria-pressed={isLightTheme}
+            title={isLightTheme ? 'الوضع الليلي' : 'الوضع الصباحي'}
+            className={iconBtn}
+          >
+            {isLightTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </button>
 
           <button onClick={onOpenWishlist} aria-label="المفضلة" className={iconBtn}>
