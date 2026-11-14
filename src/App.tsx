@@ -23,7 +23,7 @@ import { STORE_PHONE_INTL } from './utils/jordanLocations';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { RecentlyViewed } from './components/RecentlyViewed';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
-import { FAQ } from './components/FAQ'; // 💡 استيراد مكون الأسئلة الشائعة
+import { FAQ } from './components/FAQ';
 
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, testFirestoreConnection } from './firebase';
@@ -537,6 +537,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      {/* 💡 المتجر يغلف فقط واجهة المتجر */}
       <div 
         className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden pb-16 md:pb-0"
         data-theme={isLightTheme ? 'light' : 'dark'}
@@ -555,7 +556,7 @@ export default function App() {
           <div aria-hidden="true" className="absolute bottom-0 inset-x-0 gold-rule opacity-60" />
         </aside>
 
-  <Navbar
+        <Navbar
           categories={categories}
           currentCategoryData={currentCategoryData}
           cartCount={cartTotalCount}
@@ -571,8 +572,8 @@ export default function App() {
           }}
           isLightTheme={isLightTheme}
           onToggleTheme={() => setIsLightTheme((current) => !current)}
-          products={products} // 💡 تمرير المنتجات
-          onSelectProduct={(p) => { // 💡 فتح المنتج عند اختياره من البحث
+          products={products}
+          onSelectProduct={(p) => {
             saveToRecentlyViewed(p);
             setSelectedProductModal(p);
           }}
@@ -787,7 +788,6 @@ export default function App() {
           )}
         </main>
 
-        {/* 💡 قسم الأسئلة الشائعة */}
         <FAQ />
 
         <Footer
@@ -875,23 +875,25 @@ export default function App() {
           onOpenTracking={() => setIsOrderTrackingOpen(true)}
         />
 
-        <AdminAuthModal
-          isOpen={isAdminAuthOpen}
-          onClose={() => setIsAdminAuthOpen(false)}
-          onSuccess={() => {
-            setIsAdminAuthOpen(false);
-            setIsAdminOpen(true);
-          }}
+      </div> {/* 💡 إغلاق المتجر هنا */}
+
+      {/* 💡 لوحة الإدارة والنوافذ خارج الثيم لتبقى داكنة دائماً */}
+      <AdminAuthModal
+        isOpen={isAdminAuthOpen}
+        onClose={() => setIsAdminAuthOpen(false)}
+        onSuccess={() => {
+          setIsAdminAuthOpen(false);
+          setIsAdminOpen(true);
+        }}
+      />
+
+      <Suspense fallback={<AdminDashboardFallback />}>
+        <AdminDashboard
+          isOpen={isAdminOpen}
+          onClose={() => setIsAdminOpen(false)}
         />
+      </Suspense>
 
-        <Suspense fallback={<AdminDashboardFallback />}>
-          <AdminDashboard
-            isOpen={isAdminOpen}
-            onClose={() => setIsAdminOpen(false)}
-          />
-        </Suspense>
-
-      </div>
     </ErrorBoundary>
   );
 }
