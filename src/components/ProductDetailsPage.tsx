@@ -5,6 +5,7 @@ import { STORE_PHONE_INTL } from '../utils/jordanLocations';
 import { getVideoSource } from '../utils/video';
 import { getStockState, availableQty } from '../utils/inventory';
 import { ImageLightbox } from './ImageLightbox';
+import { ProductReviews } from './ProductReviews'; // 💡 استيراد مكون التقييمات
 
 interface ProductDetailsPageProps {
   product: Product | null;
@@ -533,6 +534,9 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
           </div>
 
         </div>
+
+        {/* 💡 قسم تقييمات العملاء */}
+        <ProductReviews productId={product.id} />
 
         {relatedProducts.length > 0 && onSelectProduct && (
           <div className="border-t border-white/10 bg-[#0F0D0B] p-6 sm:p-8">
