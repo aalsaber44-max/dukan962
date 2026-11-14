@@ -65,10 +65,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const streetInputRef = useRef<HTMLInputElement>(null);
   const buildingInputRef = useRef<HTMLInputElement>(null);
   
-  // 💡 مرجع جديد للـ div الخاص برسائل الخطأ للتمرير إليه
   const errorRef = useRef<HTMLDivElement>(null);
 
-  // 💡 التمرير التلقائي إلى رسالة الخطأ عند ظهورها
   useEffect(() => {
     if (cartError.length > 0 && errorRef.current) {
       errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -281,7 +279,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           const needQty = Math.max(0, Number(cartItem.quantity) || 0);
           const cartPrice = getItemUnitPrice(cartItem);
 
-          // 💡 1. فحص المخزون (على مستوى المنتج ككل)
           const productStock = typeof serverProduct.stock === 'number' ? Math.max(0, Number(serverProduct.stock)) : Infinity;
           const prevStock = updatedRootStockByProduct.get(pid) ?? productStock;
 
@@ -296,7 +293,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
              updatedRootStockByProduct.set(pid, prevStock - needQty);
           }
 
-          // 💡 2. فحص اللون والسعر
           if (serverColors.length > 0) {
             const colorName = cartItem.selectedColor?.name;
             const colorIdx = serverColors.findIndex((c) => c?.name === colorName);
@@ -380,7 +376,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         transaction.set(orderDocRef, orderPayload);
         transaction.set(counterDocRef, { count: nextCount }, { merge: true });
 
-        // 💡 حفظ المخزون المخصوم للمنتج
         for (const [pid, newStock] of updatedRootStockByProduct.entries()) {
           const ref = serverProducts.get(pid)?.__ref;
           if (ref) transaction.update(ref, { stock: newStock });
@@ -454,120 +449,141 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const jordanGovernorates = JORDAN_GOVERNORATES;
 
   const cliqSection = paymentMethod === 'cliq' ? (
-    <div className="bg-[#7FD1A0]/10 border border-[#7FD1A0]/25 rounded-2xl p-3.5 sm:p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-bold text-[#7FD1A0]">
-          <Smartphone className="w-4 h-4" />
-          <span>بيانات التحويل:</span>
-        </div>
+    <div className="bg-[#7FD1A0]/5 border border-[#7FD1A0]/20 rounded-2xl p-4 space-y-4 animate-fade">
+      <div className="flex items-center gap-2 text-xs font-bold text-[#7FD1A0]">
+        <Smartphone className="w-4 h-4" />
+        <span>بيانات التحويل عبر تطبيق كليك (CliQ):</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        <div className="bg-[#141210] p-2.5 rounded-xl border border-[#7FD1A0]/25 flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div className="bg-[#141210] p-3 rounded-xl border border-[#7FD1A0]/20 flex items-center justify-between shadow-inner">
           <div>
-            <span className="text-[10px] text-[#A39A8B] block">اسم الحساب:</span>
+            <span className="text-[10px] text-[#A39A8B] block mb-0.5">اسم الحساب:</span>
             <strong className="text-[#F3EEE4] font-mono text-sm">{cliqAlias}</strong>
           </div>
-          <button type="button" onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-1.5 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border cursor-pointer text-[10px] flex items-center gap-1">
-            {copiedField === 'alias' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          <button type="button" onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-2 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border border-white/5 cursor-pointer text-[#A39A8B] transition-colors">
+            {copiedField === 'alias' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
 
-        <div className="bg-[#141210] p-2.5 rounded-xl border border-[#7FD1A0]/25 flex items-center justify-between">
+        <div className="bg-[#141210] p-3 rounded-xl border border-[#7FD1A0]/20 flex items-center justify-between shadow-inner">
           <div>
-            <span className="text-[10px] text-[#A39A8B] block">رقم الهاتف:</span>
-            <strong className="text-[#F3EEE4] font-mono text-sm">{cliqPhone}</strong>
+            <span className="text-[10px] text-[#A39A8B] block mb-0.5">رقم الهاتف:</span>
+            <strong className="text-[#F3EEE4] font-mono text-sm" dir="ltr">{cliqPhone}</strong>
           </div>
-          <button type="button" onClick={() => copyToClipboard(cliqPhone, 'phone')} className="p-1.5 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border cursor-pointer text-[10px] flex items-center gap-1">
-            {copiedField === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          <button type="button" onClick={() => copyToClipboard(cliqPhone, 'phone')} className="p-2 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border border-white/5 cursor-pointer text-[#A39A8B] transition-colors">
+            {copiedField === 'phone' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold text-[#7FD1A0] mb-1">رقم عملية التحويل أو اسم الحساب (اختياري):</label>
-        <input type="text" value={cliqRef} onChange={(e) => setCliqRef(e.target.value)} placeholder="مثال: رقم العملية..." className="w-full text-xs py-2 px-3 bg-[#141210] border border-[#7FD1A0]/25 rounded-xl" />
+        <label className="block text-[11px] font-semibold text-[#7FD1A0] mb-1.5">رقم عملية التحويل (اختياري):</label>
+        <input type="text" value={cliqRef} onChange={(e) => setCliqRef(e.target.value)} placeholder="مثال: رقم العملية..." className="w-full text-xs py-2.5 px-3 bg-[#141210] border border-[#7FD1A0]/30 focus:border-[#7FD1A0] focus:ring-1 focus:ring-[#7FD1A0] rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none" />
       </div>
     </div>
   ) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-xl bg-[#141210] rounded-3xl shadow-2xl border border-white/10 flex flex-col my-3 sm:my-6 max-h-[94vh] sm:max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md overflow-y-auto animate-fade">
+      <div className="relative w-full max-w-2xl bg-[#141210] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,176,106,0.15)] border border-white/10 flex flex-col my-4 sm:my-6 max-h-[94vh] sm:max-h-[90vh]">
 
-        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-[#1C1815] rounded-t-3xl shrink-0">
+        {/* Header */}
+        <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-[#1C1815] rounded-t-3xl shrink-0">
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-[#F3EEE4]">
-              {orderConfirmed ? 'تم تأكيد طلبك في دكان 962' : 'إتمام الطلب وتحديد التوصيل'}
+            <h3 className="text-base sm:text-lg font-bold text-[#F3EEE4] font-serif flex items-center gap-2">
+              {orderConfirmed ? (
+                <><CheckCircle className="w-5 h-5 text-emerald-400" /> تم تأكيد طلبك بنجاح</>
+              ) : (
+                'إتمام الطلب وتحديد التوصيل'
+              )}
             </h3>
-            <p className="text-[11px] sm:text-xs text-[#A39A8B] mt-0.5">
-              {orderConfirmed ? 'شكراً لاختيارك طاولات دكان 962 للأثاث' : 'التوصيل لجميع المحافظات والدفع عند الاستلام أو كليك'}
+            <p className="text-[11px] sm:text-xs text-[#A39A8B] mt-1">
+              {orderConfirmed ? 'شكراً لاختيارك دكان 962، نعتز بثقتك بنا.' : 'التوصيل لجميع المحافظات والدفع عند الاستلام أو كليك'}
             </p>
           </div>
-          <button onClick={onClose} disabled={isSubmitting} className="p-2 rounded-full bg-[#141210]/10 hover:bg-[#141210]/15 text-[#F3EEE4] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          <button onClick={onClose} disabled={isSubmitting} className="p-2.5 rounded-full bg-[#141210]/50 hover:bg-[#141210]/80 text-[#A39A8B] hover:text-[#F3EEE4] transition-colors cursor-pointer disabled:opacity-50">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 p-4 sm:p-6 md:p-8">
+        <div className="overflow-y-auto flex-1 p-5 sm:p-6 md:p-8 custom-scrollbar">
           {orderConfirmed ? (
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-400/25">
-                <CheckCircle className="w-8 h-8" />
+            /* 💡 شاشة النجاح الفاخرة */
+            <div className="text-center py-6">
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse" />
+                <div className="relative w-full h-full rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center border-2 border-emerald-400/30 shadow-inner">
+                  <CheckCircle className="w-12 h-12" />
+                </div>
               </div>
-              <span className="text-xs font-bold text-[#D4B06A] uppercase tracking-wider">رقم تتبع الطلب</span>
-              <h4 className="text-2xl font-black text-[#F3EEE4] font-mono mt-1 mb-2">{orderNumber}</h4>
+              
+              <span className="text-xs font-bold text-[#A39A8B] uppercase tracking-wider mb-1 block">رقم تتبع الطلب</span>
+              <h4 className="text-3xl sm:text-4xl font-black text-[#E8CC8A] font-mono mb-4 drop-shadow-md">{orderNumber}</h4>
 
-              <div className="inline-flex items-center gap-3 bg-[#1C1815] ring-1 ring-white/10 rounded-2xl px-4 py-2.5 mb-4 text-xs">
-                <span className="text-[#A39A8B]">القطع: <strong className="text-[#F3EEE4] font-mono">{confirmedItemsCount}</strong></span>
-                <span aria-hidden="true" className="h-3.5 w-px bg-white/15" />
-                <span className="text-[#A39A8B]">المبلغ النهائي: <strong className="text-[#E8CC8A] font-mono">{confirmedTotal.toFixed(2)} د.أ</strong></span>
+              <div className="inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-6 bg-[#1C1815] ring-1 ring-white/10 rounded-2xl px-6 py-4 mb-6 text-sm shadow-lg">
+                <span className="text-[#A39A8B] flex items-center gap-2">
+                  إجمالي القطع: <strong className="text-[#F3EEE4] font-mono text-base">{confirmedItemsCount}</strong>
+                </span>
+                <span aria-hidden="true" className="hidden sm:block h-4 w-px bg-white/15" />
+                <span className="text-[#A39A8B] flex items-center gap-2">
+                  المبلغ النهائي: <strong className="text-[#E8CC8A] font-mono text-lg">{confirmedTotal.toFixed(2)} د.أ</strong>
+                </span>
               </div>
 
-              <p className="text-xs text-[#B9B0A0] leading-relaxed max-w-md mx-auto mb-5">
-                تم استلام طلبك وحفظه بنجاح في السحابة! يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
+              <p className="text-xs text-[#B9B0A0] leading-relaxed max-w-md mx-auto mb-8">
+                تم استلام طلبك وحفظه بنجاح في السحابة. يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
               </p>
-              <div className="mb-6">
-                <a href={finalWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3.5 px-6 text-xs sm:text-sm font-bold text-white bg-[#2E5339] hover:bg-[#1E3826] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+              
+              <div className="max-w-sm mx-auto space-y-3">
+                <a href={finalWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-4 px-6 text-sm font-bold text-white bg-[#25D366] hover:bg-[#1FAF5E] rounded-xl shadow-[0_8px_20px_-8px_rgba(37,211,102,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
                   <MessageCircle className="w-5 h-5" />
-                  <span>إرسال تفاصيل الطلب عبر واتساب</span>
+                  <span>إرسال الطلب إلى واتساب</span>
                 </a>
+                <button onClick={onClose} className="w-full py-3 px-6 text-sm font-bold text-[#F3EEE4] bg-white/5 hover:bg-white/10 rounded-xl transition-all cursor-pointer">
+                  العودة إلى المعرض
+                </button>
               </div>
-              <button onClick={onClose} className="py-2.5 px-8 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl transition-all cursor-pointer">
-                العودة إلى المعرض
-              </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
 
-              {/* 💡 ref={errorRef} لجعل الشاشة تنزل تلقائياً للخطأ */}
+              {/* Error Message Container */}
               {cartError.length > 0 && (
-                <div ref={errorRef} className="bg-rose-500/10 border border-rose-400/30 rounded-2xl p-3.5 space-y-1.5" role="alert">
-                  <div className="flex items-center gap-2 text-xs font-bold text-rose-300">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>يرجى المراجعة قبل تأكيد الطلب:</span>
+                <div ref={errorRef} className="bg-rose-500/10 border border-rose-400/30 rounded-2xl p-4 space-y-2 shadow-[0_0_15px_rgba(225,29,72,0.1)]" role="alert">
+                  <div className="flex items-center gap-2 text-sm font-bold text-rose-400">
+                    <AlertTriangle className="w-5 h-5 shrink-0" />
+                    <span>تعذر إتمام الطلب، يرجى المراجعة:</span>
                   </div>
-                  {cartError.map((msg, i) => (
-                    <p key={i} className="text-[11px] text-rose-200/90 leading-relaxed pr-6">• {msg}</p>
-                  ))}
+                  <ul className="list-disc list-inside space-y-1">
+                    {cartError.map((msg, i) => (
+                      <li key={i} className="text-xs text-rose-200/90 leading-relaxed pl-1">{msg}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
+              {/* Payment Methods */}
               <div>
-                <label className="block text-xs font-bold text-[#F3EEE4] mb-2">اختر طريقة الدفع: <span className="text-rose-300">*</span></label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <button type="button" onClick={() => setPaymentMethod('cod')} className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 cursor-pointer ${paymentMethod === 'cod' ? 'border-[#D4B06A] bg-[#1C1815] shadow-none ring-1 ring-[#D4B06A]' : 'border-white/10 hover:border-white/10'}`}>
-                    <Truck className="w-5 h-5 text-[#D4B06A] shrink-0" />
+                <label className="block text-xs font-bold text-[#F3EEE4] mb-3">اختر طريقة الدفع <span className="text-rose-400">*</span></label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button type="button" onClick={() => setPaymentMethod('cod')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cod' ? 'border-[#D4B06A] bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.15)] ring-1 ring-[#D4B06A]' : 'border-white/10 bg-[#1C1815] hover:border-[#D4B06A]/50 hover:bg-white/5'}`}>
+                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cod' ? 'bg-[#D4B06A] text-[#0B0A09]' : 'bg-white/5 text-[#A39A8B]'}`}>
+                      <Truck className="w-5 h-5" />
+                    </div>
                     <div>
-                      <p className="text-xs font-bold text-[#F3EEE4]">الدفع عند الاستلام</p>
-                      <p className="text-[10px] text-[#A39A8B]">كاش بعد المعاينة</p>
+                      <p className={`text-sm font-bold ${paymentMethod === 'cod' ? 'text-[#E8CC8A]' : 'text-[#F3EEE4]'}`}>الدفع عند الاستلام</p>
+                      <p className="text-[11px] text-[#A39A8B] mt-0.5">كاش بعد المعاينة</p>
                     </div>
                   </button>
-                  <button type="button" onClick={() => setPaymentMethod('cliq')} className={`p-3 rounded-xl border text-right transition-all flex items-center gap-2.5 cursor-pointer ${paymentMethod === 'cliq' ? 'border-[#D4B06A] bg-[#1C1815] shadow-none ring-1 ring-[#D4B06A]' : 'border-white/10 hover:border-white/10'}`}>
-                    <Smartphone className="w-5 h-5 text-[#7FD1A0] shrink-0" />
+                  
+                  <button type="button" onClick={() => setPaymentMethod('cliq')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cliq' ? 'border-[#7FD1A0] bg-[#7FD1A0]/10 shadow-[0_0_15px_rgba(127,209,160,0.15)] ring-1 ring-[#7FD1A0]' : 'border-white/10 bg-[#1C1815] hover:border-[#7FD1A0]/50 hover:bg-white/5'}`}>
+                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cliq' ? 'bg-[#7FD1A0] text-[#0B0A09]' : 'bg-white/5 text-[#A39A8B]'}`}>
+                      <Smartphone className="w-5 h-5" />
+                    </div>
                     <div>
-                      <p className="text-xs font-bold text-[#7FD1A0]">دفع كليك (CliQ)</p>
-                      <p className="text-[10px] text-[#A39A8B]">تحويل فوري</p>
+                      <p className={`text-sm font-bold ${paymentMethod === 'cliq' ? 'text-[#7FD1A0]' : 'text-[#F3EEE4]'}`}>دفع كليك (CliQ)</p>
+                      <p className="text-[11px] text-[#A39A8B] mt-0.5">تحويل فوري</p>
                     </div>
                   </button>
                 </div>
@@ -575,109 +591,107 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {cliqSection}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">الاسم الكامل (الرباعي) *</label>
-                  <input
-                    ref={nameInputRef}
-                    type="text"
-                    required
-                    autoComplete="name"
-                    value={name}
-                    onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
-                    placeholder="مثال: محمد أحمد علي محمود"
-                    className={`w-full text-sm sm:text-xs py-2.5 sm:py-2 px-3 bg-[#1C1815] border rounded-xl ${nameError ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
-                  />
-                  {nameError && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{nameError}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">رقم الهاتف الأساسي *</label>
-                  <input
-                    type="tel"
-                    required
-                    inputMode="tel"
-                    dir="ltr"
-                    autoComplete="tel-national"
-                    value={phone1}
-                    onChange={(e) => handlePhone1Change(e.target.value)}
-                    placeholder="07XXXXXXXX"
-                    className={`w-full text-sm sm:text-xs py-2.5 sm:py-2 px-3 bg-[#1C1815] border rounded-xl font-mono text-right ${phone1Error ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
-                  />
-                  {phone1Error && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{phone1Error}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">رقم هاتف إضافي (اختياري)</label>
-                  <input
-                    type="tel"
-                    inputMode="tel"
-                    dir="ltr"
-                    value={phone2}
-                    onChange={(e) => handlePhone2Change(e.target.value)}
-                    placeholder="رقم بديل..."
-                    className={`w-full text-sm sm:text-xs py-2.5 sm:py-2 px-3 bg-[#1C1815] border rounded-xl font-mono text-right ${phone2Error ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
-                  />
-                  {phone2Error && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{phone2Error}</p>}
+              {/* Personal Info */}
+              <div className="space-y-4 pt-2">
+                <h4 className="text-sm font-bold text-[#E8CC8A] border-b border-white/10 pb-2">بيانات المستلم</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">الاسم الكامل (الرباعي) <span className="text-rose-400">*</span></label>
+                    <input
+                      ref={nameInputRef}
+                      type="text"
+                      value={name}
+                      onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
+                      placeholder="مثال: محمد أحمد علي محمود"
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${nameError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                    />
+                    {nameError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{nameError}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">رقم الهاتف الأساسي <span className="text-rose-400">*</span></label>
+                    <input
+                      type="tel"
+                      dir="ltr"
+                      value={phone1}
+                      onChange={(e) => handlePhone1Change(e.target.value)}
+                      placeholder="07XXXXXXXX"
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone1Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                    />
+                    {phone1Error && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{phone1Error}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">رقم هاتف إضافي (اختياري)</label>
+                    <input
+                      type="tel"
+                      dir="ltr"
+                      value={phone2}
+                      onChange={(e) => handlePhone2Change(e.target.value)}
+                      placeholder="رقم بديل..."
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone2Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                    />
+                    {phone2Error && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{phone2Error}</p>}
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-2">
-                <label className="block text-xs font-bold text-[#F3EEE4] mb-2">عنوان التوصيل بالتفصيل <span className="text-rose-300">*</span></label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Address */}
+              <div className="space-y-4 pt-2">
+                <h4 className="text-sm font-bold text-[#E8CC8A] border-b border-white/10 pb-2">عنوان التوصيل بالتفصيل</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[10px] font-semibold text-[#A39A8B] mb-1">المحافظة *</label>
-                    <select value={governorate} onChange={(e) => { setGovernorate(e.target.value); setAutoDetectedGov(null); }} className="w-full text-sm sm:text-xs py-2.5 sm:py-2 px-2 bg-[#1C1815] border border-white/10 rounded-xl">
+                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">المحافظة <span className="text-rose-400">*</span></label>
+                    <select value={governorate} onChange={(e) => { setGovernorate(e.target.value); setAutoDetectedGov(null); }} className="w-full text-sm py-3 px-3 bg-[#1C1815] border border-white/10 rounded-xl text-[#F3EEE4] focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A] outline-none cursor-pointer appearance-none">
                       {jordanGovernorates.map((gov) => <option key={gov} value={gov}>{gov}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-[#A39A8B] mb-1">المنطقة / الحي *</label>
+                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">المنطقة / الحي <span className="text-rose-400">*</span></label>
                     <input
                       ref={regionInputRef}
                       type="text"
-                      required
                       value={region}
                       onChange={(e) => handleRegionChange(e.target.value)}
                       placeholder="مثال: جبل عمان"
-                      className={`w-full text-sm sm:text-xs py-2.5 sm:py-2 px-2 bg-[#1C1815] border rounded-xl ${regionError ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${regionError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
                     />
-                    {regionError && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{regionError}</p>}
+                    {regionError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{regionError}</p>}
                     {!regionError && autoDetectedGov && <span className="text-[9px] text-[#7FD1A0] mt-1 block">تم تحديد المحافظة تلقائياً ✓</span>}
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-[#A39A8B] mb-1">اسم الشارع / أقرب معلم *</label>
+                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">اسم الشارع / أقرب معلم <span className="text-rose-400">*</span></label>
                     <input
                       ref={streetInputRef}
                       type="text"
-                      required
                       value={street}
                       onChange={(e) => { setStreet(e.target.value); if (streetError && e.target.value.trim()) setStreetError(null); }}
                       placeholder="مثال: شارع المدينة المنورة"
-                      className={`w-full text-sm sm:text-xs py-2.5 sm:py-2 px-2 bg-[#1C1815] border rounded-xl ${streetError ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${streetError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
                     />
-                    {streetError && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{streetError}</p>}
+                    {streetError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{streetError}</p>}
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[10px] font-semibold text-[#A39A8B] mb-1">رقم العمارة / البناية والطابق *</label>
+                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">رقم العمارة / البناية والطابق <span className="text-rose-400">*</span></label>
                     <input
                       ref={buildingInputRef}
                       type="text"
-                      required
                       value={building}
                       onChange={(e) => { setBuilding(e.target.value); if (buildingError && e.target.value.trim()) setBuildingError(null); }}
                       placeholder="مثال: عمارة رقم 14، الطابق 2"
-                      className={`w-full text-sm sm:text-xs py-2.5 sm:py-2 px-2 bg-[#1C1815] border rounded-xl ${buildingError ? 'border-rose-400 bg-rose-500/10' : 'border-white/10'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${buildingError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
                     />
-                    {buildingError && <p className="text-[10px] text-rose-400 mt-1 font-semibold">{buildingError}</p>}
+                    {buildingError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{buildingError}</p>}
                   </div>
                 </div>
               </div>
 
+              {/* Notes */}
               <div>
-                <label className="block text-xs font-semibold text-[#F3EEE4] mb-1">ملاحظات إضافية للتوصيل (اختياري)</label>
-                <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-sm sm:text-xs py-2.5 sm:py-2 px-3 bg-[#1C1815] border border-white/10 rounded-xl" />
+                <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">ملاحظات إضافية للتوصيل (اختياري)</label>
+                <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-sm py-3 px-4 bg-[#1C1815] border border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A] rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none resize-none" />
               </div>
 
-              <div className="bg-[#1C1815] p-4 rounded-2xl border border-white/10 space-y-1.5 text-xs">
+              {/* Summary */}
+              <div className="bg-[#1C1815] p-5 rounded-2xl border border-white/10 shadow-inner space-y-3 text-sm">
                 <div className="flex justify-between text-[#A39A8B]">
                   <span>المجموع الفرعي ({totalItemsCount} قطعة)</span>
                   <span className="font-mono font-bold text-[#F3EEE4]">{subtotal.toFixed(2)} د.أ</span>
@@ -686,18 +700,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <span>أجور التوصيل ({governorate})</span>
                   <span className={`font-semibold font-mono ${deliveryFee === 0 ? 'text-[#7FD1A0]' : 'text-[#F3EEE4]'}`}>{deliveryFee === 0 ? 'مجاني' : `${deliveryFee.toFixed(2)} د.أ`}</span>
                 </div>
-                <div className="pt-2 border-t border-white/10 flex justify-between font-black text-sm text-[#F3EEE4]">
-                  <span>المبلغ الإجمالي:</span>
-                  <span className="font-mono text-base">{total.toFixed(2)} د.أ</span>
+                <div className="pt-3 border-t border-white/10 flex justify-between font-black text-[#F3EEE4] items-end">
+                  <span className="text-base">المبلغ الإجمالي:</span>
+                  <span className="font-mono text-2xl text-[#E8CC8A] leading-none">{total.toFixed(2)} <span className="text-sm font-bold text-[#A39A8B]">د.أ</span></span>
                 </div>
               </div>
 
-              <button type="submit" disabled={isSubmitting} className="w-full py-3.5 px-6 text-sm font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
-                <span>{isSubmitting ? 'جارٍ التحقق من المخزون وحفظ الطلب...' : 'تأكيد طلب الشراء الآن 🛒'}</span>
+              <button type="submit" disabled={isSubmitting} className="w-full py-4 px-6 text-base font-black text-[#0B0A09] bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] hover:from-[#E8CC8A] hover:to-[#E8CC8A] rounded-xl shadow-[0_8px_20px_-8px_rgba(212,176,106,0.6)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-50">
+                <span>{isSubmitting ? 'جارٍ التحقق وحفظ الطلب...' : 'تأكيد طلب الشراء الآن 🛒'}</span>
               </button>
 
-              <p className="flex items-center justify-center gap-1.5 text-[10px] text-[#8A8173]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#7FD1A0]" />
+              <p className="flex items-center justify-center gap-2 text-[10px] text-[#8A8173]">
+                <ShieldCheck className="w-4 h-4 text-[#7FD1A0]" />
                 يُفحص السعر والمخزون من السيرفر لحظة الإرسال — الطلب محمي بمعاملة ذرّية
               </p>
             </form>
