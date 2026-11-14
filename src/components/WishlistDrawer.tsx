@@ -63,7 +63,8 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                   onClick={onClose}
                   className="py-2.5 px-6 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl transition-all cursor-pointer"
                 >
-                  تصفح الطاولات
+                  {/* 💡 تم تعديل النص هنا */}
+                  تصفح المنتجات
                 </button>
               </div>
             ) : (
