@@ -453,6 +453,12 @@ export default function App() {
     setSelectedColor('');
   };
 
+  // 💡 دالة العودة للصفحة الرئيسية بالكامل
+  const goHome = () => {
+    handleResetFilters(); // تصفير كل الفلاتر والبحث
+    scrollToTop();        // الصعود لأعلى الصفحة
+  };
+
   // Filtered Products logic
   const filteredProducts = useMemo(() => {
     const filtered = products.filter((prod) => {
@@ -856,13 +862,13 @@ export default function App() {
 
         <FloatingActions />
         
-        {/* 💡 شريط التنقل السفلي للموبايل */}
+        {/* 💡 شريط التنقل السفلي للموبايل (تم تمرير دالة العودة للرئيسية) */}
         <MobileBottomNav
           cartCount={cartTotalCount}
           wishlistCount={wishlist.length}
           onOpenCart={() => setIsCartOpen(true)}
           onOpenWishlist={() => setIsWishlistOpen(true)}
-          onScrollToTop={scrollToTop}
+          onGoHome={goHome}
           onScrollToCategories={scrollToCategories}
         />
 
