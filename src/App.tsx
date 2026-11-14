@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
-import { Sparkles, MessageCircle } from 'lucide-react'; // 💡 تمت الإضافة
+import { Sparkles, MessageCircle } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
@@ -18,7 +18,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Toast, ToastData, ToastVariant } from './components/Toast';
 import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
-import { STORE_PHONE_INTL } from './utils/jordanLocations'; // 💡 تمت الإضافة
+import { STORE_PHONE_INTL } from './utils/jordanLocations';
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
@@ -64,7 +64,6 @@ export default function App() {
   });
 
   useEffect(() => {
-    // 💡 هذا السطر مهم جداً ليتعرف المتصفح على الوضع (لشريط التمرير والحقول)
     document.documentElement.dataset.theme = isLightTheme ? 'light' : 'dark';
     try {
       localStorage.setItem('dukan962_store_theme', isLightTheme ? 'light' : 'dark');
@@ -581,7 +580,6 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      {/* 💡 التعديل هنا: إضافة storefront-theme و data-theme */}
       <div 
         className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden"
         data-theme={isLightTheme ? 'light' : 'dark'}
@@ -662,7 +660,7 @@ export default function App() {
 
           {/* ✨ قسم العطور حسب الطلب (يظهر فقط داخل قسم العطور) */}
           {(currentCategoryData.name.includes('عطور') || selectedCategory === 'perfumes') && (
-            <div className="mb-8 relative overflow-hidden rounded-[24px] bg-gradient-to-l from-[#141210] to-[#1C1815] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="mb-8 relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.15),transparent_50%)] pointer-events-none" />
               
               <div className="relative z-10 text-center sm:text-right flex-1">
