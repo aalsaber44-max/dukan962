@@ -287,13 +287,20 @@
   color: #776F64 !important;
 }
 
-/* 💡 الاستثناءات الجديدة: إبقاء النصوص بيضاء فوق الصور والطبقات الداكنة */
+/* ───────────────────────────────────────────
+   💡 الاستثناءات الذكية: تثبيت ألوان العناصر فوق الصور
+   ─────────────────────────────────────────── */
 .storefront-theme[data-theme="light"] .\!text-white {
   color: #FFFFFF !important;
 }
+.storefront-theme[data-theme="light"] .\!fill-white {
+  fill: #FFFFFF !important;
+}
 /* إبقاء خلفيات الـ Glass الداكنة فوق الصور داكنة لتظهر النصوص بوضوح */
+.storefront-theme[data-theme="light"] [class~="!bg-black/60"],
+.storefront-theme[data-theme="light"] [class~="bg-black/60"],
 .storefront-theme[data-theme="light"] [class~="bg-black/50"] {
-  background-color: rgba(11, 10, 9, 0.6) !important;
+  background-color: rgba(11, 10, 9, 0.65) !important;
 }
 .storefront-theme[data-theme="light"] [class~="bg-black/40"] {
   background-color: rgba(11, 10, 9, 0.5) !important;
