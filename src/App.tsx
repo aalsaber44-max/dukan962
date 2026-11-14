@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
-import { Sparkles, MessageCircle, Flame, Clock } from 'lucide-react'; // 💡 أيقونات جديدة للأقسام
+import { Sparkles, MessageCircle, Flame, Clock } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
@@ -20,16 +20,14 @@ import { Toast, ToastData, ToastVariant } from './components/Toast';
 import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
 import { STORE_PHONE_INTL } from './utils/jordanLocations';
 
-// 💡 استيراد الميزات
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { RecentlyViewed } from './components/RecentlyViewed';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
+import { FAQ } from './components/FAQ'; // 💡 استيراد مكون الأسئلة الشائعة
 
-// استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, testFirestoreConnection } from './firebase';
 
-// ⚡ تحميل كسول للوحة التحكم
 const AdminDashboard = lazy(() =>
   import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 );
@@ -439,7 +437,6 @@ export default function App() {
     [products, selectedProductModal]
   );
 
-  // 💡 استخراج المنتجات للعروض والمنتجات الجديدة (تظهر فقط في الصفحة الرئيسية)
   const offersProducts = useMemo(() => {
     return products
       .filter((p) => p.isActive !== false && Number(p.originalPrice) > Number(p.basePrice))
@@ -587,7 +584,6 @@ export default function App() {
           }}
         />
 
-        {/* 💡 الأقسام الجديدة تظهر فقط في الصفحة الرئيسية */}
         {selectedCategory === 'all' && (
           <>
             {offersProducts.length > 0 && (
@@ -785,6 +781,9 @@ export default function App() {
             </div>
           )}
         </main>
+
+        {/* 💡 قسم الأسئلة الشائعة */}
+        <FAQ />
 
         <Footer
           categories={categories}
