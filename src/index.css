@@ -77,13 +77,11 @@
     background-size: 200% 100%;
   }
 
-  /* خط ذهبي رفيع يتلاشى على الأطراف */
   .gold-rule {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgb(212 176 106 / 0.55), transparent);
   }
 
-  /* ✨ العنصر المميز: إضاءة ذهبية تتبع المؤشر على الحافة والسطح */
   .spotlight { position: relative; }
   .spotlight::before,
   .spotlight::after {
@@ -126,11 +124,8 @@
   }
 }
 
-
 /* ───────────────────────────────────────────
    وضع Warm Luxury — المتجر فقط
-   يتم تفعيله عبر data-theme على غلاف المتجر،
-   ولا يؤثر على لوحة الإدارة.
    ─────────────────────────────────────────── */
 .storefront-theme {
   min-height: 100vh;
@@ -153,7 +148,6 @@
   color: #91877A;
 }
 
-/* خلفيات الواجهة والبطاقات الداكنة */
 .storefront-theme[data-theme="light"] [class~="bg-[#080706]"],
 .storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]"],
 .storefront-theme[data-theme="light"] [class~="bg-[#0F0D0B]"],
@@ -176,7 +170,6 @@
   background-color: #EFEAE2 !important;
 }
 
-/* ألوان النصوص */
 .storefront-theme[data-theme="light"] [class~="text-[#F3EEE4]"],
 .storefront-theme[data-theme="light"] [class~="text-[#CFC7B8]"],
 .storefront-theme[data-theme="light"] [class~="text-white"] {
@@ -196,7 +189,6 @@
   color: #A88962 !important;
 }
 
-/* الأزرار والعناصر الذهبية */
 .storefront-theme[data-theme="light"] [class~="bg-[#D4B06A]"],
 .storefront-theme[data-theme="light"] [class~="bg-[#E8CC8A]"] {
   background-color: #A88962 !important;
@@ -216,7 +208,6 @@
   --tw-gradient-to: #A88962 var(--tw-gradient-to-position) !important;
 }
 
-/* حدود، فواصل، حلقات التركيز */
 .storefront-theme[data-theme="light"] [class~="border-white/10"],
 .storefront-theme[data-theme="light"] [class~="border-white/15"],
 .storefront-theme[data-theme="light"] [class~="border-white/20"],
@@ -238,7 +229,6 @@
   --tw-ring-offset-color: #FFFFFF !important;
 }
 
-/* درجات الحالة تبقى واضحة في الوضعين */
 .storefront-theme[data-theme="light"] [class~="text-[#7FD1A0]"] {
   color: #39734D !important;
 }
@@ -254,7 +244,6 @@
   color: #C24152 !important;
 }
 
-/* ظلال أخف لتناسب الأسطح الفاتحة */
 .storefront-theme[data-theme="light"] .shadow-soft,
 .storefront-theme[data-theme="light"] .shadow-lift,
 .storefront-theme[data-theme="light"] .shadow-glass {
@@ -277,18 +266,15 @@
   border-color: #FAF8F4;
 }
 
-/* تحسين خلفيات الصور داخل بطاقات المنتجات */
 .storefront-theme[data-theme="light"] [class~="bg-gradient-to-b"] {
   --tw-gradient-from: #F2EDE4 var(--tw-gradient-from-position);
   --tw-gradient-to: #E9E1D4 var(--tw-gradient-to-position);
 }
 
-/* تبديل الألوان بسلاسة دون التأثير على الصور */
 .storefront-theme[data-theme="light"] :where(button, a, article, input, section, aside) {
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
   transition-duration: 220ms;
 }
-
 
 .storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]/70"],
 .storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]/0"] {
@@ -299,4 +285,16 @@
 }
 .storefront-theme[data-theme="light"] [class~="text-[#D6D0C7]"] {
   color: #776F64 !important;
+}
+
+/* 💡 الاستثناءات الجديدة: إبقاء النصوص بيضاء فوق الصور والطبقات الداكنة */
+.storefront-theme[data-theme="light"] .\!text-white {
+  color: #FFFFFF !important;
+}
+/* إبقاء خلفيات الـ Glass الداكنة فوق الصور داكنة لتظهر النصوص بوضوح */
+.storefront-theme[data-theme="light"] [class~="bg-black/50"] {
+  background-color: rgba(11, 10, 9, 0.6) !important;
+}
+.storefront-theme[data-theme="light"] [class~="bg-black/40"] {
+  background-color: rgba(11, 10, 9, 0.5) !important;
 }
