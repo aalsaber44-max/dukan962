@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Volume2, VolumeX, Play, Pause, AlertTriangle } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface CategoryVideoBannerProps {
   videoUrl: string;
@@ -18,6 +18,8 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasError, setHasError] = useState(false);
+  // 💡 حالة جديدة: لمعرفة ما إذا كان الفيديو في طور التحميل
+  const [isBuffering, setIsBuffering] = useState(false);
 
   // ⛔ منع أي تشغيل تلقائي: نتأكد أن الفيديوهين متوقفان فور التحميل
   useEffect(() => {
@@ -51,6 +53,8 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
     const bg = bgVideoRef.current;
     if (!main) return;
 
+    setIsBuffering(true); // إظهار مؤشر التحميل
+
     try {
       // ضغط المستخدم = user gesture، فيسمح المتصفح بالصوت
       await main.play();
@@ -61,8 +65,8 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
       try {
         await main.play();
       } catch (err) {
-        // 💡 تم إزالة setHasError هنا: قد يكون الفيديو فقط بطيئاً في التحميل
         console.warn('Video play delayed, waiting for data:', err);
+        setIsBuffering(false); // إخفاء المؤشر في حال فشل التشغيل
         return;
       }
     }
@@ -80,6 +84,7 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
   const pauseBoth = () => {
     mainVideoRef.current?.pause();
     bgVideoRef.current?.pause();
+    setIsBuffering(false);
   };
 
   const handlePlayPause = async (e?: React.MouseEvent) => {
@@ -122,7 +127,7 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
     <div className="relative mb-6 sm:mb-8 rounded-[22px] sm:rounded-[28px] overflow-hidden ring-1 ring-white/10 shadow-lift bg-[#0B0A09]">
       <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] flex items-center justify-center overflow-hidden">
 
-        {/* الخلفية الضبابية — muted دائماً، تُشغَّل/تُوقَف فقط بالتبعية */}
+        {/* الخلفية الضبابية — muted دائماً، preload=metadata لتخفيف التحميل */}
         <video
           ref={bgVideoRef}
           src={videoUrl}
@@ -130,26 +135,32 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none"
         />
 
-        {/* الفيديو الأساسي — بدون muted ليبدأ بالصوت عند أول تشغيل، وبدون bg-black ليبقى شفافاً */}
+        {/* الفيديو الأساسي — preload=metadata لتسريع الظهور الأولي */}
         <video
           ref={mainVideoRef}
           src={videoUrl}
           poster={poster}
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           aria-label={`فيديو قسم ${title}`}
           className="relative z-10 w-full h-full object-contain"
           onPlay={handleMainPlay}
           onPause={handleMainPause}
           onVolumeChange={syncMutedState}
           onError={() => setHasError(true)}
-          onLoadedData={() => setHasError(false)}
+          onLoadedData={() => {
+            setHasError(false);
+            setIsBuffering(false);
+          }}
+          // 💡 مراقبة حالة التحميل (buffering)
+          onWaiting={() => setIsBuffering(true)}
+          onPlaying={() => setIsBuffering(false)}
         />
 
         {/* زر تشغيل كبير في المنتصف */}
@@ -161,7 +172,12 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
             aria-label="تشغيل الفيديو"
           >
             <span className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/25 backdrop-blur-md ring-2 ring-white/60 flex items-center justify-center group-hover/play:scale-110 transition-transform shadow-2xl">
-              <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white ml-1" />
+              {isBuffering ? (
+                // 💡 يظهر هذا المؤشر إذا كان الفيديو قيد التحميل
+                <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-white animate-spin" />
+              ) : (
+                <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white ml-1" />
+              )}
             </span>
           </button>
         )}
