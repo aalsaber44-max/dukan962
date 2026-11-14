@@ -47,8 +47,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [finalWhatsAppUrl, setFinalWhatsAppUrl] = useState('');
-
-  // 💡 حالات مستقلة لحفظ الإجمالي وعدد القطع لشاشة التأكيد
   const [confirmedTotal, setConfirmedTotal] = useState(0);
   const [confirmedItemsCount, setConfirmedItemsCount] = useState(0);
 
@@ -66,6 +64,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const regionInputRef = useRef<HTMLInputElement>(null);
   const streetInputRef = useRef<HTMLInputElement>(null);
   const buildingInputRef = useRef<HTMLInputElement>(null);
+  
+  // 💡 مرجع جديد للـ div الخاص برسائل الخطأ للتمرير إليه
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  // 💡 التمرير التلقائي إلى رسالة الخطأ عند ظهورها
+  useEffect(() => {
+    if (cartError.length > 0 && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [cartError]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -175,7 +183,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    // ── 1) تحقق الحقول ──
     const nameParts = name.trim().split(/\s+/).filter(Boolean);
     const nameOk = nameParts.length >= 4;
     setNameError(nameOk ? null : 'الرجاء إدخال الاسم الرباعي كاملاً (أربع مقاطع على الأقل) كما في هويتك.');
@@ -208,7 +215,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    // ── 2) فحص أولي سريع ──
     const { cart: preCart, messages: preMessages } = reconcileCart(items, products);
     if (preMessages.length > 0) {
       setCartError(preMessages);
@@ -233,16 +239,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     const counterDocRef = doc(db, 'counters', 'orders');
 
     try {
-      // ── 3) المعاملة الذرّية ──
       const result = await runTransaction(db, async (transaction) => {
-        // 3.a) رقم الطلب الفريد
         const counterSnap = await transaction.get(counterDocRef);
         const rawCount = counterSnap.exists() ? counterSnap.data().count : 10000;
         const currentCount = Number.isFinite(Number(rawCount)) ? Number(rawCount) : 10000;
         const nextCount = currentCount + 1;
         const orderNumberStr = `DUKAN-${nextCount}`;
 
-        // 3.b) قراءة المنتجات من السيرفر
         const uniqueProductIds = Array.from(
           new Set(preCart.map((it) => it.product?.id).filter((id): id is string => Boolean(id)))
         );
@@ -255,13 +258,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           serverProducts.set(pid, snap.exists() ? { ...snap.data(), __ref: doc(db, 'products', pid) } : null);
         });
 
-        // 3.c) التحقق وبناء السلة من بيانات السيرفر
         const validationErrors: string[] = [];
         const rebuiltCart: CartItem[] = [];
-        const updatedColorsByProduct = new Map<string, any[]>();
         const updatedRootStockByProduct = new Map<string, number>();
         
-        // 💡 حساب الإجمالي من السيرفر مباشرة
         let finalSubtotal = 0;
 
         for (const cartItem of preCart) {
@@ -281,6 +281,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           const needQty = Math.max(0, Number(cartItem.quantity) || 0);
           const cartPrice = getItemUnitPrice(cartItem);
 
+          // 💡 1. فحص المخزون (على مستوى المنتج ككل)
+          const productStock = typeof serverProduct.stock === 'number' ? Math.max(0, Number(serverProduct.stock)) : Infinity;
+          const prevStock = updatedRootStockByProduct.get(pid) ?? productStock;
+
+          if (prevStock < needQty) {
+             validationErrors.push(
+                `الكمية المطلوبة من "${serverProduct.name}" غير متوفرة (المتاح: ${prevStock === Infinity ? 'غير محدود' : prevStock}، المطلوب: ${needQty}).`
+             );
+             continue;
+          }
+          
+          if (prevStock !== Infinity) {
+             updatedRootStockByProduct.set(pid, prevStock - needQty);
+          }
+
+          // 💡 2. فحص اللون والسعر
           if (serverColors.length > 0) {
             const colorName = cartItem.selectedColor?.name;
             const colorIdx = serverColors.findIndex((c) => c?.name === colorName);
@@ -291,12 +307,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             const serverColor = serverColors[colorIdx];
             const serverColorPrice = Number(serverColor.price);
             
-            // السعر النهائي من السيرفر (أو السعر الأساسي إذا كان سعر اللون غير صالح)
             const effectiveServerPrice = Number.isFinite(serverColorPrice) && serverColorPrice > 0
               ? serverColorPrice
               : (Number.isFinite(serverBasePrice) && serverBasePrice > 0 ? serverBasePrice : 0);
 
-            // مقارنة السعر
             if (Math.abs(effectiveServerPrice - cartPrice) > 0.01) {
               validationErrors.push(
                 `تغيّر سعر "${serverProduct.name} - ${colorName}" من ${cartPrice.toFixed(2)} إلى ${effectiveServerPrice.toFixed(2)} د.أ. يرجى تحديث السلة.`
@@ -304,24 +318,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               continue;
             }
 
-            // 💡 خصم المخزون (إن وُجد)
-            const prevColors = updatedColorsByProduct.get(pid) ?? serverColors;
-            const prevStock = Number(prevColors[colorIdx]?.stock);
-            const baseStock = Number.isFinite(prevStock) ? prevStock : Number(serverColor.stock) || 0;
-            
-            if (baseStock < needQty) {
-              validationErrors.push(
-                `الكمية المطلوبة من "${serverProduct.name} - ${colorName}" غير متوفرة (المتاح: ${baseStock}، المطلوب: ${needQty}).`
-              );
-              continue;
-            }
-
-            const colorCopy = { ...serverColor, stock: baseStock - needQty };
-            const newColors = [...prevColors];
-            newColors[colorIdx] = colorCopy;
-            updatedColorsByProduct.set(pid, newColors);
-
-            // 💡 إضافة السعر المستخرج من السيرفر للإجمالي مباشرة
             finalSubtotal += effectiveServerPrice * needQty;
 
             rebuiltCart.push({
@@ -331,7 +327,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               selectedColor: { ...cartItem.selectedColor, price: effectiveServerPrice },
             });
           } else {
-            // منتج بدون ألوان
             const effectiveServerPrice = Number.isFinite(serverBasePrice) && serverBasePrice > 0 ? serverBasePrice : 0;
             
             if (Math.abs(effectiveServerPrice - cartPrice) > 0.01) {
@@ -341,20 +336,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               continue;
             }
 
-            // 💡 سياسة المنتجات غير المتتبَّعة:
-            // إذا لم يكن stock رقماً، نتجاهل الخصم ونكمل (الطلب سيُسجل كـ stockDeducted: true لأننا عالجنا المخزون المتاح).
-            if (typeof serverProduct.stock === 'number') {
-              const prevRootStock = updatedRootStockByProduct.get(pid) ?? (Number(serverProduct.stock) || 0);
-              if (prevRootStock < needQty) {
-                validationErrors.push(
-                  `الكمية المطلوبة من "${serverProduct.name}" غير متوفرة (المتاح: ${prevRootStock}، المطلوب: ${needQty}).`
-                );
-                continue;
-              }
-              updatedRootStockByProduct.set(pid, prevRootStock - needQty);
-            }
-
-            // 💡 إضافة السعر المستخرج من السيرفر للإجمالي مباشرة
             finalSubtotal += effectiveServerPrice * needQty;
 
             rebuiltCart.push({
@@ -371,11 +352,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           throw err;
         }
 
-        // 3.d) الحسابات النهائية بناءً على المجموع المستخرج من السيرفر
         const finalDeliveryFee = calculateDeliveryFee(governorate, finalSubtotal);
         const finalTotal = finalSubtotal + finalDeliveryFee;
 
-        // 3.e) بناء الطلب
         const orderPayload = stripUndefined({
           id: orderNumberStr,
           name: name.trim(),
@@ -398,14 +377,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           createdAt: new Date().toISOString(),
         });
 
-        // 3.f) الكتابة
         transaction.set(orderDocRef, orderPayload);
         transaction.set(counterDocRef, { count: nextCount }, { merge: true });
 
-        for (const [pid, newColors] of updatedColorsByProduct.entries()) {
-          const ref = serverProducts.get(pid)?.__ref;
-          if (ref) transaction.update(ref, { colors: newColors });
-        }
+        // 💡 حفظ المخزون المخصوم للمنتج
         for (const [pid, newStock] of updatedRootStockByProduct.entries()) {
           const ref = serverProducts.get(pid)?.__ref;
           if (ref) transaction.update(ref, { stock: newStock });
@@ -421,7 +396,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         };
       });
 
-      // ── 4) بعد نجاح المعاملة ──
       setOrderNumber(result.orderNumber);
       setConfirmedTotal(result.total);
       setConfirmedItemsCount(result.cart.reduce((s, i) => s + i.quantity, 0));
@@ -544,7 +518,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <span className="text-xs font-bold text-[#D4B06A] uppercase tracking-wider">رقم تتبع الطلب</span>
               <h4 className="text-2xl font-black text-[#F3EEE4] font-mono mt-1 mb-2">{orderNumber}</h4>
 
-              {/* 💡 استخدام القيم المحفوظة بدلاً من total و totalItemsCount المتغيرين */}
               <div className="inline-flex items-center gap-3 bg-[#1C1815] ring-1 ring-white/10 rounded-2xl px-4 py-2.5 mb-4 text-xs">
                 <span className="text-[#A39A8B]">القطع: <strong className="text-[#F3EEE4] font-mono">{confirmedItemsCount}</strong></span>
                 <span aria-hidden="true" className="h-3.5 w-px bg-white/15" />
@@ -567,8 +540,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
+              {/* 💡 ref={errorRef} لجعل الشاشة تنزل تلقائياً للخطأ */}
               {cartError.length > 0 && (
-                <div className="bg-rose-500/10 border border-rose-400/30 rounded-2xl p-3.5 space-y-1.5" role="alert">
+                <div ref={errorRef} className="bg-rose-500/10 border border-rose-400/30 rounded-2xl p-3.5 space-y-1.5" role="alert">
                   <div className="flex items-center gap-2 text-xs font-bold text-rose-300">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>يرجى المراجعة قبل تأكيد الطلب:</span>
