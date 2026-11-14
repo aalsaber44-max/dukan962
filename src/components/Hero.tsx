@@ -58,7 +58,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               className="absolute inset-0 w-full h-full object-contain z-10 animate-kenburns"
             />
 
-            {/* 💡 زيادة تعتيم الخلفية قليلاً لضمان وضوح النص الأبيض في الوضع الصباحي */}
+            {/* تعتيم الخلفية لضمان وضوح النصوص */}
             <div className="absolute inset-0 z-10 bg-gradient-to-l from-black/90 via-black/50 to-transparent pointer-events-none" />
             <div className="absolute inset-x-0 bottom-0 h-1/3 z-10 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
@@ -68,7 +68,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 variants={container}
                 initial="hidden"
                 animate="show"
-                // 💡 إجبار النص ليكون أبيض دائماً لأنه فوق صورة
                 className="max-w-2xl !text-white drop-shadow-xl"
               >
                 <motion.div variants={item} className="flex items-center gap-2.5 mb-3 sm:mb-5">
@@ -96,9 +95,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 </motion.p>
 
                 <motion.div variants={item} className="flex items-center gap-3 sm:gap-4">
+                  {/* 💡 زر ذهبي ثابت ونص أسود ثابت في الوضعين */}
                   <button
                     onClick={onExploreClick}
-                    className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] !text-[#0B0A09] text-sm sm:text-base font-bold shadow-gold transition-all duration-300 hover:shadow-[0_16px_40px_-10px_rgba(232,204,138,0.8)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                    className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full !bg-[#D4B06A] hover:!bg-[#E8CC8A] !text-[#0B0A09] text-sm sm:text-base font-bold shadow-gold transition-all duration-300 hover:shadow-[0_16px_40px_-10px_rgba(232,204,138,0.8)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                   >
                     <span
                       aria-hidden="true"
@@ -108,8 +108,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                     <ArrowLeft className="relative w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover/btn:-translate-x-1" />
                   </button>
 
-                  {/* 💡 الزر الثانوي بخلفية داكنة شفافة ونص أبيض */}
-                  <span className="hidden sm:inline-flex items-center gap-2 h-14 px-5 rounded-full text-sm font-semibold !text-white bg-black/40 ring-1 ring-white/20 backdrop-blur-md drop-shadow-md">
+                  <span className="hidden sm:inline-flex items-center gap-2 h-14 px-5 rounded-full text-sm font-semibold !text-white !bg-black/50 ring-1 ring-white/20 backdrop-blur-md drop-shadow-md">
                     <ShieldCheck className="w-5 h-5 text-[#E8CC8A]" />
                     يوجد معاينة عند وصول الطلب
                   </span>
