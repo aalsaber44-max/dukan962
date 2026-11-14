@@ -20,9 +20,10 @@ import { Toast, ToastData, ToastVariant } from './components/Toast';
 import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
 import { STORE_PHONE_INTL } from './utils/jordanLocations';
 
-// 💡 استيراد الميزات الجديدة
+// 💡 استيراد الميزات
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { RecentlyViewed } from './components/RecentlyViewed';
+import { OrderTrackingModal } from './components/OrderTrackingModal'; // 💡 نافذة تتبع الطلبات
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
@@ -42,7 +43,6 @@ const AdminDashboardFallback = () => (
   </div>
 );
 
-// 💡 بيانات الصفحة الرئيسية الافتراضية
 const homeCategoryData: Category = {
   id: 'all',
   name: 'الرئيسية',
@@ -58,7 +58,6 @@ const homeCategoryData: Category = {
 };
 
 export default function App() {
-  // وضع ألوان المتجر فقط؛ لوحة الإدارة تبقى على تصميمها الحالي.
   const [isLightTheme, setIsLightTheme] = useState<boolean>(() => {
     try {
       return localStorage.getItem('dukan962_store_theme') === 'light';
@@ -71,17 +70,13 @@ export default function App() {
     document.documentElement.dataset.theme = isLightTheme ? 'light' : 'dark';
     try {
       localStorage.setItem('dukan962_store_theme', isLightTheme ? 'light' : 'dark');
-    } catch {
-      // استمرار عمل الواجهة حتى إذا كان التخزين المحلي غير متاح.
-    }
+    } catch {}
   }, [isLightTheme]);
 
-  // 1. حالات المنتجات والأقسام
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
 
-  // 2. جلب المنتجات والأقسام من السحابة (Live Sync)
   useEffect(() => {
     const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
       const prods: Product[] = [];
@@ -119,76 +114,25 @@ export default function App() {
     };
   }, []);
 
-  // 🩺 اختبار الاتصال بقاعدة Firestore عند الإقلاع
   useEffect(() => {
     testFirestoreConnection();
   }, []);
 
-  // 🔄 تحديث بيانات السلة تلقائياً عند أي تغيّر في المنتجات
   useEffect(() => {
     if (!productsLoaded || products.length === 0 || cart.length === 0) return;
     setCart((prev) => refreshCartData(prev, products));
   }, [products, productsLoaded]);
 
-  // 💡 3. زراعة الأقسام الافتراضية — فقط عند أول تشغيل (مجموعة فارغة)
   useEffect(() => {
     const seedCategories = async () => {
       try {
         const snapshot = await getDocs(collection(db, 'categories'));
         
         const defaultCategories = [
-          {
-            id: 'tables',
-            name: 'طاولات',
-            image: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png',
-            bannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', 
-            mobileBannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png',
-            title: 'طاولات عصرية تجمع بين الأناقة والعملية',
-            description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات',
-            buttonText: 'استكشف طاولات العرض الآن',
-            badgeText: '✨ يوجد معاينة عند وصول الطلب',
-            isActive: true,
-            order: 1
-          },
-          {
-            id: 'shoes',
-            name: 'أحذية',
-            image: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png',
-            bannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', 
-            mobileBannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', 
-            title: 'أحدث صيحات الأحذية',
-            description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.',
-            buttonText: 'استكشف الأحذية الآن',
-            badgeText: '👟 خامات أصلية',
-            isActive: true,
-            order: 2
-          },
-          {
-            id: 'perfumes',
-            name: 'عطور',
-            image: 'https://i.postimg.cc/R0LRh1yY/Designer.png',
-            bannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', 
-            mobileBannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', 
-            title: 'عطور تدوم طويلاً',
-            description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.',
-            buttonText: 'استكشف العطور الآن',
-            badgeText: '🌟 عطور فاخرة',
-            isActive: true,
-            order: 3
-          },
-          {
-            id: 'ramadan',
-            name: 'زينة رمضان',
-            image: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png',
-            bannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', 
-            mobileBannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', 
-            title: 'زينة رمضان.. أضف البهجة لبيتك',
-            description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.',
-            buttonText: 'استكشف زينة رمضان',
-            badgeText: '🌙 أجواء رمضانية',
-            isActive: true,
-            order: 4
-          }
+          { id: 'tables', name: 'طاولات', image: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', bannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', mobileBannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', title: 'طاولات عصرية تجمع بين الأناقة والعملية', description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات', buttonText: 'استكشف طاولات العرض الآن', badgeText: '✨ يوجد معاينة عند وصول الطلب', isActive: true, order: 1 },
+          { id: 'shoes', name: 'أحذية', image: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', bannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', mobileBannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', title: 'أحدث صيحات الأحذية', description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.', buttonText: 'استكشف الأحذية الآن', badgeText: '👟 خامات أصلية', isActive: true, order: 2 },
+          { id: 'perfumes', name: 'عطور', image: 'https://i.postimg.cc/R0LRh1yY/Designer.png', bannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', mobileBannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', title: 'عطور تدوم طويلاً', description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.', buttonText: 'استكشف العطور الآن', badgeText: '🌟 عطور فاخرة', isActive: true, order: 3 },
+          { id: 'ramadan', name: 'زينة رمضان', image: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', bannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', mobileBannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', title: 'زينة رمضان.. أضف البهجة لبيتك', description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.', buttonText: 'استكشف زينة رمضان', badgeText: '🌙 أجواء رمضانية', isActive: true, order: 4 }
         ];
 
         if (snapshot.empty) {
@@ -220,7 +164,6 @@ export default function App() {
     seedCategories();
   }, []);
 
-  // 4. ترحيل المنتجات القديمة من المتصفح إلى السحابة
   useEffect(() => {
     const migrateOldProducts = async () => {
       const savedOldProducts = localStorage.getItem('dukan962_products_v3');
@@ -252,7 +195,6 @@ export default function App() {
     setTimeout(migrateOldProducts, 1500); 
   }, []);
 
-  // Cart state
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem('dukan962_cart');
@@ -261,7 +203,6 @@ export default function App() {
     return [];
   });
 
-  // Wishlist state
   const [wishlist, setWishlist] = useState<Product[]>(() => {
     try {
       const saved = localStorage.getItem('dukan962_wishlist');
@@ -270,28 +211,26 @@ export default function App() {
     return [];
   });
 
-  // Filtering state
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); 
   const [sortBy, setSortBy] = useState<'featured' | 'newest' | 'price-asc' | 'price-desc'>('featured');
   const [selectedColor, setSelectedColor] = useState<string>('');
 
-  // Modals & Drawers state
   const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  
+  // 💡 حالة نافذة تتبع الطلبات
+  const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
 
-  // Admin Security & Dashboard state
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  // Toast feedback
   const [toast, setToast] = useState<ToastData | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cart & Wishlist persistence
   useEffect(() => {
     localStorage.setItem('dukan962_cart', JSON.stringify(cart));
   }, [cart]);
@@ -314,16 +253,14 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
-  // 💡 دالة حفظ المنتج في "شوهد مؤخراً"
   const saveToRecentlyViewed = (product: Product) => {
     try {
       const savedIds: string[] = JSON.parse(localStorage.getItem('dukan962_recently_viewed') || '[]');
-      const newIds = [product.id, ...savedIds.filter(id => id !== product.id)].slice(0, 6); // نحتفظ بآخر 6 منتجات فقط
+      const newIds = [product.id, ...savedIds.filter(id => id !== product.id)].slice(0, 6);
       localStorage.setItem('dukan962_recently_viewed', JSON.stringify(newIds));
     } catch {}
   };
 
-  // Add to cart with color & quantity
   const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
     const liveProduct = products.find((p) => p.id === product.id);
     if (productsLoaded && !liveProduct) {
@@ -336,20 +273,16 @@ export default function App() {
     
     let activeColor: ProductColor;
 
-    // 💡 التحقق الصارم من اختيار العميل
     if (chosenColor && chosenColor.name) {
       const matchedColor = liveColors.find((c) => c.name === chosenColor.name);
       if (liveColors.length > 0 && !matchedColor) {
-        // العميل اختار لوناً، ولكن هذا اللون لم يعد موجوداً في أحدث نسخة من المنتج
         showToast(`عذراً، اللون "${chosenColor.name}" لم يعد متاحاً لهذا المنتج. يرجى اختيار لون آخر.`, { variant: 'warning' });
         return;
       }
-      activeColor = matchedColor || chosenColor; // إذا كان المنتج بلا ألوان، نأخذ اختيار العميل
+      activeColor = matchedColor || chosenColor;
     } else if (liveColors.length > 0) {
-      // العميل لم يختر لوناً (مثلاً ضغط إضافة للسلة من كرت المنتج)، نختار أول لون متاح تلقائياً
       activeColor = liveColors[0];
     } else {
-      // منتج بلا ألوان والعميل لم يرسل لوناً
       activeColor = {
         name: 'افتراضي',
         hex: '#3E2723',
@@ -428,7 +361,6 @@ export default function App() {
     );
   };
 
-  // Wishlist toggle
   const handleToggleWishlist = (product: Product) => {
     setWishlist((prev) => {
       const exists = prev.some((p) => p.id === product.id);
@@ -453,13 +385,11 @@ export default function App() {
     setSelectedColor('');
   };
 
-  // 💡 دالة العودة للصفحة الرئيسية بالكامل
   const goHome = () => {
-    handleResetFilters(); // تصفير كل الفلاتر والبحث
-    scrollToTop();        // الصعود لأعلى الصفحة
+    handleResetFilters();
+    scrollToTop();
   };
 
-  // Filtered Products logic
   const filteredProducts = useMemo(() => {
     const filtered = products.filter((prod) => {
       if (prod.isActive === false) return false;
@@ -496,7 +426,6 @@ export default function App() {
     return filtered;
   }, [products, selectedCategory, searchQuery, priceRange, selectedColor, sortBy]);
 
-  // منتجات مشابهة لنافذة التفاصيل
   const relatedProducts = useMemo(
     () =>
       selectedProductModal
@@ -517,12 +446,10 @@ export default function App() {
     [cart]
   );
 
-  // ✅ عند اختيار قسم: الصعود لأعلى الصفحة لرؤية بانر القسم الجديد في Hero
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 🎯 يُستخدم فقط في زر "استكشف تشكيلاتنا الآن" داخل Hero — يريد الزائر رؤية المنتجات فعلاً.
   const scrollToCatalog = () => {
     const el = document.getElementById('catalog');
     if (el) {
@@ -534,7 +461,6 @@ export default function App() {
     document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // الفلاتر النشطة
   const activeFilters: ActiveFilter[] = [];
   if (selectedCategory !== 'all') {
     activeFilters.push({
@@ -561,7 +487,6 @@ export default function App() {
     ? homeCategoryData 
     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
-  // 🔎 SEO ديناميكي
   useEffect(() => {
     const setMetaDescription = (content: string) => {
       let tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
@@ -575,9 +500,9 @@ export default function App() {
 
     if (selectedProductModal) {
       const price = Number(selectedProductModal.basePrice || 0).toFixed(2);
-      document.title = `${selectedProductModal.name} | ${price} د.أ | دكان 962`;
+      document.title = `${selectedProductModal.name} | ${price} د. أ | دكان 962`;
       setMetaDescription(
-        `${selectedProductModal.name} بسعر ${price} دينار أردني — ${selectedProductModal.description?.slice(0, 120) || 'منتج مختار بعناية من تشكيلات دكان 962 مع معاينة عند الاستلام والتوصيل لجميع المحافظات.'}`
+        `${selectedProductModal.name} بسعر ${price} دينار أردني — ${selectedProductModal.description?.slice(0, 120) || 'منتج مختار بعناية...'}`
       );
       return;
     }
@@ -586,7 +511,7 @@ export default function App() {
       document.title = `${currentCategoryData.name} | دكان 962 للأثاث`;
       setMetaDescription(
         currentCategoryData.description ||
-          `تشكيلة ${currentCategoryData.name} المميزة في دكان 962 — جودة عالية وأسعار منافسة والتوصيل لجميع محافظات المملكة بالدينار الأردني.`
+          `تشكيلة ${currentCategoryData.name} المميزة في دكان 962 — جودة عالية وأسعار منافسة...`
       );
       return;
     }
@@ -599,7 +524,6 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      {/* 💡 تمت إضافة pb-16 للموبايل و md:pb-0 للكمبيوتر لكي لا يغطي الشريط السفلي المحتوى */}
       <div 
         className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden pb-16 md:pb-0"
         data-theme={isLightTheme ? 'light' : 'dark'}
@@ -607,7 +531,6 @@ export default function App() {
         
         <Toast toast={toast} onDismiss={dismissToast} />
 
-        {/* Top Banner Notice */}
         <aside aria-label="شريط العروض" className="relative bg-[#080706] text-[#A39A8B] text-[11px] sm:text-xs py-2.5 px-4 text-center">
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
             <span className="text-[#E8CC8A] font-semibold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
@@ -619,7 +542,6 @@ export default function App() {
           <div aria-hidden="true" className="absolute bottom-0 inset-x-0 gold-rule opacity-60" />
         </aside>
 
-        {/* Navigation Header */}
         <Navbar
           categories={categories}
           currentCategoryData={currentCategoryData}
@@ -638,10 +560,8 @@ export default function App() {
           onToggleTheme={() => setIsLightTheme((current) => !current)}
         />
 
-        {/* Hero Section */}
         <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
 
-        {/* Categories Visual Section */}
         <CategoryBoxes
           categories={categories}
           selectedCategory={selectedCategory}
@@ -651,7 +571,6 @@ export default function App() {
           }}
         />
 
-        {/* Catalog & Shop Section */}
         <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
@@ -669,7 +588,6 @@ export default function App() {
             </div>
           </div>
 
-            {/* 🎬 بانر فيديو القسم — يظهر فقط عند اختيار قسم (ليس "الكل") ولديه فيديو */}
           {selectedCategory !== 'all' && currentCategoryData.videoUrl && (
             <CategoryVideoBanner
               videoUrl={currentCategoryData.videoUrl}
@@ -678,7 +596,6 @@ export default function App() {
             />
           )}
 
-          {/* ✨ قسم العطور حسب الطلب (يظهر فقط داخل قسم العطور) */}
           {(currentCategoryData.name.includes('عطور') || selectedCategory === 'perfumes') && (
             <div className="mb-8 relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.15),transparent_50%)] pointer-events-none" />
@@ -752,7 +669,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 💡 إضافة قسم شوهد مؤخراً هنا */}
           <RecentlyViewed 
             products={products} 
             cart={cart} 
@@ -791,7 +707,7 @@ export default function App() {
           )}
         </main>
 
-        {/* Footer */}
+        {/* 💡 تم تمرير onOpenTracking للفوتر */}
         <Footer
           categories={categories}
           currentCategoryData={currentCategoryData}
@@ -800,6 +716,7 @@ export default function App() {
             scrollToTop();
           }}
           onOpenAdmin={() => setIsAdminAuthOpen(true)}
+          onOpenTracking={() => setIsOrderTrackingOpen(true)}
         />
 
         <ProductDetailsPage
@@ -860,9 +777,14 @@ export default function App() {
           }}
         />
 
+        {/* 💡 نافذة تتبع الطلبات */}
+        <OrderTrackingModal
+          isOpen={isOrderTrackingOpen}
+          onClose={() => setIsOrderTrackingOpen(false)}
+        />
+
         <FloatingActions />
         
-        {/* 💡 شريط التنقل السفلي للموبايل (تم تمرير دالة العودة للرئيسية) */}
         <MobileBottomNav
           cartCount={cartTotalCount}
           wishlistCount={wishlist.length}
