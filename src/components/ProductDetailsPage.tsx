@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ShoppingBag, MessageCircle, Shield, Truck, Check, Sparkles, Heart, ShieldCheck, ZoomIn, Play, ExternalLink, Star } from 'lucide-react';
+import { X, ShoppingBag, MessageCircle, Shield, Truck, Check, Sparkles, Heart, ShieldCheck, ZoomIn, Play, ExternalLink, Star, Share2 } from 'lucide-react'; // 💡 إضافة أيقونة Share2
 import { Product, ProductColor } from '../types/furniture';
 import { STORE_PHONE_INTL } from '../utils/jordanLocations';
 import { getVideoSource } from '../utils/video';
 import { getStockState, availableQty } from '../utils/inventory';
 import { ImageLightbox } from './ImageLightbox';
-import { ProductReviews } from './ProductReviews'; // 💡 استيراد مكون التقييمات
+import { ProductReviews } from './ProductReviews';
 
 interface ProductDetailsPageProps {
   product: Product | null;
@@ -110,6 +110,27 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
     }, 850);
   };
 
+  // 💡 دالة المشاركة
+  const handleShare = async () => {
+    const shareData = {
+      title: `شاهد هذا المنتج في دكان 962`,
+      text: `شاهد هذا المنتج في دكان 962:\n*${product.name}*\nالسعر: ${currentPrice.toFixed(2)} د.أ\n`,
+      url: window.location.origin, // نشارك رابط الموقع الحالي
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      // كبديل لأجهزة الكمبيوتر أو المتصفحات القديمة: فتح واتساب
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(shareData.text + shareData.url)}`;
+      window.open(waUrl, '_blank');
+    }
+  };
+
   const stockState = getStockState(product);
   const maxQty = availableQty(product);
   const isOut = stockState === 'out';
@@ -148,6 +169,16 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
             aria-label="المفضلة"
           >
             <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-rose-600' : ''}`} />
+          </button>
+
+          {/* 💡 زر المشاركة */}
+          <button
+            onClick={handleShare}
+            className="p-2.5 rounded-full bg-[#141210]/85 hover:bg-[#1E1A17] text-[#F3EEE4] shadow-sm transition-all cursor-pointer"
+            aria-label="مشاركة المنتج"
+            title="مشاركة المنتج"
+          >
+            <Share2 className="w-5 h-5" />
           </button>
 
           <button
