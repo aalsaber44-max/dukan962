@@ -649,13 +649,48 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🎬 بانر فيديو القسم — يظهر فقط عند اختيار قسم (ليس "الكل") ولديه فيديو */}
+            {/* 🎬 بانر فيديو القسم — يظهر فقط عند اختيار قسم (ليس "الكل") ولديه فيديو */}
           {selectedCategory !== 'all' && currentCategoryData.videoUrl && (
             <CategoryVideoBanner
               videoUrl={currentCategoryData.videoUrl}
               poster={currentCategoryData.image}
               title={currentCategoryData.name}
             />
+          )}
+
+          {/* ✨ قسم العطور حسب الطلب (يظهر فقط داخل قسم العطور) */}
+          {(currentCategoryData.name.includes('عطور') || selectedCategory === 'perfumes') && (
+            <div className="mb-8 relative overflow-hidden rounded-[24px] bg-gradient-to-l from-[#141210] to-[#1C1815] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.15),transparent_50%)] pointer-events-none" />
+              
+              <div className="relative z-10 text-center sm:text-right flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4B06A]/10 text-[#E8CC8A] text-[11px] font-bold mb-3 ring-1 ring-[#D4B06A]/30">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  خدمة حصرية
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
+                  لم تجد عطرك المفضل؟ نوفر لك <span className="text-[#D4B06A]">عطور حسب الطلب</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-[#A39A8B] leading-relaxed max-w-xl">
+                  أرسل لنا اسم البراند ونوع العطر والحجم المطلوب، وسنقوم بتجهيز التركيبة الخاصة بك ومراجعتها.
+                  سنبلغك بالسعر ووقت التجهيز فوراً.
+                </p>
+              </div>
+
+              <div className="relative z-10 shrink-0">
+                <a
+                  href={`https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
+                    'مرحباً دكان 962،\nأرغب في طلب عطر مخصص (Custom Made).\n\nتفاصيل طلبي:\n- اسم البراند: \n- نوع العطر: \n- الحجم المطلوب: \n\nأرجو إبلاغي بالسعر ووقت التجهيز. شكراً لكم!'
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  اطلب عطرك المخصص الآن
+                </a>
+              </div>
+            </div>
           )}
 
           <FilterBar
