@@ -783,15 +783,17 @@ export default function App() {
           onClose={() => setIsOrderTrackingOpen(false)}
         />
 
-        <FloatingActions />
+        {/* 💡 تم تمرير onOpenTracking للزر العائم */}
+        <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
         
+        {/* 💡 تم تمرير onOpenTracking للشريط السفلي */}
         <MobileBottomNav
           cartCount={cartTotalCount}
           wishlistCount={wishlist.length}
           onOpenCart={() => setIsCartOpen(true)}
           onOpenWishlist={() => setIsWishlistOpen(true)}
           onGoHome={goHome}
-          onScrollToCategories={scrollToCategories}
+          onOpenTracking={() => setIsOrderTrackingOpen(true)}
         />
 
         <AdminAuthModal
