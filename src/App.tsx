@@ -52,6 +52,25 @@ const homeCategoryData: Category = {
 };
 
 export default function App() {
+  // وضع ألوان المتجر فقط؛ لوحة الإدارة تبقى على تصميمها الحالي.
+  const [isLightTheme, setIsLightTheme] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('dukan962_store_theme') === 'light';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    // 💡 هذا السطر مهم جداً ليتعرف المتصفح على الوضع (لشريط التمرير والحقول)
+    document.documentElement.dataset.theme = isLightTheme ? 'light' : 'dark';
+    try {
+      localStorage.setItem('dukan962_store_theme', isLightTheme ? 'light' : 'dark');
+    } catch {
+      // استمرار عمل الواجهة حتى إذا كان التخزين المحلي غير متاح.
+    }
+  }, [isLightTheme]);
+
   // 1. حالات المنتجات والأقسام
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -560,7 +579,11 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden">
+      {/* 💡 التعديل هنا: إضافة storefront-theme و data-theme */}
+      <div 
+        className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden"
+        data-theme={isLightTheme ? 'light' : 'dark'}
+      >
         
         <Toast toast={toast} onDismiss={dismissToast} />
 
@@ -591,6 +614,8 @@ export default function App() {
             setSelectedCategory(cat);
             scrollToTop();
           }}
+          isLightTheme={isLightTheme}
+          onToggleTheme={() => setIsLightTheme((current) => !current)}
         />
 
         {/* Hero Section */}
@@ -764,6 +789,8 @@ export default function App() {
           }}
         />
 
+        <FloatingActions />
+        
         <AdminAuthModal
           isOpen={isAdminAuthOpen}
           onClose={() => setIsAdminAuthOpen(false)}
@@ -780,7 +807,6 @@ export default function App() {
           />
         </Suspense>
 
-        <FloatingActions />
       </div>
     </ErrorBoundary>
   );
