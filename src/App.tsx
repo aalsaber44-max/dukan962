@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { Sparkles, MessageCircle } from 'lucide-react'; // 💡 تمت الإضافة
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
@@ -17,6 +18,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Toast, ToastData, ToastVariant } from './components/Toast';
 import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
+import { STORE_PHONE_INTL } from './utils/jordanLocations'; // 💡 تمت الإضافة
 
 // استيراد دوال Firebase
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
