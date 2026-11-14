@@ -1,13 +1,13 @@
 import React from 'react';
-import { Home, LayoutGrid, Heart, ShoppingBag } from 'lucide-react';
+import { Home, Truck, Heart, ShoppingBag } from 'lucide-react';
 
 interface MobileBottomNavProps {
   cartCount: number;
   wishlistCount: number;
   onOpenCart: () => void;
   onOpenWishlist: () => void;
-  onGoHome: () => void; // 💡 تم تغيير الاسم ليعبر عن العودة للرئيسية
-  onScrollToCategories: () => void;
+  onGoHome: () => void;
+  onOpenTracking: () => void; // 💡 تم التعديل
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -16,7 +16,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onOpenCart,
   onOpenWishlist,
   onGoHome,
-  onScrollToCategories,
+  onOpenTracking,
 }) => {
   return (
     <div className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-[#141210]/95 backdrop-blur-xl border-t border-white/10 pb-safe shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.8)]">
@@ -31,13 +31,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <span className="text-[10px] font-bold">الرئيسية</span>
         </button>
 
-        {/* الأقسام */}
+        {/* تتبع الطلب بدلاً من الأقسام */}
         <button
-          onClick={onScrollToCategories}
+          onClick={onOpenTracking}
           className="flex flex-col items-center justify-center w-full h-full gap-1 text-[#A39A8B] hover:text-[#E8CC8A] active:scale-95 transition-all"
         >
-          <LayoutGrid className="w-5 h-5" />
-          <span className="text-[10px] font-bold">الأقسام</span>
+          <Truck className="w-5 h-5" />
+          <span className="text-[10px] font-bold">تتبع طلبي</span>
         </button>
 
         {/* المفضلة */}
