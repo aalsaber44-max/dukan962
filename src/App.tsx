@@ -555,7 +555,7 @@ export default function App() {
           <div aria-hidden="true" className="absolute bottom-0 inset-x-0 gold-rule opacity-60" />
         </aside>
 
-        <Navbar
+  <Navbar
           categories={categories}
           currentCategoryData={currentCategoryData}
           cartCount={cartTotalCount}
@@ -571,6 +571,11 @@ export default function App() {
           }}
           isLightTheme={isLightTheme}
           onToggleTheme={() => setIsLightTheme((current) => !current)}
+          products={products} // 💡 تمرير المنتجات
+          onSelectProduct={(p) => { // 💡 فتح المنتج عند اختياره من البحث
+            saveToRecentlyViewed(p);
+            setSelectedProductModal(p);
+          }}
         />
 
         <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
