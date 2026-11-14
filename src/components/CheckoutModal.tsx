@@ -260,6 +260,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         const rebuiltCart: CartItem[] = [];
         const updatedRootStockByProduct = new Map<string, number>();
         
+        // 💡 إضافة متغير لحفظ الكميات المخصومة لكل منتج
+        const stockDeductions: Record<string, number> = {}; 
+        
         let finalSubtotal = 0;
 
         for (const cartItem of preCart) {
@@ -291,6 +294,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           
           if (prevStock !== Infinity) {
              updatedRootStockByProduct.set(pid, prevStock - needQty);
+             // 💡 تسجيل الكمية المخصومة
+             stockDeductions[pid] = (stockDeductions[pid] || 0) + needQty;
           }
 
           if (serverColors.length > 0) {
@@ -370,6 +375,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           total: finalTotal,
           status: 'جديد',
           stockDeducted: true,
+          stockDeductions: stockDeductions, // 💡 حفظ الكميات المخصومة في الفاتورة
           createdAt: new Date().toISOString(),
         });
 
