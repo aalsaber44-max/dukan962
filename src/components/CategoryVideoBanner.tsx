@@ -61,8 +61,8 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
       try {
         await main.play();
       } catch (err) {
-        console.error('Video play failed:', err);
-        setHasError(true);
+        // 💡 تم إزالة setHasError هنا: قد يكون الفيديو فقط بطيئاً في التحميل
+        console.warn('Video play delayed, waiting for data:', err);
         return;
       }
     }
@@ -112,7 +112,7 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
     }
   };
 
-  // ✅ أي إيقاف للفيديو الأساسي = أوقف الخلفية أيضاً (يُصلح المشكلة)
+  // ✅ أي إيقاف للفيديو الأساسي = أوقف الخلفية أيضاً
   const handleMainPause = () => {
     setIsPlaying(false);
     bgVideoRef.current?.pause();
@@ -130,21 +130,21 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none"
         />
 
-        {/* الفيديو الأساسي — بدون muted ليبدأ بالصوت عند أول تشغيل */}
+        {/* الفيديو الأساسي — بدون muted ليبدأ بالصوت عند أول تشغيل، وبدون bg-black ليبقى شفافاً */}
         <video
           ref={mainVideoRef}
           src={videoUrl}
           poster={poster}
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           aria-label={`فيديو قسم ${title}`}
-          className="relative z-10 w-full h-full object-contain bg-black"
+          className="relative z-10 w-full h-full object-contain"
           onPlay={handleMainPlay}
           onPause={handleMainPause}
           onVolumeChange={syncMutedState}
