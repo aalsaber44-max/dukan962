@@ -70,6 +70,8 @@ export default function App() {
           description: data.description || 'لا يوجد وصف',
           basePrice: Number(data.basePrice) || 0,
           originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+          images: Array.isArray(data.images) ? data.images : [],
+          colors: Array.isArray(data.colors) ? data.colors : [],
         } as Product);
       });
       setProducts(prods);
@@ -179,7 +181,7 @@ export default function App() {
           const currentData = existingDoc.data();
           const missingDefaults = Object.fromEntries(
             Object.entries(defaultCat).filter(([key]) =>
-              currentData[key] === undefined || currentData[key] === null || currentData[key] === ''
+              currentData[key] === undefined
             )
           );
           if (Object.keys(missingDefaults).length > 0) {
@@ -295,17 +297,34 @@ export default function App() {
       showToast('هذا المنتج لم يعد متوفراً في المتجر', { variant: 'warning' });
       return;
     }
+    
     const live = liveProduct || product;
-    const requestedColorName = chosenColor?.name || product.colors?.[0]?.name;
-    const activeColor = live.colors?.find((color) => color.name === requestedColorName)
-      || live.colors?.[0]
-      || chosenColor
-      || {
+    const liveColors = Array.isArray(live.colors) ? live.colors : [];
+    
+    let activeColor: ProductColor;
+
+    // 💡 التحقق الصارم من اختيار العميل
+    if (chosenColor && chosenColor.name) {
+      const matchedColor = liveColors.find((c) => c.name === chosenColor.name);
+      if (liveColors.length > 0 && !matchedColor) {
+        // العميل اختار لوناً، ولكن هذا اللون لم يعد موجوداً في أحدث نسخة من المنتج
+        showToast(`عذراً، اللون "${chosenColor.name}" لم يعد متاحاً لهذا المنتج. يرجى اختيار لون آخر.`, { variant: 'warning' });
+        return;
+      }
+      activeColor = matchedColor || chosenColor; // إذا كان المنتج بلا ألوان، نأخذ اختيار العميل
+    } else if (liveColors.length > 0) {
+      // العميل لم يختر لوناً (مثلاً ضغط إضافة للسلة من كرت المنتج)، نختار أول لون متاح تلقائياً
+      activeColor = liveColors[0];
+    } else {
+      // منتج بلا ألوان والعميل لم يرسل لوناً
+      activeColor = {
         name: 'افتراضي',
         hex: '#3E2723',
         price: live.basePrice,
         image: live.images?.[0] || '',
       };
+    }
+
     const canAdd = availableQty(live) - qtyInCart(cart, product.id);
     if (canAdd <= 0) {
       showToast(`"${product.name}" نفدت الكمية المتاحة`, { variant: 'warning' });
@@ -460,7 +479,6 @@ export default function App() {
   );
 
   // ✅ عند اختيار قسم: الصعود لأعلى الصفحة لرؤية بانر القسم الجديد في Hero
-  //    بدلاً من القفز إلى منطقة الكتالوج (حيث يظهر الفيديو أولاً).
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -571,7 +589,6 @@ export default function App() {
           onSearchChange={setSearchQuery}
           onSelectCategory={(cat) => {
             setSelectedCategory(cat);
-            // ✅ الصعود لأعلى الصفحة بدلاً من القفز إلى الكتالوج/الفيديو
             scrollToTop();
           }}
         />
@@ -585,7 +602,6 @@ export default function App() {
           selectedCategory={selectedCategory}
           onSelectCategory={(cat) => {
             setSelectedCategory(cat);
-            // ✅ الصعود لأعلى الصفحة بدلاً من القفز إلى الكتالوج/الفيديو
             scrollToTop();
           }}
         />
@@ -688,7 +704,6 @@ export default function App() {
           currentCategoryData={currentCategoryData}
           onSelectCategory={(cat) => {
             setSelectedCategory(cat);
-            // ✅ الصعود لأعلى الصفحة بدلاً من القفز إلى الكتالوج/الفيديو
             scrollToTop();
           }}
           onOpenAdmin={() => setIsAdminAuthOpen(true)}
