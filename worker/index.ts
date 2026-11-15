@@ -7,9 +7,9 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// 💡 الموديلات الصحيحة والمدعومة رسمياً
-const DEFAULT_MODEL = 'gemini-3.8-flash'; // الموديل الذي أوصت به جوجل في رسالة الخطأ
-const FALLBACK_MODEL = 'gemini-1.5-flash'; // موديل احتياطي مضمون
+// 💡 استخدام الموديلات الحالية والمدعومة رسمياً
+const DEFAULT_MODEL = 'gemini-3.8-flash';
+const FALLBACK_MODEL = 'gemini-3.5-flash-lite';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
