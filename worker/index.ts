@@ -7,9 +7,9 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// 💡 الموديلات التي تعمل فعلياً (تم التعديل من 2.5 إلى 3.8)
-const DEFAULT_MODEL = 'gemini-3.8-flash'; 
-const FALLBACK_MODEL = 'gemini-3.8-flash'; // نستخدم نفس الموديل كاحتياط في حال حدوث خطأ مؤقت
+// 💡 النماذج الصحيحة والمستقرة
+const DEFAULT_MODEL = 'gemini-2.5-flash'; 
+const FALLBACK_MODEL = 'gemini-2.0-flash'; 
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
@@ -138,6 +138,7 @@ ${message}
             systemInstruction: STORE_KNOWLEDGE,
             temperature: 0.3,
             maxOutputTokens: 250,
+            reasoning_effort: "low", // ✅ يقلل وقت التفكير ويسرع الرد
           },
         });
       } catch (err: any) {
@@ -152,6 +153,7 @@ ${message}
             systemInstruction: STORE_KNOWLEDGE,
             temperature: 0.3,
             maxOutputTokens: 250,
+            reasoning_effort: "low", // ✅ يقلل وقت التفكير للنموذج الاحتياطي أيضاً
           },
         });
       }
