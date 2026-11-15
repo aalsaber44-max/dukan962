@@ -24,6 +24,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { RecentlyViewed } from './components/RecentlyViewed';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
 import { FAQPage } from './components/FAQPage'; // 💡 استيراد صفحة الأسئلة الشائعة
+import { SupportChatbot } from './components/SupportChatbot';
 
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, testFirestoreConnection } from './firebase';
@@ -896,6 +897,8 @@ export default function App() {
         />
 
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
+
+        <SupportChatbot onOpenFAQ={() => setIsFAQPageOpen(true)} />
         
         <MobileBottomNav
           cartCount={cartTotalCount}
