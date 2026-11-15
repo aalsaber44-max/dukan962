@@ -82,7 +82,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     setIsSending(true);
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+    const timeoutId = window.setTimeout(() => controller.abort(), 60000);
 
     try {
       const response = await fetch('/api/chat', {
