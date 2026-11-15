@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
-import { Sparkles, MessageCircle, Flame, Clock } from 'lucide-react';
+import { Sparkles, MessageCircle, Flame, Clock, HelpCircle } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBoxes } from './components/CategoryBoxes';
@@ -23,7 +23,7 @@ import { STORE_PHONE_INTL } from './utils/jordanLocations';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { RecentlyViewed } from './components/RecentlyViewed';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
-import { FAQ } from './components/FAQ';
+import { FAQPage } from './components/FAQPage'; // 💡 استيراد صفحة الأسئلة الشائعة
 
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, testFirestoreConnection } from './firebase';
@@ -220,6 +220,7 @@ export default function App() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
+  const [isFAQPageOpen, setIsFAQPageOpen] = useState(false); // 💡 حالة صفحة الأسئلة
 
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -788,7 +789,31 @@ export default function App() {
           )}
         </main>
 
-        <FAQ />
+        {/* 💡 قسم الدعوة لزيارة الأسئلة الشائعة */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full border-t border-white/10">
+          <div className="relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.1),transparent_50%)] pointer-events-none" />
+            
+            <div className="relative z-10 text-center sm:text-right flex-1">
+              <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
+                هل لديك استفسار قبل الطلب؟
+              </h3>
+              <p className="text-xs sm:text-sm text-[#A39A8B] leading-relaxed max-w-xl">
+                كل ما تحتاج معرفته عن التوصيل، الدفع، والمعاينة موجود في صفحة مخصصة لراحتتك.
+              </p>
+            </div>
+
+            <div className="relative z-10 shrink-0">
+              <button
+                onClick={() => setIsFAQPageOpen(true)}
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+              >
+                <HelpCircle className="w-5 h-5" />
+                الأسئلة الشائعة وطريقة الطلب
+              </button>
+            </div>
+          </div>
+        </section>
 
         <Footer
           categories={categories}
@@ -862,6 +887,12 @@ export default function App() {
         <OrderTrackingModal
           isOpen={isOrderTrackingOpen}
           onClose={() => setIsOrderTrackingOpen(false)}
+        />
+
+        {/* 💡 صفحة الأسئلة الشائعة */}
+        <FAQPage
+          isOpen={isFAQPageOpen}
+          onClose={() => setIsFAQPageOpen(false)}
         />
 
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
