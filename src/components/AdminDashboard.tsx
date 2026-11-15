@@ -7,12 +7,11 @@ import {
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
 import { db } from '../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, increment, deleteField, runTransaction } from 'firebase/firestore'; 
-// 💡 تم تصحيح مسار الاستيراد هنا (لأن الملف في src وليس src/components)
 import { CategoryManager } from '../CategoryManager'; 
 import { AdminStats } from './AdminStats';
 import { StockBadge } from './StockBadge';
 import { aggregateItems, getStockState, planOrderStockChange, DEFAULT_LOW_STOCK } from '../utils/inventory';
-import { stripUndefined, toUpdateData } from '../utils/firestoreData';
+import { stripUndefined } from '../utils/firestoreData'; // 💡 تم حذف toUpdateData
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -21,7 +20,6 @@ interface AdminDashboardProps {
 
 const DEFAULT_ADMIN_PASSWORD = 'Dukan962@Admin#2024!';
 const PASSWORD_STORAGE_KEY = 'dukan962_admin_password';
-/** يحوّل نص الحقل إلى عدد صحيح >= 0، أو undefined إذا كان فارغاً (= غير مُتتبَّع) */
 const parseQty = (v: string): number | undefined => {
   const n = Math.floor(Number(v));
   return v.trim() !== '' && Number.isFinite(n) ? Math.max(0, n) : undefined;
@@ -65,8 +63,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
-  
-  // 💡 حالة جديدة لتصفية الإحصائيات
   const [statsTimeFilter, setStatsTimeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
 
   const [readOrders, setReadOrders] = useState<string[]>(() => {
@@ -209,8 +205,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
 
     try {
-      const { id, ...dataToUpdate } = { ...updated, sku };
-      await updateDoc(doc(db, 'products', id), toUpdateData(dataToUpdate as Record<string, unknown>));
+      // 💡 هذا هو الإصلاح: معالجة الحقول الفارغة باستخدام deleteField لمنع خطأ invalid-argument
+      const dataToUpdate: Record<string, any> = {};
+      const payload = { ...updated, sku };
+      
+      Object.entries(payload).forEach(([key, value]) => {
+        if (key === 'id') return;
+        if (value === undefined) {
+          dataToUpdate[key] = deleteField();
+        } else {
+          dataToUpdate[key] = value;
+        }
+      });
+
+      await updateDoc(doc(db, 'products', updated.id), dataToUpdate);
       setEditingProduct(null);
       showNotification(`تم حفظ وتحديث القطعة "${updated.name}" بنجاح في السحابة!`);
     } catch (error) {
@@ -376,7 +384,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // 📦 تُنفّذ قراءة الطلب والمخزون وتحديثهما داخل Transaction واحدة لمنع تضارب التحديثات المتزامنة.
   const handleUpdateOrderStatus = async (firestoreId: string, newStatus: string) => {
     const currentOrder = orders.find((o) => o.firestoreId === firestoreId);
     if (currentOrder?.status === 'تم التسليم' && newStatus !== 'تم التسليم') {
@@ -443,7 +450,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // عند حذف طلب سبق خصم مخزونه، أعد الكميات المسجلة فقط وبشكل ذري قبل حذف الطلب.
   const handleDeleteOrder = async (firestoreId: string) => {
     try {
       await runTransaction(db, async (transaction) => {
@@ -451,7 +457,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         const orderSnapshot = await transaction.get(orderRef);
         if (!orderSnapshot.exists()) return;
         const orderData = orderSnapshot.data() as Order;
-        // لا نعيد مخزون طلب تم تسليمه لمجرد حذف سجله؛ الحذف ليس إثباتاً لاسترجاع البضاعة.
         const canRestore = orderData.status !== 'تم التسليم' && orderData.stockDeducted;
         const deductions = canRestore ? (orderData.stockDeductions || {}) : {};
         const productIds = Object.entries(deductions)
@@ -551,7 +556,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     document.body.removeChild(link);
   };
 
-  // 💡 دالة تصفية الإحصائيات
   const getFilteredStatsOrders = () => {
     if (statsTimeFilter === 'all') return orders;
     
@@ -578,7 +582,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const statsFilteredOrders = getFilteredStatsOrders();
 
-  // 💡 دالة تصدير الإحصائيات (Excel أو TXT)
   const handleExportStats = (format: 'csv' | 'txt') => {
     if (statsFilteredOrders.length === 0) return alert('لا توجد طلبات لتصديرها في هذه الفترة');
     
@@ -745,7 +748,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <div className="flex-1 overflow-y-auto p-6">
           
-          {/* 💡 تعديل تبويب الإحصائيات لإضافة التصفية والتصدير */}
           {activeTab === 'stats' && (
             <div className="space-y-4">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#141210] p-4 rounded-2xl border border-white/10 shadow-soft">
