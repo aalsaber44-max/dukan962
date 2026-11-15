@@ -7,9 +7,9 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// 💡 النماذج الصحيحة والمستقرة التي تعمل حالياً
-const DEFAULT_MODEL = 'gemini-2.5-flash'; 
-const FALLBACK_MODEL = 'gemini-2.0-flash'; 
+// 💡 الموديلات التي تعمل فعلياً (تم التعديل من 2.5 إلى 3.8)
+const DEFAULT_MODEL = 'gemini-3.8-flash'; 
+const FALLBACK_MODEL = 'gemini-3.8-flash'; // نستخدم نفس الموديل كاحتياط في حال حدوث خطأ مؤقت
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
