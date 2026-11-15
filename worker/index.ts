@@ -7,12 +7,12 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
+// 💡 الإصدار الذي يعمل بنجاح
 const DEFAULT_MODEL = 'gemini-3.8-flash'; 
-const FALLBACK_MODEL = 'gemini-1.5-flash';
+const FALLBACK_MODEL = 'gemini-3.5-flash-lite'; // احتياطي في حال تعطل الأول
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
-// 💡 تم تحديث التعليمات لتشمل دور التاجر والرد على أسئلة المنتجات
 const STORE_KNOWLEDGE = `
 أنت "نشمي"، مساعد خدمة العملاء والبائع الرسمي لمتجر Dukan962 في الأردن.
 أجب بالعربية الواضحة واللطيفة، ويمكنك استخدام اللهجة الأردنية البسيطة.
@@ -97,7 +97,6 @@ export default {
         }
       }
 
-      // 💡 استلام سياق المنتجات
       const body = await request.json() as { message?: unknown; history?: unknown; productContext?: string };
       
       if (typeof body.message !== 'string') {
@@ -117,7 +116,6 @@ export default {
       const history = cleanHistory(body.history);
       const productContext = body.productContext || 'لا توجد منتجات متاحة.';
       
-      // 💡 دمج قائمة المنتجات مع رسالة الزبون لكي يقرأها الـ AI
       const augmentedMessage = `
 [قائمة المنتجات المتاحة حالياً في المتجر]:
 ${productContext}
@@ -134,7 +132,7 @@ ${message}
           model: primaryModel,
           contents: [
             ...history,
-            { role: 'user', parts: [{ text: augmentedMessage }] }, // 💡 إرسال الرسالة المدموجة
+            { role: 'user', parts: [{ text: augmentedMessage }] },
           ],
           config: {
             systemInstruction: STORE_KNOWLEDGE,
