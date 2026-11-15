@@ -7,10 +7,9 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// 💡 تم تحديث معرّف الموديل ليطابق ما يظهر في واجهة Gemini: "3.5 Flash-Lite"
-const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
-// الموديل الاحتياطي في حال تعطل الموديل الأساسي (قد يكون 2.5-flash لا يزال مدعوماً)
-const FALLBACK_MODEL = 'gemini-2.5-flash';
+// 💡 الموديل الأساسي والاحتياطي الصحيحان (Gemini 3.8)
+const DEFAULT_MODEL = 'gemini-3.8-flash';
+const FALLBACK_MODEL = 'gemini-3.8-flash-lite';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
