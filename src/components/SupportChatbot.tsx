@@ -148,8 +148,8 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   };
 
   return (
-    // 💡 تم تعديل الموقع ليكون في الأعلى (top-24) وعلى اليسار (left-4)
-    <div dir="rtl" className="fixed top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start">
+    // 💡 تم تعديل الموقع ليكون متجاوباً: top-20 للهاتف و top-24 للشاشات الكبيرة
+    <div dir="rtl" className="fixed top-20 sm:top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start">
       
       {/* 💡 عنصر الصوت المخفي */}
       <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
@@ -157,7 +157,8 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
       {isOpen && (
         <section
           aria-label="مساعد نشمي - دكان 962"
-          className="flex h-[min(560px,calc(100dvh-200px))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[26px] border border-[#D4B06A]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-top-3 duration-200"
+          // 💡 تم تعديل الارتفاع ليكون مناسباً للهاتف (dvh-120px) وللابتوب (dvh-200px)
+          className="flex h-[min(500px,calc(100dvh-120px))] sm:h-[min(560px,calc(100dvh-200px))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[26px] border border-[#D4B06A]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-top-3 duration-200"
         >
           <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4B06A]/20 bg-[#191511] px-4 py-4">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#D4B06A] to-transparent" />
@@ -293,14 +294,14 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
           onClick={() => setIsOpen(true)}
         >
           {/* غيمة الكلام (Speech Bubble) */}
-          <div className="relative mb-2 bg-[#1C1815] text-[#E8CC8A] px-4 py-2 rounded-2xl shadow-[0_4px_20px_rgba(212,176,106,0.15)] border border-[#D4B06A]/30 animate-bounce text-[13px] font-bold whitespace-nowrap transition-all duration-300 group-hover:bg-[#26211D]">
+          <div className="relative mb-2 bg-[#1C1815] text-[#E8CC8A] px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-[0_4px_20px_rgba(212,176,106,0.15)] border border-[#D4B06A]/30 animate-bounce text-[11px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 group-hover:bg-[#26211D]">
             تحدث مع نشمي
             {/* سهم الغيمة السفلية */}
             <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1C1815] border-b border-r border-[#D4B06A]/30 rotate-45 group-hover:bg-[#26211D]"></div>
           </div>
 
-          {/* فيديو الروبوت العائم */}
-          <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_10px_25px_rgba(212,176,106,0.3)]">
+          {/* فيديو الروبوت العائم - تم تصغيره على الهاتف ليكون w-20 بدلاً من w-28 */}
+          <div className="relative w-20 h-20 sm:w-32 sm:h-32 rounded-full overflow-hidden transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_10px_25px_rgba(212,176,106,0.3)]">
             {!hasVideoError ? (
               <video
                 src="/nashmi.mp4"
@@ -313,7 +314,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-[#E8CC8A] to-[#8F682D] flex items-center justify-center text-[#17120A]">
-                <MessageCircle className="w-12 h-12" />
+                <MessageCircle className="w-10 h-10 sm:w-12 sm:h-12" />
               </div>
             )}
           </div>
