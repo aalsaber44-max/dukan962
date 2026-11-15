@@ -35,7 +35,8 @@ export const auth = getAuth(app);
  */
 export const testFirestoreConnection = async (): Promise<boolean> => {
   try {
-    const snapshot = await getDocFromServer(doc(db, "__health__", "ping"));
+    // 💡 تم تغيير __health__ إلى health_check لتجنب الخطأ
+    const snapshot = await getDocFromServer(doc(db, "health_check", "ping"));
     console.info(
       snapshot.exists()
         ? "[Dukan962] الاتصال بقاعدة Firestore يعمل بنجاح ✓"
@@ -48,7 +49,7 @@ export const testFirestoreConnection = async (): Promise<boolean> => {
 
     const diagnostics: Record<string, string> = {
       "permission-denied":
-        "🔒 [permission-denied] قواعد Firestore Rules ترفض قراءة المسار __health__/ping. " +
+        "🔒 [permission-denied] قواعد Firestore Rules ترفض قراءة المسار health_check/ping. " +
         "افتح القراءة لهذا المسار في القواعد (allow read: if true).",
       "unavailable":
         "🌐 [unavailable] تعذّر الوصول إلى سيرفر Firestore. " +
