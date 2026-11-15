@@ -1,24 +1,15 @@
 import { GoogleGenAI } from '@google/genai';
 
-interface StaticAssets {
-  fetch(request: Request): Promise<Response>;
-}
-
-interface RateLimitBinding {
-  limit(options: { key: string }): Promise<{ success: boolean }>;
-}
-
 interface Env {
   GEMINI_API_KEY: string;
   GEMINI_MODEL?: string;
-  ASSETS: StaticAssets;
-  CHAT_LIMITER?: RateLimitBinding;
+  ASSETS: any;
+  CHAT_LIMITER?: any;
 }
 
-const DEFAULT_MODEL = 'gemini-1.5-flash-latest';
+const DEFAULT_MODEL = 'gemini-1.5-flash';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
-const MAX_RETRIES = 3; // 💡 عدد المحاولات
 
 const STORE_KNOWLEDGE = `
 أنت "نشمي"، مساعد خدمة العملاء الرسمي لمتجر Dukan962 في الأردن.
@@ -49,7 +40,6 @@ function json(data: unknown, status = 200): Response {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff',
     },
   });
 }
@@ -83,26 +73,11 @@ function cleanHistory(value: unknown): Array<{ role: 'user' | 'model'; parts: Ar
     }));
 }
 
-async function generateContentWithRetry(ai: GoogleGenAI, model: string, contents: any[], config: any, retries = MAX_RETRIES) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await ai.models.generateContent({ model, contents, config });
-    } catch (error: any) {
-      const status = error?.status;
-      if (status === 503 && i < retries - 1) {
-        console.warn(`Gemini 503 error, retrying (${i + 1}/${retries})...`);
-        await new Promise(res => setTimeout(res, 1000 * (i + 1))); // انتظار متزايد
-        continue;
-      }
-      throw error;
-    }
-  }
-}
-
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    // استدعاء الملفات الثابتة (React) إذا لم يكن الطلب لـ API
     if (url.pathname !== '/api/chat') {
       return env.ASSETS.fetch(request);
     }
@@ -111,22 +86,8 @@ export default {
       return json({ success: false, message: 'طريقة الطلب غير مدعومة.' }, 405);
     }
 
-    const origin = request.headers.get('Origin');
-    if (origin) {
-      try {
-        if (new URL(origin).origin !== url.origin) {
-          return json({ success: false, message: 'غير مسموح بالوصول.' }, 403);
-        }
-      } catch {
-        return json({ success: false, message: 'طلب غير صالح.' }, 403);
-      }
-    }
-
-    if (!request.headers.get('Content-Type')?.toLowerCase().includes('application/json')) {
-      return json({ success: false, message: 'صيغة الطلب غير مدعومة.' }, 415);
-    }
-
     try {
+      // 1. التحقق من الـ Rate Limiter (إذا كان معرفاً في Cloudflare)
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       if (env.CHAT_LIMITER) {
         const limit = await env.CHAT_LIMITER.limit({ key: ip });
@@ -135,6 +96,7 @@ export default {
         }
       }
 
+      // 2. قراءة الرسالة
       const body = await request.json() as { message?: unknown; history?: unknown };
       if (typeof body.message !== 'string') {
         return json({ success: false, message: 'اكتب سؤالك أولاً.' }, 400);
@@ -145,28 +107,31 @@ export default {
         return json({ success: false, message: `الرسالة يجب أن تكون بين حرف و${MAX_MESSAGE_LENGTH} حرف.` }, 400);
       }
 
+      // 3. التحقق من المفتاح
       if (!env.GEMINI_API_KEY) {
         console.error('MISSING API KEY');
         return json({ success: false, message: 'المساعد غير مُعدّ (المفتاح مفقود).' }, 503);
       }
 
+      // 4. استدعاء Gemini باستخدام المكتبة الرسمية المحدثة
       const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
       const history = cleanHistory(body.history);
+      
       const modelToUse = env.GEMINI_MODEL || DEFAULT_MODEL;
+      console.log('Calling Gemini with model:', modelToUse);
 
-      const result = await generateContentWithRetry(
-        ai,
-        modelToUse,
-        [
+      const result = await ai.models.generateContent({
+        model: modelToUse,
+        contents: [
           ...history,
           { role: 'user', parts: [{ text: message }] },
         ],
-        {
+        config: {
           systemInstruction: STORE_KNOWLEDGE,
           temperature: 0.3,
           maxOutputTokens: 200,
-        }
-      );
+        },
+      });
 
       const answer = result.text?.trim();
       if (!answer) {
