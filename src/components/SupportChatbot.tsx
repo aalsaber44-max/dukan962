@@ -148,7 +148,8 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   };
 
   return (
-    <div dir="rtl" className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-[80] font-sans">
+    // 💡 تم تغيير الموقع إلى top-24 (أعلى يسار) وإضافة flex-col
+    <div dir="rtl" className="fixed top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start">
       
       {/* 💡 عنصر الصوت المخفي */}
       <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
@@ -156,7 +157,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
       {isOpen && (
         <section
           aria-label="مساعد نشمي - دكان 962"
-          className="mb-4 flex h-[min(560px,calc(100dvh-200px))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[26px] border border-[#D4B06A]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-bottom-3 duration-200"
+          className="flex h-[min(560px,calc(100dvh-200px))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[26px] border border-[#D4B06A]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-top-3 duration-200"
         >
           <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4B06A]/20 bg-[#191511] px-4 py-4">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#D4B06A] to-transparent" />
@@ -302,7 +303,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
           <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_10px_25px_rgba(212,176,106,0.3)]">
             {!hasVideoError ? (
               <video
-                src="/nashmi.mp4" // 💡 ضع اسم الفيديو الخاص بك هنا
+                src="/nashmi.mp4"
                 autoPlay
                 loop
                 muted
