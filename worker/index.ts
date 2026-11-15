@@ -7,14 +7,14 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// 💡 استخدام الموديلات الحالية والمدعومة رسمياً
-const DEFAULT_MODEL = 'gemini-3.8-flash';
-const FALLBACK_MODEL = 'gemini-3.5-flash-lite';
+const DEFAULT_MODEL = 'gemini-3.8-flash'; 
+const FALLBACK_MODEL = 'gemini-1.5-flash';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
+// 💡 تم تحديث التعليمات لتشمل دور التاجر والرد على أسئلة المنتجات
 const STORE_KNOWLEDGE = `
-أنت "نشمي"، مساعد خدمة العملاء الرسمي لمتجر Dukan962 في الأردن.
+أنت "نشمي"، مساعد خدمة العملاء والبائع الرسمي لمتجر Dukan962 في الأردن.
 أجب بالعربية الواضحة واللطيفة، ويمكنك استخدام اللهجة الأردنية البسيطة.
 
 معلومات المتجر المعتمدة:
@@ -31,9 +31,11 @@ const STORE_KNOWLEDGE = `
 1. أجب باختصار شديد، من جملة إلى ثلاث جمل.
 2. لا تخترع رسومًا أو مواعيد أو سياسات.
 3. لا تقل إنك أنشأت طلبًا أو أكدت دفعًا؛ أنت لا تنفذ هذه العمليات.
-4. إذا لم تعرف الإجابة، وجّه العميل لصفحة الأسئلة الشائعة.
-5. عند السؤال عن التوصيل أو الدفع أو تأكيد الطلب، أجب بإيجاز ووجّه العميل صراحةً للضغط على زر «الأسئلة الشائعة وطريقة الطلب».
-6. لا تطلب كلمات مرور أو أرقام بطاقات.
+4. إذا سألك العميل عن منتج أو سعر أو توفر، ابحث في "قائمة المنتجات" المرفقة مع الرسالة.
+5. إذا وجدت المنتج في القائمة، أخبره بالسعر المتوفر واسمه.
+6. إذا لم تجد المنتج في القائمة، اعتذر منه وقل له أن هذا المنتج قد يكون غير متوفر حالياً، واقترح عليه تصفح المتجر.
+7. عند السؤال عن التوصيل أو الدفع أو تأكيد الطلب، أجب بإيجاز ووجّه العميل صراحةً للضغط على زر «الأسئلة الشائعة وطريقة الطلب».
+8. لا تطلب كلمات مرور أو أرقام بطاقات.
 `;
 
 function json(data: unknown, status = 200): Response {
@@ -59,7 +61,6 @@ function isSupportTopic(message: string): boolean {
 
 function cleanHistory(value: unknown): Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> {
   if (!Array.isArray(value)) return [];
-
   return value
     .slice(-MAX_HISTORY_MESSAGES)
     .filter((item): item is { role: string; text: string } => {
@@ -96,7 +97,9 @@ export default {
         }
       }
 
-      const body = await request.json() as { message?: unknown; history?: unknown };
+      // 💡 استلام سياق المنتجات
+      const body = await request.json() as { message?: unknown; history?: unknown; productContext?: string };
+      
       if (typeof body.message !== 'string') {
         return json({ success: false, message: 'اكتب سؤالك أولاً.' }, 400);
       }
@@ -107,36 +110,50 @@ export default {
       }
 
       if (!env.GEMINI_API_KEY) {
-        console.error('MISSING API KEY');
         return json({ success: false, message: 'المساعد غير مُعدّ (المفتاح مفقود).' }, 503);
       }
 
       const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
       const history = cleanHistory(body.history);
+      const productContext = body.productContext || 'لا توجد منتجات متاحة.';
       
+      // 💡 دمج قائمة المنتجات مع رسالة الزبون لكي يقرأها الـ AI
+      const augmentedMessage = `
+[قائمة المنتجات المتاحة حالياً في المتجر]:
+${productContext}
+
+[سؤال الزبون]:
+${message}
+      `;
+
       const primaryModel = env.GEMINI_MODEL || DEFAULT_MODEL;
       let result: any = null;
 
       try {
-        console.log('Calling Gemini with primary model:', primaryModel);
         result = await ai.models.generateContent({
           model: primaryModel,
-          contents: [...history, { role: 'user', parts: [{ text: message }] }],
+          contents: [
+            ...history,
+            { role: 'user', parts: [{ text: augmentedMessage }] }, // 💡 إرسال الرسالة المدموجة
+          ],
           config: {
             systemInstruction: STORE_KNOWLEDGE,
             temperature: 0.3,
-            maxOutputTokens: 200,
+            maxOutputTokens: 250,
           },
         });
       } catch (err: any) {
-        console.warn(`Primary model ${primaryModel} failed, switching to fallback ${FALLBACK_MODEL}:`, err?.message);
+        console.warn(`Primary model failed, switching to fallback...`);
         result = await ai.models.generateContent({
           model: FALLBACK_MODEL,
-          contents: [...history, { role: 'user', parts: [{ text: message }] }],
+          contents: [
+            ...history,
+            { role: 'user', parts: [{ text: augmentedMessage }] },
+          ],
           config: {
             systemInstruction: STORE_KNOWLEDGE,
             temperature: 0.3,
-            maxOutputTokens: 200,
+            maxOutputTokens: 250,
           },
         });
       }
@@ -154,16 +171,10 @@ export default {
 
     } catch (error: any) {
       console.error('Dukan962 AI Error:', error?.message || error);
-      
       if (error?.status === 429) {
         return json({ success: false, message: 'المساعد مشغول جداً حالياً، حاول بعد قليل.' }, 429);
       }
-
-      return json({ 
-        success: false, 
-        message: 'حدث خطأ مؤقت في الاتصال بالمساعد.', 
-        debug_error: error?.message || String(error) 
-      }, 503);
+      return json({ success: false, message: 'حدث خطأ مؤقت في الاتصال بالمساعد.', debug_error: error?.message }, 503);
     }
   },
 };
