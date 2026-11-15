@@ -7,8 +7,9 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// تم تحديث الموديل إلى الإصدار الأحدث والأسرع للدردشة
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// 💡 الموديل الأساسي والاحتياطي (تم تصحيح اسم الموديل الاحتياطي)
+const DEFAULT_MODEL = 'gemini-1.5-flash';
+const FALLBACK_MODEL = 'gemini-2.0-flash'; 
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
@@ -113,21 +114,33 @@ export default {
       const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
       const history = cleanHistory(body.history);
       
-      const modelToUse = env.GEMINI_MODEL || DEFAULT_MODEL;
-      console.log('Calling Gemini with model:', modelToUse);
+      const primaryModel = env.GEMINI_MODEL || DEFAULT_MODEL;
+      let result: any = null;
 
-      const result = await ai.models.generateContent({
-        model: modelToUse,
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: message }] },
-        ],
-        config: {
-          systemInstruction: STORE_KNOWLEDGE,
-          temperature: 0.3,
-          maxOutputTokens: 200,
-        },
-      });
+      // محاولة الاتصال بالموديل الأساسي، وإذا فشل يتم تجربة الموديل الاحتياطي تلقائياً
+      try {
+        console.log('Calling Gemini with primary model:', primaryModel);
+        result = await ai.models.generateContent({
+          model: primaryModel,
+          contents: [...history, { role: 'user', parts: [{ text: message }] }],
+          config: {
+            systemInstruction: STORE_KNOWLEDGE,
+            temperature: 0.3,
+            maxOutputTokens: 200,
+          },
+        });
+      } catch (err: any) {
+        console.warn(`Primary model ${primaryModel} failed, switching to fallback ${FALLBACK_MODEL}:`, err?.message);
+        result = await ai.models.generateContent({
+          model: FALLBACK_MODEL,
+          contents: [...history, { role: 'user', parts: [{ text: message }] }],
+          config: {
+            systemInstruction: STORE_KNOWLEDGE,
+            temperature: 0.3,
+            maxOutputTokens: 200,
+          },
+        });
+      }
 
       const answer = result.text?.trim();
       if (!answer) {
