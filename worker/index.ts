@@ -7,7 +7,8 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-const DEFAULT_MODEL = 'gemini-1.5-flash';
+// تم تحديث الموديل إلى الإصدار الأحدث والأسرع للدردشة
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
@@ -77,7 +78,6 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // استدعاء الملفات الثابتة (React) إذا لم يكن الطلب لـ API
     if (url.pathname !== '/api/chat') {
       return env.ASSETS.fetch(request);
     }
@@ -87,7 +87,6 @@ export default {
     }
 
     try {
-      // 1. التحقق من الـ Rate Limiter (إذا كان معرفاً في Cloudflare)
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       if (env.CHAT_LIMITER) {
         const limit = await env.CHAT_LIMITER.limit({ key: ip });
@@ -96,7 +95,6 @@ export default {
         }
       }
 
-      // 2. قراءة الرسالة
       const body = await request.json() as { message?: unknown; history?: unknown };
       if (typeof body.message !== 'string') {
         return json({ success: false, message: 'اكتب سؤالك أولاً.' }, 400);
@@ -107,13 +105,11 @@ export default {
         return json({ success: false, message: `الرسالة يجب أن تكون بين حرف و${MAX_MESSAGE_LENGTH} حرف.` }, 400);
       }
 
-      // 3. التحقق من المفتاح
       if (!env.GEMINI_API_KEY) {
         console.error('MISSING API KEY');
         return json({ success: false, message: 'المساعد غير مُعدّ (المفتاح مفقود).' }, 503);
       }
 
-      // 4. استدعاء Gemini باستخدام المكتبة الرسمية المحدثة
       const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
       const history = cleanHistory(body.history);
       
