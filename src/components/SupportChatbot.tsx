@@ -28,7 +28,7 @@ interface SupportChatbotProps {
 const WELCOME_MESSAGE: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
-  text: 'أهلاً بك في Dukan962 👋 أنا مساعدك للتسوق وخدمة العملاء. كيف يمكنني مساعدتك؟',
+  text: 'أهلاً بك في دكان 962 👋 أنا "نشمي"، مساعدك الشخصي للتسوق. كيف بقدر أساعدك اليوم؟',
 };
 
 export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => {
@@ -137,7 +137,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     <div dir="rtl" className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-[80] font-sans">
       {isOpen && (
         <section
-          aria-label="مساعد خدمة عملاء Dukan962"
+          aria-label="مساعد نشمي - دكان 962"
           className="mb-4 flex h-[min(560px,calc(100dvh-200px))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[26px] border border-[#D4B06A]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-bottom-3 duration-200"
         >
           <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4B06A]/20 bg-[#191511] px-4 py-4">
@@ -147,10 +147,10 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
                 <Bot className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-sm font-black tracking-wide text-[#F3EEE4]">مساعد Dukan962</h2>
+                <h2 className="text-sm font-black tracking-wide text-[#F3EEE4]">نشمي</h2>
                 <p className="mt-1 flex items-center gap-1.5 text-[10px] text-[#B9A77F]">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                  مساعد التسوق وخدمة العملاء
+                  مساعدك الشخصي في دكان 962
                 </p>
               </div>
             </div>
@@ -203,7 +203,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
               <div className="flex justify-end">
                 <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-white/[0.07] bg-[#211E1A] px-4 py-3 text-xs text-[#C8BFAF]">
                   <LoaderCircle className="h-4 w-4 animate-spin text-[#D4B06A]" />
-                  جارٍ التفكير...
+                  نشمي يكتب الآن...
                 </div>
               </div>
             )}
@@ -217,8 +217,8 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 maxLength={700}
-                placeholder="اكتب سؤالك هنا..."
-                aria-label="اكتب رسالتك للمساعد"
+                placeholder="اكتب سؤالك لنشمي هنا..."
+                aria-label="اكتب رسالتك لنشمي"
                 className="min-w-0 flex-1 bg-transparent px-2 py-2 text-right text-xs text-[#F3EEE4] outline-none placeholder:text-[#777064]"
                 disabled={isSending}
               />
@@ -236,16 +236,18 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
         </section>
       )}
 
+      {/* 💡 الزر العائم الواضح (كبسولة) */}
       <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setIsOpen((current) => !current)}
-          aria-label={isOpen ? 'إغلاق مساعد Dukan962' : 'فتح مساعد Dukan962'}
+          aria-label={isOpen ? 'إغلاق مساعد نشمي' : 'فتح مساعد نشمي'}
           aria-expanded={isOpen}
-          className="group relative grid h-14 w-14 place-items-center rounded-full border border-[#F0D99D]/65 bg-gradient-to-br from-[#E8CC8A] via-[#C49A53] to-[#8F682D] text-[#17120A] shadow-[0_8px_30px_rgba(0,0,0,0.4),0_0_25px_rgba(212,176,106,0.18)] transition duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-[0_12px_35px_rgba(0,0,0,0.5),0_0_32px_rgba(212,176,106,0.3)]"
+          className="group relative flex items-center gap-2.5 h-14 px-6 rounded-full border border-[#F0D99D]/65 bg-gradient-to-br from-[#E8CC8A] via-[#C49A53] to-[#8F682D] text-[#17120A] shadow-[0_8px_30px_rgba(0,0,0,0.4),0_0_25px_rgba(212,176,106,0.18)] transition duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-[0_12px_35px_rgba(0,0,0,0.5),0_0_32px_rgba(212,176,106,0.3)]"
         >
           <span className="absolute inset-0 rounded-full border border-[#F8E8BF]/50 transition duration-500 group-hover:scale-125 group-hover:opacity-0" />
           {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+          <span className="text-sm font-bold whitespace-nowrap">{isOpen ? 'إغلاق' : 'تحدث مع نشمي'}</span>
         </button>
       </div>
     </div>
