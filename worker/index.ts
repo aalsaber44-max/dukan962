@@ -7,9 +7,9 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// 💡 الموديلات الصحيحة حسب وثائق Google الرسمية
-const DEFAULT_MODEL = 'gemini-4-hydrogen'; // للمهام العامة والسرعة
-const FALLBACK_MODEL = 'gemini-3.8-flash'; // للأداء العالي
+// 💡 الموديلات الصحيحة والمدعومة رسمياً
+const DEFAULT_MODEL = 'gemini-3.8-flash'; // الموديل الذي أوصت به جوجل في رسالة الخطأ
+const FALLBACK_MODEL = 'gemini-1.5-flash'; // موديل احتياطي مضمون
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
@@ -117,7 +117,6 @@ export default {
       const primaryModel = env.GEMINI_MODEL || DEFAULT_MODEL;
       let result: any = null;
 
-      // محاولة الاتصال بالموديل الأساسي، وإذا فشل يتم تجربة الموديل الاحتياطي تلقائياً
       try {
         console.log('Calling Gemini with primary model:', primaryModel);
         result = await ai.models.generateContent({
