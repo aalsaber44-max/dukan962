@@ -98,7 +98,8 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
     setIsSending(true);
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 60000);
+    // ✅ تم زيادة وقت الانتظار إلى 90 ثانية (90000 ملي ثانية) لتفادي انتهاء الوقت
+    const timeoutId = window.setTimeout(() => controller.abort(), 90000);
 
     try {
       const response = await fetch('/api/chat', {
@@ -148,7 +149,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   };
 
   return (
-    // 💡 تم تعديل الموقع ليكون في الأعلى على اليسار مع مساحة آمنة للهاتف
     <div dir="rtl" className="fixed top-20 sm:top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start">
       
       <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
@@ -156,7 +156,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
       {isOpen && (
         <section
           aria-label="مساعد نشمي - دكان 962"
-          // 💡 نافذة المحادثة أصبحت متجاوبة تماماً: تأخذ عرض الشاشة على الهاتف وتصغر على اللابتوب
           className="flex h-[calc(100dvh-160px)] sm:h-[min(560px,calc(100dvh-200px))] w-[calc(100vw-2rem)] sm:w-[390px] flex-col overflow-hidden rounded-[26px] border border-[#D4B06A]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-top-3 duration-200"
         >
           <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4B06A]/20 bg-[#191511] px-4 py-4">
@@ -288,13 +287,11 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
           className="flex flex-col items-center justify-end cursor-pointer group"
           onClick={() => setIsOpen(true)}
         >
-          {/* غيمة الكلام (Speech Bubble) */}
           <div className="relative mb-2 bg-[#1C1815] text-[#E8CC8A] px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-[0_4px_20px_rgba(212,176,106,0.15)] border border-[#D4B06A]/30 animate-bounce text-[10px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 group-hover:bg-[#26211D]">
             تحدث مع نشمي
             <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1C1815] border-b border-r border-[#D4B06A]/30 rotate-45 group-hover:bg-[#26211D]"></div>
           </div>
 
-          {/* 💡 فيديو الروبوت العائم - تم تصغيره جداً على الهاتف ليكون w-14 (56px) لكي لا يغطي الصور */}
           <div className="relative w-14 h-14 sm:w-32 sm:h-32 rounded-full overflow-hidden transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_10px_25px_rgba(212,176,106,0.3)]">
             {!hasVideoError ? (
               <video
