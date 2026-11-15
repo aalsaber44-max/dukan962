@@ -1,13 +1,6 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
-import {
-  Bot,
-  BookOpen,
-  LoaderCircle,
-  MessageCircle,
-  Send,
-  Sparkles,
-  X,
-} from 'lucide-react';
+import { Bot, BookOpen, LoaderCircle, MessageCircle, Send, Sparkles, X } from 'lucide-react';
+import { Product } from '../types/furniture'; // 💡 استيراد نوع المنتج
 
 type ChatMessage = {
   id: string;
@@ -23,6 +16,7 @@ type ApiHistoryMessage = {
 
 interface SupportChatbotProps {
   onOpenFAQ: () => void;
+  products: Product[]; // 💡 إضافة المنتجات للـ props
 }
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -31,7 +25,7 @@ const WELCOME_MESSAGE: ChatMessage = {
   text: 'أهلاً بك في دكان 962 👋 أنا "نشمي"، مساعدك الشخصي للتسوق. كيف بقدر أساعدك اليوم؟',
 };
 
-export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => {
+export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, products }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -46,6 +40,16 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     }
   }, [isOpen, messages, isSending]);
 
+  // 💡 دالة لتحويل المنتجات إلى نص مختصر يسهل على الـ AI قراءته
+  const getProductContext = () => {
+    if (!products || products.length === 0) return 'لا توجد منتجات متاحة حالياً.';
+    return products
+      .filter(p => p.isActive !== false)
+      .slice(0, 50) // نأخذ أول 50 منتج فقط لتجنب إطالة الرسالة
+      .map(p => `- ${p.name} | السعر: ${p.basePrice} د.أ | القسم: ${p.categoryId}`)
+      .join('\n');
+  };
+
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const message = input.trim();
@@ -54,20 +58,12 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     if (message.length > 700) {
       setMessages((current) => [
         ...current,
-        {
-          id: `error-${Date.now()}`,
-          role: 'assistant',
-          text: 'الرجاء اختصار رسالتك إلى 700 حرف كحد أقصى.',
-        },
+        { id: `error-${Date.now()}`, role: 'assistant', text: 'الرجاء اختصار رسالتك إلى 700 حرف كحد أقصى.' },
       ]);
       return;
     }
 
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      text: message,
-    };
+    const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: message };
 
     const previousMessages = messages
       .filter((item) => item.id !== 'welcome')
@@ -88,7 +84,12 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: previousMessages }),
+        // 💡 إرسال سياق المنتجات مع الرسالة
+        body: JSON.stringify({ 
+          message, 
+          history: previousMessages,
+          productContext: getProductContext() 
+        }),
         signal: controller.signal,
       });
 
@@ -115,17 +116,11 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     } catch (error) {
       const messageText = error instanceof Error && error.name === 'AbortError'
         ? 'استغرق الرد وقتًا أطول من المتوقع. حاول مرة أخرى.'
-        : error instanceof Error
-          ? error.message
-          : 'حدث خطأ غير متوقع. حاول مرة أخرى.';
+        : error instanceof Error ? error.message : 'حدث خطأ غير متوقع. حاول مرة أخرى.';
 
       setMessages((current) => [
         ...current,
-        {
-          id: `error-${Date.now()}`,
-          role: 'assistant',
-          text: messageText,
-        },
+        { id: `error-${Date.now()}`, role: 'assistant', text: messageText },
       ]);
     } finally {
       window.clearTimeout(timeoutId);
@@ -134,6 +129,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
   };
 
   return (
+    // ... (نفس كود الواجهة الذي أرسلته بدون تغيير)
     <div dir="rtl" className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-[80] font-sans">
       {isOpen && (
         <section
@@ -171,10 +167,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
             </div>
 
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-start' : 'justify-end'}`}
-              >
+              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-start' : 'justify-end'}`}>
                 <div className={`max-w-[88%] ${message.role === 'user' ? 'items-start' : 'items-end'} flex flex-col gap-2`}>
                   <div
                     className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-3 text-[12px] leading-7 shadow-sm sm:text-[13px] ${
@@ -236,7 +229,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
         </section>
       )}
 
-      {/* 💡 الزر العائم الواضح (كبسولة) */}
       <div className="flex justify-end">
         <button
           type="button"
