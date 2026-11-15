@@ -9,7 +9,7 @@ import {
   X,
   Volume2,
 } from 'lucide-react';
-import { Product } from '../types/furniture'; // 💡 استيراد نوع المنتج
+import { Product } from '../types/furniture';
 
 type ChatMessage = {
   id: string;
@@ -25,7 +25,7 @@ type ApiHistoryMessage = {
 
 interface SupportChatbotProps {
   onOpenFAQ: () => void;
-  products: Product[]; // 💡 إضافة المنتجات للـ props
+  products: Product[];
 }
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -43,8 +43,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // 💡 مراجع للصوت ومنع تكرار الصوت عند كل فتح
   const audioRef = useRef<HTMLAudioElement>(null);
   const hasPlayedSoundRef = useRef(false);
 
@@ -53,7 +51,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       window.setTimeout(() => inputRef.current?.focus(), 120);
       
-      // 💡 تشغيل صوت الترحيب مرة واحدة فقط عند أول فتح
       if (!hasPlayedSoundRef.current && audioRef.current) {
         audioRef.current.play().then(() => {
           hasPlayedSoundRef.current = true;
@@ -64,12 +61,11 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
     }
   }, [isOpen, messages, isSending]);
 
-  // 💡 دالة لتحويل المنتجات إلى نص مختصر يسهل على الـ AI قراءته
   const getProductContext = () => {
     if (!products || products.length === 0) return 'لا توجد منتجات متاحة حالياً.';
     return products
       .filter(p => p.isActive !== false)
-      .slice(0, 50) // نأخذ أول 50 منتج فقط لتجنب إطالة الرسالة
+      .slice(0, 50)
       .map(p => `- ${p.name} | السعر: ${p.basePrice} د.أ | القسم: ${p.categoryId}`)
       .join('\n');
   };
@@ -154,7 +150,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   return (
     <div dir="rtl" className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-[80] font-sans">
       
-      {/* 💡 عنصر الصوت المخفي (يشتغل برمجياً) */}
+      {/* 💡 عنصر الصوت المخفي */}
       <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
 
       {isOpen && (
@@ -166,16 +162,9 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#D4B06A] to-transparent" />
             
             <div className="flex items-center gap-3">
-              {/* 💡 الفيديو التفاعلي لنشمي */}
+              {/* 💡 صورة/فيديو نشمي في الهيدر */}
               <div 
-                className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-full border border-[#D4B06A]/35 bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.2)] transition-transform duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = 0;
-                    audioRef.current.play().catch(() => {});
-                  }
-                }}
-                title="اضغط لإعادة سماع الترحيب"
+                className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-full border border-[#D4B06A]/35 bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.2)]"
               >
                 {!hasVideoError ? (
                   <video
@@ -188,7 +177,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  // في حال فشل تحميل الفيديو، نعود لأيقونة البوت
                   <Bot className="h-6 w-6 text-[#E8CC8A]" />
                 )}
               </div>
@@ -203,7 +191,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
             </div>
 
             <div className="flex items-center gap-1">
-              {/* 💡 زر إعادة سماع الصوت */}
               <button
                 type="button"
                 onClick={() => {
@@ -298,20 +285,39 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
         </section>
       )}
 
-      {/* 💡 الزر العائم الواضح (كبسولة) */}
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => setIsOpen((current) => !current)}
-          aria-label={isOpen ? 'إغلاق مساعد نشمي' : 'فتح مساعد نشمي'}
-          aria-expanded={isOpen}
-          className="group relative flex items-center gap-2.5 h-14 px-6 rounded-full border border-[#F0D99D]/65 bg-gradient-to-br from-[#E8CC8A] via-[#C49A53] to-[#8F682D] text-[#17120A] shadow-[0_8px_30px_rgba(0,0,0,0.4),0_0_25px_rgba(212,176,106,0.18)] transition duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-[0_12px_35px_rgba(0,0,0,0.5),0_0_32px_rgba(212,176,106,0.3)]"
+      {/* 💡 التصميم الجديد: الروبوت العائم + غيمة الكلام */}
+      {!isOpen && (
+        <div 
+          className="flex flex-col items-center justify-end cursor-pointer group"
+          onClick={() => setIsOpen(true)}
         >
-          <span className="absolute inset-0 rounded-full border border-[#F8E8BF]/50 transition duration-500 group-hover:scale-125 group-hover:opacity-0" />
-          {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-          <span className="text-sm font-bold whitespace-nowrap">{isOpen ? 'إغلاق' : 'تحدث مع نشمي'}</span>
-        </button>
-      </div>
+          {/* غيمة الكلام (Speech Bubble) */}
+          <div className="relative mb-2 bg-[#1C1815] text-[#E8CC8A] px-4 py-2 rounded-2xl shadow-[0_4px_20px_rgba(212,176,106,0.15)] border border-[#D4B06A]/30 animate-bounce text-[13px] font-bold whitespace-nowrap transition-all duration-300 group-hover:bg-[#26211D]">
+            تحدث مع نشمي
+            {/* سهم الغيمة السفلية */}
+            <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1C1815] border-b border-r border-[#D4B06A]/30 rotate-45 group-hover:bg-[#26211D]"></div>
+          </div>
+
+          {/* فيديو الروبوت العائم */}
+          <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_10px_25px_rgba(212,176,106,0.3)]">
+            {!hasVideoError ? (
+              <video
+                src="/nashmi.mp4" // 💡 ضع اسم الفيديو الخاص بك هنا
+                autoPlay
+                loop
+                muted
+                playsInline
+                onError={() => setHasVideoError(true)}
+                className="w-full h-full object-cover bg-transparent"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#E8CC8A] to-[#8F682D] flex items-center justify-center text-[#17120A]">
+                <MessageCircle className="w-12 h-12" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
