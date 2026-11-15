@@ -7,9 +7,9 @@ interface Env {
   CHAT_LIMITER?: any;
 }
 
-// 💡 الإصدار الذي يعمل بنجاح
-const DEFAULT_MODEL = 'gemini-3.8-flash'; 
-const FALLBACK_MODEL = 'gemini-3.5-flash-lite'; // احتياطي في حال تعطل الأول
+// 💡 النماذج الصحيحة والمستقرة التي تعمل حالياً
+const DEFAULT_MODEL = 'gemini-2.5-flash'; 
+const FALLBACK_MODEL = 'gemini-2.0-flash'; 
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
@@ -141,7 +141,7 @@ ${message}
           },
         });
       } catch (err: any) {
-        console.warn(`Primary model failed, switching to fallback...`);
+        console.warn(`Primary model (${primaryModel}) failed, switching to fallback (${FALLBACK_MODEL})...`);
         result = await ai.models.generateContent({
           model: FALLBACK_MODEL,
           contents: [
