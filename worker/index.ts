@@ -15,7 +15,8 @@ interface Env {
   CHAT_LIMITER: RateLimitBinding;
 }
 
-const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+// 💡 تم تصحيح اسم الموديل هنا ليكون متوافقاً مع Google
+const DEFAULT_MODEL = 'gemini-1.5-flash';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 
@@ -97,7 +98,6 @@ export default {
       return json({ success: false, message: 'طريقة الطلب غير مدعومة.' }, 405);
     }
 
-    // This is a same-origin API. Reject browser requests originating elsewhere.
     const origin = request.headers.get('Origin');
     if (origin) {
       try {
@@ -179,7 +179,6 @@ export default {
         return json({ success: false, message: 'المساعد مشغول حاليًا. حاول مرة أخرى بعد قليل.' }, 429);
       }
 
-      // Never log request bodies, customer messages, or secret values.
       console.error('Dukan962 Support AI request failed.');
       return json({ success: false, message: 'حدث خطأ مؤقت. حاول مرة أخرى بعد قليل.' }, 503);
     }
