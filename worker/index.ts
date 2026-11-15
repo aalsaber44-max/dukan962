@@ -18,6 +18,7 @@ interface Env {
 const DEFAULT_MODEL = 'gemini-1.5-flash-latest';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
+const MAX_RETRIES = 3; // 💡 عدد المحاولات
 
 const STORE_KNOWLEDGE = `
 أنت "نشمي"، مساعد خدمة العملاء الرسمي لمتجر Dukan962 في الأردن.
@@ -82,6 +83,22 @@ function cleanHistory(value: unknown): Array<{ role: 'user' | 'model'; parts: Ar
     }));
 }
 
+async function generateContentWithRetry(ai: GoogleGenAI, model: string, contents: any[], config: any, retries = MAX_RETRIES) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await ai.models.generateContent({ model, contents, config });
+    } catch (error: any) {
+      const status = error?.status;
+      if (status === 503 && i < retries - 1) {
+        console.warn(`Gemini 503 error, retrying (${i + 1}/${retries})...`);
+        await new Promise(res => setTimeout(res, 1000 * (i + 1))); // انتظار متزايد
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -94,7 +111,6 @@ export default {
       return json({ success: false, message: 'طريقة الطلب غير مدعومة.' }, 405);
     }
 
-    // التحقق من الأمان (Origin)
     const origin = request.headers.get('Origin');
     if (origin) {
       try {
@@ -111,7 +127,6 @@ export default {
     }
 
     try {
-      // التحقق من Rate Limiter
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       if (env.CHAT_LIMITER) {
         const limit = await env.CHAT_LIMITER.limit({ key: ip });
@@ -139,18 +154,19 @@ export default {
       const history = cleanHistory(body.history);
       const modelToUse = env.GEMINI_MODEL || DEFAULT_MODEL;
 
-      const result = await ai.models.generateContent({
-        model: modelToUse,
-        contents: [
+      const result = await generateContentWithRetry(
+        ai,
+        modelToUse,
+        [
           ...history,
           { role: 'user', parts: [{ text: message }] },
         ],
-        config: {
+        {
           systemInstruction: STORE_KNOWLEDGE,
           temperature: 0.3,
           maxOutputTokens: 200,
-        },
-      });
+        }
+      );
 
       const answer = result.text?.trim();
       if (!answer) {
@@ -164,14 +180,12 @@ export default {
       });
 
     } catch (error: any) {
-      // 💡 هذا السطر سيطبع الخطأ الحقيقي في سجلات Cloudflare
       console.error('Dukan962 AI Error:', error?.message || error);
       
       if (error?.status === 429) {
         return json({ success: false, message: 'المساعد مشغول جداً حالياً، حاول بعد قليل.' }, 429);
       }
 
-      // إظهار الخطأ الحقيقي لك في المتصفح لكي نعرف السبب
       return json({ 
         success: false, 
         message: 'حدث خطأ مؤقت في الاتصال بالمساعد.', 
