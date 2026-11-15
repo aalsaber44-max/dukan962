@@ -898,7 +898,11 @@ export default function App() {
 
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
 
-        <SupportChatbot onOpenFAQ={() => setIsFAQPageOpen(true)} />
+        {/* 💡 السطر المطلوب إضافته هنا */}
+        <SupportChatbot 
+          onOpenFAQ={() => setIsFAQPageOpen(true)} 
+          products={products} // 💡 تمرير المنتجات
+        />
         
         <MobileBottomNav
           cartCount={cartTotalCount}
