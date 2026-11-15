@@ -148,7 +148,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   };
 
   return (
-    // 💡 تم تغيير الموقع إلى top-24 (أعلى يسار) وإضافة flex-col
+    // 💡 تم تعديل الموقع ليكون في الأعلى (top-24) وعلى اليسار (left-4)
     <div dir="rtl" className="fixed top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start">
       
       {/* 💡 عنصر الصوت المخفي */}
