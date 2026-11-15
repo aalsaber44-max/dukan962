@@ -1,5 +1,14 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
-import { Bot, BookOpen, LoaderCircle, MessageCircle, Send, Sparkles, X } from 'lucide-react';
+import {
+  Bot,
+  BookOpen,
+  LoaderCircle,
+  MessageCircle,
+  Send,
+  Sparkles,
+  X,
+  Volume2,
+} from 'lucide-react';
 import { Product } from '../types/furniture'; // 💡 استيراد نوع المنتج
 
 type ChatMessage = {
@@ -30,13 +39,28 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
+  const [hasVideoError, setHasVideoError] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // 💡 مراجع للصوت ومنع تكرار الصوت عند كل فتح
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const hasPlayedSoundRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       window.setTimeout(() => inputRef.current?.focus(), 120);
+      
+      // 💡 تشغيل صوت الترحيب مرة واحدة فقط عند أول فتح
+      if (!hasPlayedSoundRef.current && audioRef.current) {
+        audioRef.current.play().then(() => {
+          hasPlayedSoundRef.current = true;
+        }).catch((err) => {
+          console.warn('المتصفح منع تشغيل الصوت تلقائياً:', err);
+        });
+      }
     }
   }, [isOpen, messages, isSending]);
 
@@ -84,7 +108,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 💡 إرسال سياق المنتجات مع الرسالة
         body: JSON.stringify({ 
           message, 
           history: previousMessages,
@@ -129,8 +152,11 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
   };
 
   return (
-    // ... (نفس كود الواجهة الذي أرسلته بدون تغيير)
     <div dir="rtl" className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-[80] font-sans">
+      
+      {/* 💡 عنصر الصوت المخفي (يشتغل برمجياً) */}
+      <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
+
       {isOpen && (
         <section
           aria-label="مساعد نشمي - دكان 962"
@@ -138,10 +164,35 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
         >
           <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4B06A]/20 bg-[#191511] px-4 py-4">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#D4B06A] to-transparent" />
+            
             <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl border border-[#D4B06A]/35 bg-[#D4B06A]/10 text-[#E8CC8A]">
-                <Bot className="h-6 w-6" />
+              {/* 💡 الفيديو التفاعلي لنشمي */}
+              <div 
+                className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-full border border-[#D4B06A]/35 bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.2)] transition-transform duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
+                onClick={() => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(() => {});
+                  }
+                }}
+                title="اضغط لإعادة سماع الترحيب"
+              >
+                {!hasVideoError ? (
+                  <video
+                    src="/nashmi.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    onError={() => setHasVideoError(true)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  // في حال فشل تحميل الفيديو، نعود لأيقونة البوت
+                  <Bot className="h-6 w-6 text-[#E8CC8A]" />
+                )}
               </div>
+
               <div>
                 <h2 className="text-sm font-black tracking-wide text-[#F3EEE4]">نشمي</h2>
                 <p className="mt-1 flex items-center gap-1.5 text-[10px] text-[#B9A77F]">
@@ -150,14 +201,32 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              aria-label="إغلاق المحادثة"
-              className="grid h-9 w-9 place-items-center rounded-full text-[#B9B0A0] transition hover:bg-white/10 hover:text-white"
-            >
-              <X className="h-4 w-4" />
-            </button>
+
+            <div className="flex items-center gap-1">
+              {/* 💡 زر إعادة سماع الصوت */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(() => {});
+                  }
+                }}
+                title="إعادة سماع الترحيب"
+                className="grid h-9 w-9 place-items-center rounded-full text-[#D4B06A] transition hover:bg-[#D4B06A]/15"
+              >
+                <Volume2 className="h-4 w-4" />
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                aria-label="إغلاق المحادثة"
+                className="grid h-9 w-9 place-items-center rounded-full text-[#B9B0A0] transition hover:bg-white/10 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </header>
 
           <div className="flex-1 space-y-4 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(212,176,106,0.07),transparent_55%)] px-3 py-4 sm:px-4">
@@ -229,6 +298,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
         </section>
       )}
 
+      {/* 💡 الزر العائم الواضح (كبسولة) */}
       <div className="flex justify-end">
         <button
           type="button"
