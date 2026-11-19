@@ -898,10 +898,9 @@ export default function App() {
 
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
 
-        {/* 💡 السطر المطلوب إضافته هنا */}
-        <SupportChatbot 
-          onOpenFAQ={() => setIsFAQPageOpen(true)} 
-          products={products} // 💡 تمرير المنتجات
+        {/* 💡 مساعد نشمي — الخادم يجلب بيانات المنتجات مباشرة من Firestore */}
+        <SupportChatbot
+          onOpenFAQ={() => setIsFAQPageOpen(true)}
         />
         
         <MobileBottomNav
