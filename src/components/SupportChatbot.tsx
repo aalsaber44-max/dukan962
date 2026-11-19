@@ -9,7 +9,6 @@ import {
   X,
   Volume2,
 } from 'lucide-react';
-import { Product } from '../types/furniture';
 
 type ChatMessage = {
   id: string;
@@ -25,7 +24,6 @@ type ApiHistoryMessage = {
 
 interface SupportChatbotProps {
   onOpenFAQ: () => void;
-  products: Product[];
 }
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -34,13 +32,13 @@ const WELCOME_MESSAGE: ChatMessage = {
   text: 'أهلاً بك في دكان 962 👋 أنا "نشمي"، مساعدك الشخصي للتسوق. كيف بقدر أساعدك اليوم؟',
 };
 
-export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, products }) => {
+export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [hasVideoError, setHasVideoError] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -50,7 +48,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       window.setTimeout(() => inputRef.current?.focus(), 120);
-      
+
       if (!hasPlayedSoundRef.current && audioRef.current) {
         audioRef.current.play().then(() => {
           hasPlayedSoundRef.current = true;
@@ -60,15 +58,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
       }
     }
   }, [isOpen, messages, isSending]);
-
-  const getProductContext = () => {
-    if (!products || products.length === 0) return 'لا توجد منتجات متاحة حالياً.';
-    return products
-      .filter(p => p.isActive !== false)
-      .slice(0, 50)
-      .map(p => `- ${p.name} | السعر: ${p.basePrice} د.أ | القسم: ${p.categoryId}`)
-      .join('\n');
-  };
 
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -98,17 +87,16 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
     setIsSending(true);
 
     const controller = new AbortController();
-    // ✅ تم زيادة وقت الانتظار إلى 90 ثانية (90000 ملي ثانية) لتفادي انتهاء الوقت
     const timeoutId = window.setTimeout(() => controller.abort(), 90000);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message, 
+        body: JSON.stringify({
+          message,
           history: previousMessages,
-          productContext: getProductContext() 
+          // ❌ لم نعد نُرسل productContext — الخادم يجلبه مباشرة من Firestore
         }),
         signal: controller.signal,
       });
@@ -150,7 +138,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
 
   return (
     <div dir="rtl" className="fixed top-20 sm:top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start">
-      
+
       <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
 
       {isOpen && (
@@ -160,7 +148,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
         >
           <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4B06A]/20 bg-[#191511] px-4 py-4">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#D4B06A] to-transparent" />
-            
+
             <div className="flex items-center gap-3">
               <div className="relative grid h-10 w-10 sm:h-12 sm:w-12 place-items-center overflow-hidden rounded-full border border-[#D4B06A]/35 bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.2)]">
                 {!hasVideoError ? (
@@ -201,7 +189,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
               >
                 <Volume2 className="h-4 w-4" />
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -283,7 +271,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ, produ
       )}
 
       {!isOpen && (
-        <div 
+        <div
           className="flex flex-col items-center justify-end cursor-pointer group"
           onClick={() => setIsOpen(true)}
         >
