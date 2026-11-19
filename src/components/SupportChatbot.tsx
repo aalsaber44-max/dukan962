@@ -39,6 +39,12 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [hasVideoError, setHasVideoError] = useState(false);
 
+  // 💡 حالات جديدة للتحكم في السحب والإفلات (Dragging)
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
+  const hasDraggedRef = useRef(false); // لتمييز الضغطة العادية عن السحب
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -136,9 +142,51 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     }
   };
 
-  return (
-    <div dir="rtl" className="fixed top-20 sm:top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start">
+  // 💡 دوال السحب والإفلات
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (isOpen) return; // لا تسمح بالسحب إذا كانت المحادثة مفتوحة
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    hasDraggedRef.current = false;
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: position.x,
+      initialY: position.y,
+    };
+  };
 
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+
+    // إذا تحرك المؤشر مسافة أكثر من 5 بكسل، اعتبرها سحباً وليست ضغطة
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      hasDraggedRef.current = true;
+    }
+
+    setPosition({
+      x: dragRef.current.initialX + dx,
+      y: dragRef.current.initialY + dy,
+    });
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  return (
+    // 💡 الحاوية الرئيسية تتحرك باستخدام transform بناءً على حالة السحب
+    <div 
+      dir="rtl" 
+      className="fixed top-20 sm:top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start"
+      style={{
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+      }}
+    >
       <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
 
       {isOpen && (
@@ -272,8 +320,20 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
 
       {!isOpen && (
         <div
-          className="flex flex-col items-center justify-end cursor-pointer group"
-          onClick={() => setIsOpen(true)}
+          // 💡 إضافة أحداث المؤشر لجعل الزر قابلاً للسحب
+          className={`flex flex-col items-center justify-end group touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onClick={(e) => {
+            // إذا قام المستخدم بالسحب، لا تفتح المحادثة
+            if (hasDraggedRef.current) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            setIsOpen(true);
+          }}
         >
           <div className="relative mb-2 bg-[#1C1815] text-[#E8CC8A] px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-[0_4px_20px_rgba(212,176,106,0.15)] border border-[#D4B06A]/30 animate-bounce text-[10px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 group-hover:bg-[#26211D]">
             تحدث مع نشمي
@@ -289,10 +349,10 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
                 muted
                 playsInline
                 onError={() => setHasVideoError(true)}
-                className="w-full h-full object-cover bg-transparent"
+                className="w-full h-full object-cover bg-transparent pointer-events-none"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#E8CC8A] to-[#8F682D] flex items-center justify-center text-[#17120A]">
+              <div className="w-full h-full bg-gradient-to-br from-[#E8CC8A] to-[#8F682D] flex items-center justify-center text-[#17120A] pointer-events-none">
                 <MessageCircle className="w-6 h-6 sm:w-12 sm:h-12" />
               </div>
             )}
