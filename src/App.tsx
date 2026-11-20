@@ -104,10 +104,7 @@ export default function App() {
       snapshot.forEach((doc) => {
         cats.push({ ...doc.data(), id: doc.id } as Category);
       });
-      // الأقسام التي لا تحتوي isActive تعتبر نشطة؛ نعطّل فقط ما عُطّل صراحةً من لوحة التحكم.
-      setCategories(cats.filter(c => c.isActive !== false).sort((a, b) => (a.order || 0) - (b.order || 0)));
-    }, (error) => {
-      console.error('Error loading categories from Firestore:', error);
+      setCategories(cats.filter(c => c.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)));
     });
 
     return () => {
@@ -901,9 +898,10 @@ export default function App() {
 
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
 
-        {/* 💡 مساعد نشمي — الخادم يجلب بيانات المنتجات مباشرة من Firestore */}
-        <SupportChatbot
-          onOpenFAQ={() => setIsFAQPageOpen(true)}
+        {/* 💡 السطر المطلوب إضافته هنا */}
+        <SupportChatbot 
+          onOpenFAQ={() => setIsFAQPageOpen(true)} 
+          products={products} // 💡 تمرير المنتجات
         />
         
         <MobileBottomNav
