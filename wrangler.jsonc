@@ -1,23 +1,27 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import { cloudflare } from '@cloudflare/vite-plugin';
-import path from 'path';
-import { defineConfig } from 'vite';
-
-export default defineConfig(() => {
-  return {
-    plugins: [react(), tailwindcss(), cloudflare()],
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
-    },
-    server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
-    },
-  };
-});
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "dukan962",
+  "main": "dist/dukan962/index.js",
+  "no_bundle": true,
+  "compatibility_date": "2024-11-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "ratelimits": [
+    {
+      "name": "CHAT_LIMITER",
+      "namespace_id": "962001",
+      "simple": {
+        "limit": 12,
+        "period": 60
+      }
+    }
+  ],
+  "vars": {
+    "GEMINI_MODEL": "gemini-3.8-flash"
+  }
+}
