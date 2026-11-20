@@ -591,8 +591,8 @@ export default {
       }
 
       if (!env.GEMINI_API_KEY) {
-        console.error('Dukan962 AI is missing GEMINI_API_KEY');
-        return json({ success: false, message: 'المساعد غير مُعدّ حالياً. يرجى المحاولة لاحقاً.' }, 503);
+        console.error('Dukan962 AI: GEMINI_API_KEY is not bound to this Worker deployment/environment');
+        return json({ success: false, message: 'إعداد المساعد غير مكتمل في بيئة تشغيل المتجر. يرجى مراجعة إعدادات Worker وإعادة نشره.' }, 503);
       }
 
       const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
@@ -613,12 +613,16 @@ ${message}
       `;
 
       const model = env.GEMINI_MODEL || DEFAULT_MODEL;
-      const generationConfig = {
+      // Gemini 2.5 uses thinkingBudget; Gemini 3.x uses thinkingLevel.
+      // Keep the config compatible with both the configured model and fallback.
+      const createGenerationConfig = (modelName: string) => ({
         systemInstruction: STORE_KNOWLEDGE,
         temperature: 0.3,
         maxOutputTokens: 800,
-        thinkingConfig: { thinkingLevel: 'LOW' as const },
-      };
+        thinkingConfig: modelName.startsWith('gemini-2.5-')
+          ? { thinkingBudget: 0 }
+          : { thinkingLevel: 'LOW' as const },
+      });
 
       let result: { text?: string } | null = null;
       try {
@@ -628,7 +632,7 @@ ${message}
             ...history,
             { role: 'user', parts: [{ text: augmentedMessage }] },
           ],
-          config: generationConfig as never,
+          config: createGenerationConfig(model) as never,
         }) as { text?: string };
       } catch (primaryError) {
         const primaryStatus = (primaryError as { status?: number; code?: number })?.status
@@ -647,7 +651,7 @@ ${message}
             ...history,
             { role: 'user', parts: [{ text: augmentedMessage }] },
           ],
-          config: generationConfig as never,
+          config: createGenerationConfig(FALLBACK_MODEL) as never,
         }) as { text?: string };
       }
 
