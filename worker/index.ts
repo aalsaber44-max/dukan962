@@ -3,15 +3,16 @@ import { GoogleGenAI } from '@google/genai';
 interface Env {
   GEMINI_API_KEY: string;
   GEMINI_MODEL?: string;
+  GEMINI_BASE_URL?: string; // اختياري: ضعه في Cloudflare إذا كان المزود له رابط مختلف
   ASSETS: any;
   CHAT_LIMITER?: any;
 }
 
-// 💡 الموديلات التي تعمل فعلياً
-const DEFAULT_MODEL = 'gemini-3.8-flash'; 
-const FALLBACK_MODEL = 'gemini-3.8-flash'; 
+const DEFAULT_MODEL = 'gemini-3.8-flash';
+const FALLBACK_MODEL = 'gemini-3.8-flash';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
+const AI_TIMEOUT_MS = 20000; // 20 ثانية كحد أقصى قبل إظهار سبب الخطأ الحقيقي
 
 const STORE_KNOWLEDGE = `
 أنت "نشمي"، مساعد خدمة العملاء والبائع الرسمي لمتجر Dukan962 في الأردن.
@@ -98,7 +99,7 @@ export default {
       }
 
       const body = await request.json() as { message?: unknown; history?: unknown; productContext?: string };
-      
+
       if (typeof body.message !== 'string') {
         return json({ success: false, message: 'اكتب سؤالك أولاً.' }, 400);
       }
@@ -108,16 +109,21 @@ export default {
         return json({ success: false, message: `الرسالة يجب أن تكون بين حرف و${MAX_MESSAGE_LENGTH} حرف.` }, 400);
       }
 
-      // ✅ تم إضافة تنظيف المفتاح لمنع خطأ API_KEY_INVALID
       const apiKey = (env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
       if (!apiKey) {
         return json({ success: false, message: 'المساعد غير مُعدّ (المفتاح مفقود).' }, 503);
       }
 
-      const ai = new GoogleGenAI({ apiKey });
+      // ✅ دعم الرابط المخصص إذا كان الـ API يختلف عن رابط جوجل الرسمي
+      const baseUrl = (env.GEMINI_BASE_URL || '').trim();
+      const ai = new GoogleGenAI({
+        apiKey,
+        ...(baseUrl ? { httpOptions: { baseUrl } } : {}),
+      });
+
       const history = cleanHistory(body.history);
       const productContext = body.productContext || 'لا توجد منتجات متاحة.';
-      
+
       const augmentedMessage = `
 [قائمة المنتجات المتاحة حالياً في المتجر]:
 ${productContext}
@@ -126,9 +132,13 @@ ${productContext}
 ${message}
       `;
 
-      const primaryModel = env.GEMINI_MODEL || DEFAULT_MODEL;
-      let result: any = null;
+      const primaryModel = (env.GEMINI_MODEL || '').trim() || DEFAULT_MODEL;
 
+      // ✅ مهلة 20 ثانية حتى لا يعلق 90 ثانية بصمت
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+      let result: any = null;
       try {
         result = await ai.models.generateContent({
           model: primaryModel,
@@ -140,25 +150,14 @@ ${message}
             systemInstruction: STORE_KNOWLEDGE,
             temperature: 0.3,
             maxOutputTokens: 250,
+            abortSignal: controller.signal,
           },
         });
-      } catch (err: any) {
-        console.warn(`Primary model (${primaryModel}) failed, switching to fallback (${FALLBACK_MODEL})...`);
-        result = await ai.models.generateContent({
-          model: FALLBACK_MODEL,
-          contents: [
-            ...history,
-            { role: 'user', parts: [{ text: augmentedMessage }] },
-          ],
-          config: {
-            systemInstruction: STORE_KNOWLEDGE,
-            temperature: 0.3,
-            maxOutputTokens: 250,
-          },
-        });
+      } finally {
+        clearTimeout(timer);
       }
 
-      const answer = result.text?.trim();
+      const answer = result?.text?.trim();
       if (!answer) {
         return json({ success: false, message: 'لم أتمكن من إنشاء إجابة. حاول مجدداً.' }, 503);
       }
@@ -171,10 +170,23 @@ ${message}
 
     } catch (error: any) {
       console.error('Dukan962 AI Error:', error?.message || error);
+
+      // ✅ إظهار سبب الخطأ الحقيقي في رسالة الخادم لسهولة التشخيص
+      const detail = error?.message ? ` (${error.message})` : '';
+
+      if (error?.name === 'AbortError') {
+        return json({
+          success: false,
+          message: `تأخر الخادم في الرد لأكثر من 20 ثانية${detail}`,
+        }, 504);
+      }
       if (error?.status === 429) {
         return json({ success: false, message: 'المساعد مشغول جداً حالياً، حاول بعد قليل.' }, 429);
       }
-      return json({ success: false, message: 'حدث خطأ مؤقت في الاتصال بالمساعد.', debug_error: error?.message }, 503);
+      return json({
+        success: false,
+        message: `تعذر الاتصال بالمساعد${detail}`,
+      }, 503);
     }
   },
 };
