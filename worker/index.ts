@@ -1,362 +1,936 @@
-import { GoogleGenAI } from '@google/genai';
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { Sparkles, MessageCircle, Flame, Clock, HelpCircle } from 'lucide-react';
+import { Navbar } from './components/Navbar';
+import { Hero } from './components/Hero';
+import { CategoryBoxes } from './components/CategoryBoxes';
+import { CategoryVideoBanner } from './components/CategoryVideoBanner';
+import { FilterBar } from './components/FilterBar';
+import { ProductCard } from './components/ProductCard';
+import { ProductDetailsPage } from './components/ProductDetailsPage';
+import { FloatingActions } from './components/FloatingActions';
+import { availableQty, qtyInCart, reconcileCart, refreshCartData } from './utils/inventory';
+import { CartDrawer } from './components/CartDrawer';
+import { WishlistDrawer } from './components/WishlistDrawer';
+import { CheckoutModal } from './components/CheckoutModal';
+import { AdminAuthModal } from './components/AdminAuthModal';
+import { Footer } from './components/Footer';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Product, CartItem, ProductColor, Category } from './types/furniture';
+import { Toast, ToastData, ToastVariant } from './components/Toast';
+import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
+import { STORE_PHONE_INTL } from './utils/jordanLocations';
 
-interface Env {
-  GEMINI_API_KEY: string;
-  GEMINI_MODEL?: string;
-  ASSETS: any;
-  CHAT_LIMITER?: any;
-}
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { RecentlyViewed } from './components/RecentlyViewed';
+import { OrderTrackingModal } from './components/OrderTrackingModal';
+import { FAQPage } from './components/FAQPage'; // 💡 استيراد صفحة الأسئلة الشائعة
+import { SupportChatbot } from './components/SupportChatbot';
 
-// ✅ النماذج الموحدة
-const DEFAULT_MODEL = 'gemini-3.8-flash';
-const FALLBACK_MODEL = 'gemini-3.6-flash';
-const MAX_MESSAGE_LENGTH = 700;
-const MAX_HISTORY_MESSAGES = 6;
-const CACHE_TTL_MS = 45_000; // ⏱️ تخزين مؤقت 45 ثانية
+import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
+import { db, testFirestoreConnection } from './firebase';
 
-const FIREBASE_PROJECT_ID = 'dukan962-3ea92';
+const AdminDashboard = lazy(() =>
+  import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
 
-// ───────────────────────────────────────────────
-// سياسات المتجر الموحدة (مصدر الحقيقة الواحد)
-// ───────────────────────────────────────────────
-const STORE_POLICIES_TEXT = `
-سياسات المتجر المعتمدة (لا تختلف عنها أبداً):
-• الشحن والتوصيل: التوصيل عادة من 24 إلى 48 ساعة داخل عمّان؛ من يومين إلى 4 أيام عمل لبقية المحافظات؛ رسوم التوصيل تُحسب حسب المنطقة وقيمة الطلب ويظهر الإجمالي قبل التأكيد.
-• الدفع: الدفع النقدي (كاش) عند الاستلام بعد المعاينة؛ أو التحويل عبر تطبيق كليك (CliQ).
-• المعاينة: يوفر المتجر معاينة المنتج عند وصول المندوب وقبل الاستلام والدفع؛ يمكن رفض المنتج عند المعاينة قبل الدفع إذا لم يطابق الوصف.
-• الاستبدال والاسترجاع: لا يوجد إرجاع بعد الدفع إلا في حالات الضمان؛ يمكن رفض المنتج أثناء المعاينة (قبل الدفع) إذا لم يطابق الوصف.
-• الطلب: يضاف المنتج للسلة ثم يُتَمّم الطلب؛ يمكن الطلب عبر الواتساب أيضاً؛ لتتبع الطلب يُستخدم رقم الطلب في صفحة التتبع.
-`;
+const AdminDashboardFallback = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
+    <div className="flex items-center gap-3 text-sm font-bold text-[#E8CC8A]">
+      <span className="w-5 h-5 rounded-full border-2 border-[#D4B06A]/30 border-t-[#E8CC8A] animate-spin" />
+      جارٍ تحميل لوحة التحكم...
+    </div>
+  </div>
+);
 
-const SYSTEM_INSTRUCTION = `
-أنت "نشمي"، مساعد خدمة العملاء والبائع الرسمي لمتجر Dukan962 في الأردن.
-أجب بالعربية الواضحة واللطيفة، ويمكنك استخدام اللهجة الأردنية البسيطة والمحببة.
-${STORE_POLICIES_TEXT}
+const homeCategoryData: Category = {
+  id: 'all',
+  name: 'الرئيسية',
+  image: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  bannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  mobileBannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
+  description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
+  buttonText: 'استكشف تشكيلاتنا الآن',
+  badgeText: '✨ جودة تستحق الاقتناء',
+  isActive: true,
+  order: 0
+};
 
-قواعد صارمة جداً (يجب اتباعها حرفياً):
-1. أجب باختصار، من جملة إلى ثلاث جمل كحد أقصى.
-2. لا تخترع رسومًا أو مواعيد أو سياسات أو منتجات أو أسعار أو خصومات غير موجودة في بيانات الخادم.
-3. لا تقل إنك أنشأت طلبًا أو أكدت دفعًا؛ أنت لا تنفذ هذه العمليات.
-4. إذا سألك العميل عن سعر أو توفر منتج، يجب أن تبحث عن اسم المنتج في "قائمة المنتجات" المرفقة من الخادم.
-5. إذا وجدت المنتج، أجب بهذه الصيغة: "سعر [اسم المنتج] هو [السعر] دينار." ثم اذكر الألوان والمقاسات المتاحة والمخزون بوضوح.
-6. إذا لم تجد المنتج في القائمة، قل بوضوح: "هذا المنتج مش متوفر حالياً، جرب تصفح المتجر لأحدث القطع." لا تحاول تخمين سعره أبداً.
-7. عند السؤال عن التوصيل أو الدفع أو تأكيد الطلب، أجب بإيجاز ووجّه العميل صراحةً للضغط على زر «الأسئلة الشائعة وطريقة الطلب».
-8. لا تطلب كلمات مرور أو أرقام بطاقات.
-9. إذا سأل عن لون أو مقاس محدد، تحقق من توفره في بيانات المنتج ولا تختلق خيارات غير موجودة.
-`;
+export default function App() {
+  const [isLightTheme, setIsLightTheme] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('dukan962_store_theme') === 'light';
+    } catch {
+      return false;
+    }
+  });
 
-// ───────────────────────────────────────────────
-// Firestore REST Helpers
-// ───────────────────────────────────────────────
+  useEffect(() => {
+    document.documentElement.dataset.theme = isLightTheme ? 'light' : 'dark';
+    try {
+      localStorage.setItem('dukan962_store_theme', isLightTheme ? 'light' : 'dark');
+    } catch {}
+  }, [isLightTheme]);
 
-interface FirestoreDocument {
-  name: string;
-  fields: Record<string, unknown>;
-  createTime?: string;
-  updateTime?: string;
-}
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
 
-interface CachedData<T> {
-  data: T;
-  timestamp: number;
-}
-
-let productsCache: CachedData<Record<string, unknown>[]> | null = null;
-let categoriesCache: CachedData<Record<string, unknown>[]> | null = null;
-
-async function fetchFirestoreCollection(collectionId: string): Promise<FirestoreDocument[]> {
-  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collectionId}`;
-  const res = await fetch(url, { method: 'GET' });
-  if (!res.ok) {
-    throw new Error(`Firestore read failed: ${res.status} ${res.statusText}`);
-  }
-  const json = (await res.json()) as { documents?: FirestoreDocument[] };
-  return json.documents || [];
-}
-
-function firestoreValueToJS(value: unknown): unknown {
-  if (value === null || value === undefined) return undefined;
-  if (typeof value !== 'object') return value;
-  const v = value as Record<string, unknown>;
-  if ('stringValue' in v) return v.stringValue;
-  if ('integerValue' in v) return Number(v.integerValue);
-  if ('doubleValue' in v) return v.doubleValue;
-  if ('booleanValue' in v) return v.booleanValue;
-  if ('arrayValue' in v && (v.arrayValue as Record<string, unknown>)?.values) {
-    return ((v.arrayValue as Record<string, unknown>).values as unknown[]).map(firestoreValueToJS);
-  }
-  if ('mapValue' in v && (v.mapValue as Record<string, unknown>)?.fields) {
-    return firestoreMapToJS((v.mapValue as Record<string, unknown>).fields as Record<string, unknown>);
-  }
-  if ('timestampValue' in v) return v.timestampValue;
-  if ('nullValue' in v) return null;
-  return value;
-}
-
-function firestoreMapToJS(fields: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(fields)) {
-    result[key] = firestoreValueToJS(val);
-  }
-  return result;
-}
-
-function parseFirestoreDoc(doc: FirestoreDocument): Record<string, unknown> {
-  const id = doc.name.split('/').pop() || '';
-  const data = firestoreMapToJS(doc.fields);
-  return { id, ...data };
-}
-
-async function getProducts(): Promise<Record<string, unknown>[]> {
-  const now = Date.now();
-  if (productsCache && now - productsCache.timestamp < CACHE_TTL_MS) {
-    return productsCache.data;
-  }
-  const docs = await fetchFirestoreCollection('products');
-  const products = docs.map(parseFirestoreDoc).filter((p) => p.isActive !== false);
-  productsCache = { data: products, timestamp: now };
-  return products;
-}
-
-async function getCategories(): Promise<Record<string, unknown>[]> {
-  const now = Date.now();
-  if (categoriesCache && now - categoriesCache.timestamp < CACHE_TTL_MS) {
-    return categoriesCache.data;
-  }
-  const docs = await fetchFirestoreCollection('categories');
-  const categories = docs.map(parseFirestoreDoc).filter((c) => c.isActive !== false);
-  categoriesCache = { data: categories, timestamp: now };
-  return categories;
-}
-
-// ───────────────────────────────────────────────
-// Product Formatting & Search
-// ───────────────────────────────────────────────
-
-function formatProductForAI(product: Record<string, unknown>): string {
-  const name = String(product.name || 'منتج بدون اسم');
-  const basePrice = Number(product.basePrice || 0);
-  const originalPrice = product.originalPrice ? Number(product.originalPrice) : undefined;
-  const categoryId = String(product.categoryId || 'غير محدد');
-  const description = String(product.description || '');
-  const stock = product.stock !== undefined ? Number(product.stock) : 'غير محدد';
-  const dimensions = String(product.dimensions || '');
-  const sku = String(product.sku || '');
-
-  const colors = Array.isArray(product.colors)
-    ? product.colors
-        .map((c: unknown) => {
-          const col = c as Record<string, unknown>;
-          const cName = String(col.name || '');
-          const cPrice = col.price !== undefined ? Number(col.price) : basePrice;
-          const cOriginal = col.originalPrice ? Number(col.originalPrice) : undefined;
-          return `${cName}${cPrice !== basePrice ? ` (${cPrice} د.أ)` : ''}${cOriginal ? ` [قبل الخصم: ${cOriginal} د.أ]` : ''}`;
-        })
-        .join('، ')
-    : 'لا يوجد';
-
-  const attributes = Array.isArray(product.attributes)
-    ? product.attributes
-        .map((a: unknown) => {
-          const attr = a as Record<string, unknown>;
-          return `${attr.name || ''}: ${(attr.options as string[] || []).join(' / ')}`;
-        })
-        .join('؛ ')
-    : '';
-
-  let text = `- ${name} | القسم: ${categoryId} | السعر: ${basePrice} د.أ`;
-  if (originalPrice && originalPrice > basePrice) {
-    text += ` | قبل الخصم: ${originalPrice} د.أ`;
-  }
-  text += ` | المخزون: ${stock}`;
-  if (colors && colors !== 'لا يوجد') text += ` | الألوان: ${colors}`;
-  if (attributes) text += ` | المقاسات/الخيارات: ${attributes}`;
-  if (dimensions) text += ` | المقاسات: ${dimensions}`;
-  if (sku) text += ` | SKU: ${sku}`;
-  if (description) text += ` | الوصف: ${description.slice(0, 120)}`;
-  return text;
-}
-
-function buildProductContext(products: Record<string, unknown>[], searchTerm?: string): string {
-  if (!products.length) return 'لا توجد منتجات متاحة حالياً.';
-
-  if (searchTerm && searchTerm.trim().length > 0) {
-    const term = searchTerm.trim().toLowerCase();
-    const matches = products.filter((p) => {
-      const pname = String(p.name || '').toLowerCase();
-      const pdesc = String(p.description || '').toLowerCase();
-      const pcat = String(p.categoryId || '').toLowerCase();
-      return pname.includes(term) || pdesc.includes(term) || pcat.includes(term);
+  useEffect(() => {
+    const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const prods: Product[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        prods.push({ 
+          ...data,
+          id: doc.id, 
+          name: data.name || 'منتج بدون اسم',
+          description: data.description || 'لا يوجد وصف',
+          basePrice: Number(data.basePrice) || 0,
+          originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+          images: Array.isArray(data.images) ? data.images : [],
+          colors: Array.isArray(data.colors) ? data.colors : [],
+        } as Product);
+      });
+      setProducts(prods);
+      setProductsLoaded(true);
+    }, (error) => {
+      console.error('Error loading products:', error);
+      setProductsLoaded(true);
     });
 
-    if (matches.length === 0) return `لا توجد منتجات مطابقة لـ "${searchTerm}".`;
-    if (matches.length <= 5) {
-      return `المنتجات المطابقة لـ "${searchTerm}":\n${matches.map(formatProductForAI).join('\n')}`;
+    const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
+      const cats: Category[] = [];
+      snapshot.forEach((doc) => {
+        cats.push({ ...doc.data(), id: doc.id } as Category);
+      });
+      setCategories(cats.filter(c => c.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)));
+    });
+
+    return () => {
+      unsubscribeProducts();
+      unsubscribeCategories();
+    };
+  }, []);
+
+  useEffect(() => {
+    testFirestoreConnection();
+  }, []);
+
+  useEffect(() => {
+    if (!productsLoaded || products.length === 0 || cart.length === 0) return;
+    setCart((prev) => refreshCartData(prev, products));
+  }, [products, productsLoaded]);
+
+  useEffect(() => {
+    const seedCategories = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'categories'));
+        
+        const defaultCategories = [
+          { id: 'tables', name: 'طاولات', image: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', bannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', mobileBannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', title: 'طاولات عصرية تجمع بين الأناقة والعملية', description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات', buttonText: 'استكشف طاولات العرض الآن', badgeText: '✨ يوجد معاينة عند وصول الطلب', isActive: true, order: 1 },
+          { id: 'shoes', name: 'أحذية', image: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', bannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', mobileBannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', title: 'أحدث صيحات الأحذية', description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.', buttonText: 'استكشف الأحذية الآن', badgeText: '👟 خامات أصلية', isActive: true, order: 2 },
+          { id: 'perfumes', name: 'عطور', image: 'https://i.postimg.cc/R0LRh1yY/Designer.png', bannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', mobileBannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', title: 'عطور تدوم طويلاً', description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.', buttonText: 'استكشف العطور الآن', badgeText: '🌟 عطور فاخرة', isActive: true, order: 3 },
+          { id: 'ramadan', name: 'زينة رمضان', image: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', bannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', mobileBannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', title: 'زينة رمضان.. أضف البهجة لبيتك', description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.', buttonText: 'استكشف زينة رمضان', badgeText: '🌙 أجواء رمضانية', isActive: true, order: 4 }
+        ];
+
+        if (snapshot.empty) {
+          for (const defaultCat of defaultCategories) {
+            await setDoc(doc(db, 'categories', defaultCat.id), defaultCat);
+          }
+          return;
+        }
+
+        for (const defaultCat of defaultCategories) {
+          const existingDoc = snapshot.docs.find((d) => d.id === defaultCat.id);
+          if (!existingDoc) continue;
+
+          const currentData = existingDoc.data();
+          const missingDefaults = Object.fromEntries(
+            Object.entries(defaultCat).filter(([key]) =>
+              currentData[key] === undefined
+            )
+          );
+          if (Object.keys(missingDefaults).length > 0) {
+            await setDoc(doc(db, 'categories', defaultCat.id), missingDefaults, { merge: true });
+          }
+        }
+      } catch (error) {
+        console.error('Error seeding categories:', error);
+      }
+    };
+
+    seedCategories();
+  }, []);
+
+  useEffect(() => {
+    const migrateOldProducts = async () => {
+      const savedOldProducts = localStorage.getItem('dukan962_products_v3');
+      
+      if (savedOldProducts) {
+        const oldProducts = JSON.parse(savedOldProducts);
+        
+        if (oldProducts.length > 0) {
+          const confirmMigration = window.confirm(
+            `وجدنا ${oldProducts.length} منتج محفوظ في هذا المتصفح من قبل. هل تريد رفعهم إلى السحابة (Firebase) الآن؟`
+          );
+          
+          if (confirmMigration) {
+            try {
+              for (const prod of oldProducts) {
+                await setDoc(doc(db, 'products', prod.id), prod);
+              }
+              localStorage.removeItem('dukan962_products_v3');
+              alert('تم رفع جميع المنتجات والتعديلات إلى السحابة بنجاح! 🎉');
+              window.location.reload(); 
+            } catch (error) {
+              console.error('Error migrating data:', error);
+              alert('حدث خطأ أثناء الرفع. تأكد من اتصالك بالإنترنت.');
+            }
+          }
+        }
+      }
+    };
+    setTimeout(migrateOldProducts, 1500); 
+  }, []);
+
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('dukan962_cart');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const [wishlist, setWishlist] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('dukan962_wishlist');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); 
+  const [sortBy, setSortBy] = useState<'featured' | 'newest' | 'price-asc' | 'price-desc'>('featured');
+  const [selectedColor, setSelectedColor] = useState<string>('');
+
+  const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
+  const [isFAQPageOpen, setIsFAQPageOpen] = useState(false); // 💡 حالة صفحة الأسئلة
+
+  const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('dukan962_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem('dukan962_wishlist', JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  const dismissToast = () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(null);
+  };
+
+  const showToast = (
+    message: string,
+    options: { variant?: ToastVariant; actionLabel?: string; onAction?: () => void } = {}
+  ) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ id: Date.now(), message, variant: options.variant ?? 'success', ...options });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  const saveToRecentlyViewed = (product: Product) => {
+    try {
+      const savedIds: string[] = JSON.parse(localStorage.getItem('dukan962_recently_viewed') || '[]');
+      const newIds = [product.id, ...savedIds.filter(id => id !== product.id)].slice(0, 6);
+      localStorage.setItem('dukan962_recently_viewed', JSON.stringify(newIds));
+    } catch {}
+  };
+
+  const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
+    const liveProduct = products.find((p) => p.id === product.id);
+    if (productsLoaded && !liveProduct) {
+      showToast('هذا المنتج لم يعد متوفراً في المتجر', { variant: 'warning' });
+      return;
     }
-    return `تم العثور على ${matches.length} منتج مطابق. أهم النتائج:\n${matches.slice(0, 5).map(formatProductForAI).join('\n')}`;
+    
+    const live = liveProduct || product;
+    const liveColors = Array.isArray(live.colors) ? live.colors : [];
+    
+    let activeColor: ProductColor;
+
+    if (chosenColor && chosenColor.name) {
+      const matchedColor = liveColors.find((c) => c.name === chosenColor.name);
+      if (liveColors.length > 0 && !matchedColor) {
+        showToast(`عذراً، اللون "${chosenColor.name}" لم يعد متاحاً لهذا المنتج. يرجى اختيار لون آخر.`, { variant: 'warning' });
+        return;
+      }
+      activeColor = matchedColor || chosenColor;
+    } else if (liveColors.length > 0) {
+      activeColor = liveColors[0];
+    } else {
+      activeColor = {
+        name: 'افتراضي',
+        hex: '#3E2723',
+        price: live.basePrice,
+        image: live.images?.[0] || '',
+      };
+    }
+
+    const canAdd = availableQty(live) - qtyInCart(cart, product.id);
+    if (canAdd <= 0) {
+      showToast(`"${product.name}" نفدت الكمية المتاحة`, { variant: 'warning' });
+      return;
+    }
+    const requestedQty = Math.max(1, Math.floor(Number(quantity) || 1));
+    const addQty = Math.min(requestedQty, canAdd);
+
+    setCart((prev) => {
+      const existingIdx = prev.findIndex(
+        (item) => item.product.id === product.id && item.selectedColor.name === activeColor.name
+      );
+
+      if (existingIdx > -1) {
+        const next = [...prev];
+        next[existingIdx] = {
+          ...next[existingIdx],
+          product: live,
+          selectedColor: activeColor,
+          quantity: next[existingIdx].quantity + addQty,
+        };
+        return next;
+      } else {
+        return [...prev, { product: live, quantity: addQty, selectedColor: activeColor }];
+      }
+    });
+
+    if (addQty < requestedQty) {
+      showToast(`تمت إضافة ${addQty} فقط من "${product.name}" (المتاح ${availableQty(live)})`, {
+        variant: 'warning',
+        actionLabel: 'عرض السلة',
+        onAction: () => setIsCartOpen(true),
+      });
+      return;
+    }
+
+    showToast(`${product.name} (${activeColor.name})`, {
+      variant: 'cart',
+      actionLabel: 'عرض السلة',
+      onAction: () => setIsCartOpen(true),
+    });
+  };
+
+  const handleUpdateCartQuantity = (id: string, colorName: string, delta: number) => {
+    if (delta > 0) {
+      const live = products.find((p) => p.id === id);
+      if (live && availableQty(live) - qtyInCart(cart, id) < delta) {
+        showToast(`الكمية المتاحة من "${live.name}" ${availableQty(live)} فقط`, { variant: 'warning' });
+        return;
+      }
+    }
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.product.id === id && item.selectedColor.name === colorName) {
+            const newQ = item.quantity + delta;
+            return newQ > 0 ? { ...item, quantity: newQ } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const handleRemoveFromCart = (id: string, colorName: string) => {
+    setCart((prev) =>
+      prev.filter((item) => !(item.product.id === id && item.selectedColor.name === colorName))
+    );
+  };
+
+  const handleToggleWishlist = (product: Product) => {
+    setWishlist((prev) => {
+      const exists = prev.some((p) => p.id === product.id);
+      if (exists) {
+        showToast(product.name, { variant: 'remove' });
+        return prev.filter((p) => p.id !== product.id);
+      } else {
+        showToast(product.name, {
+          variant: 'wishlist',
+          actionLabel: 'عرض المفضلة',
+          onAction: () => setIsWishlistOpen(true),
+        });
+        return [...prev, product];
+      }
+    });
+  };
+
+  const handleResetFilters = () => {
+    setSelectedCategory('all');
+    setSearchQuery('');
+    setPriceRange([0, 1000]);
+    setSelectedColor('');
+  };
+
+  const goHome = () => {
+    handleResetFilters();
+    scrollToTop();
+  };
+
+  const filteredProducts = useMemo(() => {
+    const filtered = products.filter((prod) => {
+      if (prod.isActive === false) return false;
+
+      const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
+
+      const matchesSearch =
+        searchQuery.trim() === '' ||
+        prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prod.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(prod.itemNumber).includes(searchQuery.trim());
+
+      const matchesPrice = prod.basePrice >= priceRange[0] && prod.basePrice <= priceRange[1];
+
+      const matchesColor =
+        selectedColor === '' ||
+        prod.colors?.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
+
+      return matchesCategory && matchesSearch && matchesPrice && matchesColor;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy === 'price-asc') return Number(a.basePrice) - Number(b.basePrice);
+      if (sortBy === 'price-desc') return Number(b.basePrice) - Number(a.basePrice);
+      if (sortBy === 'newest') {
+        return (
+          String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+          (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
+        );
+      }
+      return Number(b.isBestSeller || false) - Number(a.isBestSeller || false);
+    });
+
+    return filtered;
+  }, [products, selectedCategory, searchQuery, priceRange, selectedColor, sortBy]);
+
+  const relatedProducts = useMemo(
+    () =>
+      selectedProductModal
+        ? products
+            .filter((p) => p.isActive !== false && p.id !== selectedProductModal.id)
+            .sort(
+              (a, b) =>
+                Number(b.categoryId === selectedProductModal.categoryId) -
+                Number(a.categoryId === selectedProductModal.categoryId)
+            )
+            .slice(0, 4)
+        : [],
+    [products, selectedProductModal]
+  );
+
+  const offersProducts = useMemo(() => {
+    return products
+      .filter((p) => p.isActive !== false && Number(p.originalPrice) > Number(p.basePrice))
+      .slice(0, 4);
+  }, [products]);
+
+  const newArrivalsProducts = useMemo(() => {
+    return [...products]
+      .filter((p) => p.isActive !== false)
+      .sort(
+        (a, b) =>
+          String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+          (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
+      )
+      .slice(0, 4);
+  }, [products]);
+
+  const cartTotalCount = useMemo(
+    () => cart.reduce((sum, item) => sum + item.quantity, 0),
+    [cart]
+  );
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToCatalog = () => {
+    const el = document.getElementById('catalog');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const scrollToCategories = () => {
+    document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const activeFilters: ActiveFilter[] = [];
+  if (selectedCategory !== 'all') {
+    activeFilters.push({
+      key: 'category',
+      label: categories.find((c) => c.id === selectedCategory)?.name || 'قسم محدد',
+      onRemove: () => setSelectedCategory('all'),
+    });
+  }
+  if (searchQuery.trim() !== '') {
+    activeFilters.push({ key: 'search', label: `بحث: ${searchQuery.trim()}`, onRemove: () => setSearchQuery('') });
+  }
+  if (selectedColor !== '') {
+    activeFilters.push({ key: 'color', label: `اللون: ${selectedColor}`, onRemove: () => setSelectedColor('') });
+  }
+  if (priceRange[0] !== 0 || priceRange[1] !== 1000) {
+    activeFilters.push({
+      key: 'price',
+      label: `${priceRange[0]} - ${priceRange[1]} د.أ`,
+      onRemove: () => setPriceRange([0, 1000]),
+    });
   }
 
-  return `قائمة المنتجات المتاحة (${products.length} منتج):\n${products.map(formatProductForAI).join('\n')}`;
-}
+  const currentCategoryData = selectedCategory === 'all' 
+    ? homeCategoryData 
+    : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
-// ───────────────────────────────────────────────
-// Response Helpers
-// ───────────────────────────────────────────────
+  useEffect(() => {
+    const setMetaDescription = (content: string) => {
+      let tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.name = 'description';
+        document.head.appendChild(tag);
+      }
+      tag.content = content;
+    };
 
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
-  });
-}
-
-function isSupportTopic(message: string): boolean {
-  const text = message.toLowerCase();
-  const terms = [
-    'توصيل', 'التوصيل', 'الشحن', 'اشحن', 'يوصل', 'التسليم', 'المندوب',
-    'دفع', 'الدفع', 'كاش', 'نقدي', 'كليك', 'cliq', 'تحويل',
-    'طلب', 'الطلب', 'اطلب', 'أطلب', 'تأكيد', 'تاكيد',
-    'اتمام', 'إتمام', 'السلة', 'checkout', 'order', 'delivery', 'payment',
-  ];
-  return terms.some((term) => text.includes(term));
-}
-
-function cleanHistory(value: unknown): Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> {
-  if (!Array.isArray(value)) return [];
-  return value
-    .slice(-MAX_HISTORY_MESSAGES)
-    .filter((item): item is { role: string; text: string } => {
-      return Boolean(
-        item && typeof item === 'object' &&
-        typeof (item as { text?: unknown }).text === 'string' &&
-        ['user', 'model'].includes(String((item as { role?: unknown }).role))
+    if (selectedProductModal) {
+      const price = Number(selectedProductModal.basePrice || 0).toFixed(2);
+      document.title = `${selectedProductModal.name} | ${price} د. أ | دكان 962`;
+      setMetaDescription(
+        `${selectedProductModal.name} بسعر ${price} دينار أردني — ${selectedProductModal.description?.slice(0, 120) || 'منتج مختار بعناية...'}`
       );
-    })
-    .map((item) => ({
-      role: item.role as 'user' | 'model',
-      parts: [{ text: item.text.slice(0, MAX_MESSAGE_LENGTH) }],
-    }));
+      return;
+    }
+
+    if (selectedCategory !== 'all' && currentCategoryData) {
+      document.title = `${currentCategoryData.name} | دكان 962 للأثاث`;
+      setMetaDescription(
+        currentCategoryData.description ||
+          `تشكيلة ${currentCategoryData.name} المميزة في دكان 962 — جودة عالية وأسعار منافسة...`
+      );
+      return;
+    }
+
+    document.title = 'دكان 962 للأثاث | DUKAN 962 - طاولات وعفش فاخر';
+    setMetaDescription(
+      'دكان 962 للأثاث - تشكيلة طاولات وسط وصالون، طاولات شاشة وتلفزيون ومدافئ ديكور خشب تايلندي ثقيل. توصيل لكافة المحافظات بالدينار الأردني.'
+    );
+  }, [selectedCategory, selectedProductModal, currentCategoryData]);
+
+  return (
+    <ErrorBoundary>
+      {/* 💡 المتجر يغلف فقط واجهة المتجر */}
+      <div 
+        className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden pb-16 md:pb-0"
+        data-theme={isLightTheme ? 'light' : 'dark'}
+      >
+        
+        <Toast toast={toast} onDismiss={dismissToast} />
+
+        <aside aria-label="شريط العروض" className="relative bg-[#080706] text-[#A39A8B] text-[11px] sm:text-xs py-2.5 px-4 text-center">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
+            <span className="text-[#E8CC8A] font-semibold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
+            <span aria-hidden="true" className="hidden sm:block h-3 w-px bg-white/15" />
+            <span className="hidden sm:inline">التوصيل لجميع محافظات المملكة</span>
+            <span aria-hidden="true" className="hidden md:block h-3 w-px bg-white/15" />
+            <span className="hidden md:inline">الدفع كاش أو عبر كليك (CliQ)</span>
+          </div>
+          <div aria-hidden="true" className="absolute bottom-0 inset-x-0 gold-rule opacity-60" />
+        </aside>
+
+        <Navbar
+          categories={categories}
+          currentCategoryData={currentCategoryData}
+          cartCount={cartTotalCount}
+          wishlistCount={wishlist.length}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onOpenAdmin={() => setIsAdminAuthOpen(true)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToTop();
+          }}
+          isLightTheme={isLightTheme}
+          onToggleTheme={() => setIsLightTheme((current) => !current)}
+          products={products}
+          onSelectProduct={(p) => {
+            saveToRecentlyViewed(p);
+            setSelectedProductModal(p);
+          }}
+        />
+
+        <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
+
+        <CategoryBoxes
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToTop();
+          }}
+        />
+
+        {selectedCategory === 'all' && (
+          <>
+            {offersProducts.length > 0 && (
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-[#F3EEE4] tracking-tight font-serif flex items-center gap-2">
+                      <Flame className="w-6 h-6 text-rose-500" />
+                      عروض وخصومات
+                    </h2>
+                    <p className="text-sm text-[#A39A8B] mt-2">أفضل العروض المختارة لك بأسعار لا تقاوم.</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {offersProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isWishlisted={wishlist.some((w) => w.id === product.id)}
+                      onToggleWishlist={handleToggleWishlist}
+                      onAddToCart={(p) => handleAddToCart(p)}
+                      onQuickView={(p) => {
+                        saveToRecentlyViewed(p);
+                        setSelectedProductModal(p);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {newArrivalsProducts.length > 0 && (
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-[#F3EEE4] tracking-tight font-serif flex items-center gap-2">
+                      <Clock className="w-6 h-6 text-[#7FD1A0]" />
+                      وصل حديثاً
+                    </h2>
+                    <p className="text-sm text-[#A39A8B] mt-2">أحدث المنتجات التي أضفناها للمتجر مؤخراً.</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {newArrivalsProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isWishlisted={wishlist.some((w) => w.id === product.id)}
+                      onToggleWishlist={handleToggleWishlist}
+                      onAddToCart={(p) => handleAddToCart(p)}
+                      onQuickView={(p) => {
+                        saveToRecentlyViewed(p);
+                        setSelectedProductModal(p);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-4xl font-bold text-[#F3EEE4] tracking-tight font-serif">
+                {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
+              </h2>
+              <p className="text-sm text-[#A39A8B] mt-2">
+                اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
+              </p>
+            </div>
+
+            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full bg-[#7FD1A0]/10 ring-1 ring-[#7FD1A0]/25 text-xs font-bold text-[#7FD1A0]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7FD1A0]" />
+              الأسعار بالدينار الأردني (د.أ) فقط
+            </div>
+          </div>
+
+          {selectedCategory !== 'all' && currentCategoryData.videoUrl && (
+            <CategoryVideoBanner
+              videoUrl={currentCategoryData.videoUrl}
+              poster={currentCategoryData.image}
+              title={currentCategoryData.name}
+            />
+          )}
+
+          {(currentCategoryData.name.includes('عطور') || selectedCategory === 'perfumes') && (
+            <div className="mb-8 relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.15),transparent_50%)] pointer-events-none" />
+              
+              <div className="relative z-10 text-center sm:text-right flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4B06A]/10 text-[#E8CC8A] text-[11px] font-bold mb-3 ring-1 ring-[#D4B06A]/30">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  خدمة حصرية
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
+                  لم تجد عطرك المفضل؟ نوفر لك <span className="text-[#D4B06A]">عطور حسب الطلب</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-[#A39A8B] leading-relaxed max-w-xl">
+                  أرسل لنا اسم البراند ونوع العطر والحجم المطلوب، وسنقوم بتجهيز التركيبة الخاصة بك ومراجعتها.
+                  سنبلغك بالسعر ووقت التجهيز فوراً.
+                </p>
+              </div>
+
+              <div className="relative z-10 shrink-0">
+                <a
+                  href={`https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
+                    'مرحباً دكان 962،\nأرغب في طلب عطر مخصص (Custom Made).\n\nتفاصيل طلبي:\n- اسم البراند: \n- نوع العطر: \n- الحجم المطلوب: \n\nأرجو إبلاغي بالسعر ووقت التجهيز. شكراً لكم!'
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  اطلب عطرك المخصص الآن
+                </a>
+              </div>
+            </div>
+          )}
+
+          <FilterBar
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            priceRange={priceRange}
+            onPriceRangeChange={setPriceRange}
+            selectedColor={selectedColor}
+            onSelectColor={setSelectedColor}
+            onResetFilters={handleResetFilters}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <p className="text-xs text-[#A39A8B]">
+              {productsLoaded ? `${filteredProducts.length} منتج` : ''}
+            </p>
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full">
+              <span className="text-xs font-bold text-[#F3EEE4] shrink-0 ml-1">ترتيب حسب:</span>
+              {([
+                ['featured', 'الأكثر مبيعاً'],
+                ['newest', 'الأحدث'],
+                ['price-asc', 'الأقل سعراً'],
+                ['price-desc', 'الأعلى سعراً'],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setSortBy(value)}
+                  aria-pressed={sortBy === value}
+                  className={`py-1.5 px-3.5 text-xs font-semibold rounded-full transition-all duration-300 cursor-pointer whitespace-nowrap active:scale-95 ${
+                    sortBy === value
+                      ? 'bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] shadow-gold'
+                      : 'bg-white/[0.04] text-[#A39A8B] ring-1 ring-white/10 hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <RecentlyViewed 
+            products={products} 
+            cart={cart} 
+            onQuickView={(p) => {
+              saveToRecentlyViewed(p);
+              setSelectedProductModal(p);
+            }} 
+          />
+
+          {!productsLoaded ? (
+            <ProductSkeletonGrid />
+          ) : filteredProducts.length === 0 ? (
+            <EmptyState
+              variant={products.length === 0 ? 'no-products' : 'no-results'}
+              searchQuery={searchQuery}
+              activeFilters={activeFilters}
+              onReset={handleResetFilters}
+              onBrowseCategories={scrollToCategories}
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isWishlisted={wishlist.some((w) => w.id === product.id)}
+                  onToggleWishlist={handleToggleWishlist}
+                  onAddToCart={(p) => handleAddToCart(p)}
+                  onQuickView={(p) => {
+                    saveToRecentlyViewed(p);
+                    setSelectedProductModal(p);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </main>
+
+        {/* 💡 قسم الدعوة لزيارة الأسئلة الشائعة */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full border-t border-white/10">
+          <div className="relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.1),transparent_50%)] pointer-events-none" />
+            
+            <div className="relative z-10 text-center sm:text-right flex-1">
+              <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
+                هل لديك استفسار قبل الطلب؟
+              </h3>
+              <p className="text-xs sm:text-sm text-[#A39A8B] leading-relaxed max-w-xl">
+                كل ما تحتاج معرفته عن التوصيل، الدفع، والمعاينة موجود في صفحة مخصصة لراحتتك.
+              </p>
+            </div>
+
+            <div className="relative z-10 shrink-0">
+              <button
+                onClick={() => setIsFAQPageOpen(true)}
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+              >
+                <HelpCircle className="w-5 h-5" />
+                الأسئلة الشائعة وطريقة الطلب
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <Footer
+          categories={categories}
+          currentCategoryData={currentCategoryData}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToTop();
+          }}
+          onOpenAdmin={() => setIsAdminAuthOpen(true)}
+          onOpenTracking={() => setIsOrderTrackingOpen(true)}
+        />
+
+        <ProductDetailsPage
+          product={selectedProductModal}
+          isWishlisted={Boolean(selectedProductModal && wishlist.some((w) => w.id === selectedProductModal.id))}
+          onToggleWishlist={handleToggleWishlist}
+          onClose={() => setSelectedProductModal(null)}
+          onAddToCart={handleAddToCart}
+          relatedProducts={relatedProducts}
+          onSelectProduct={(p) => {
+            saveToRecentlyViewed(p);
+            setSelectedProductModal(p);
+          }}
+        />
+
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          items={cart}
+          onUpdateQuantity={handleUpdateCartQuantity}
+          onRemoveItem={handleRemoveFromCart}
+          onProceedToCheckout={() => {
+            if (!productsLoaded) {
+              showToast('انتظر لحظة حتى يتم تحديث بيانات المنتجات والمخزون', { variant: 'warning' });
+              return;
+            }
+            const { cart: reconciled, messages } = reconcileCart(cart, products);
+            setCart(reconciled);
+            if (messages.length > 0) {
+              showToast(
+                messages[0] + (messages.length > 1 ? ` (و${messages.length - 1} تنبيهات أخرى)` : ''),
+                { variant: 'warning' }
+              );
+              return;
+            }
+            setIsCartOpen(false);
+            setIsCheckoutOpen(true);
+          }}
+        />
+
+        <WishlistDrawer
+          isOpen={isWishlistOpen}
+          onClose={() => setIsWishlistOpen(false)}
+          wishlist={wishlist}
+          onRemoveFromWishlist={handleToggleWishlist}
+          onAddToCart={(p) => handleAddToCart(p)}
+        />
+
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          items={cart}
+          products={products}
+          onCartChange={setCart}
+          onSuccessOrder={() => {
+            setCart([]);
+            localStorage.removeItem('dukan962_cart');
+          }}
+        />
+
+        <OrderTrackingModal
+          isOpen={isOrderTrackingOpen}
+          onClose={() => setIsOrderTrackingOpen(false)}
+        />
+
+        {/* 💡 صفحة الأسئلة الشائعة */}
+        <FAQPage
+          isOpen={isFAQPageOpen}
+          onClose={() => setIsFAQPageOpen(false)}
+        />
+
+        <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
+
+        {/* 💡 مساعد نشمي — الخادم يجلب بيانات المنتجات مباشرة من Firestore */}
+        <SupportChatbot
+          onOpenFAQ={() => setIsFAQPageOpen(true)}
+        />
+        
+        <MobileBottomNav
+          cartCount={cartTotalCount}
+          wishlistCount={wishlist.length}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onGoHome={goHome}
+          onOpenTracking={() => setIsOrderTrackingOpen(true)}
+        />
+
+      </div> {/* 💡 إغلاق المتجر هنا */}
+
+      {/* 💡 لوحة الإدارة والنوافذ خارج الثيم لتبقى داكنة دائماً */}
+      <AdminAuthModal
+        isOpen={isAdminAuthOpen}
+        onClose={() => setIsAdminAuthOpen(false)}
+        onSuccess={() => {
+          setIsAdminAuthOpen(false);
+          setIsAdminOpen(true);
+        }}
+      />
+
+      <Suspense fallback={<AdminDashboardFallback />}>
+        <AdminDashboard
+          isOpen={isAdminOpen}
+          onClose={() => setIsAdminOpen(false)}
+        />
+      </Suspense>
+
+    </ErrorBoundary>
+  );
 }
-
-// ───────────────────────────────────────────────
-// Worker Export
-// ───────────────────────────────────────────────
-
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-
-    if (url.pathname !== '/api/chat') {
-      return env.ASSETS.fetch(request);
-    }
-
-    if (request.method !== 'POST') {
-      return json({ success: false, message: 'طريقة الطلب غير مدعومة.' }, 405);
-    }
-
-    try {
-      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-      if (env.CHAT_LIMITER) {
-        const limit = await env.CHAT_LIMITER.limit({ key: ip });
-        if (!limit.success) {
-          return json({ success: false, message: 'وصلت إلى الحد المؤقت للرسائل. حاول بعد دقيقة.' }, 429);
-        }
-      }
-
-      const body = await request.json() as { message?: unknown; history?: unknown };
-
-      if (typeof body.message !== 'string') {
-        return json({ success: false, message: 'اكتب سؤالك أولاً.' }, 400);
-      }
-
-      const message = body.message.trim();
-      if (!message || message.length > MAX_MESSAGE_LENGTH) {
-        return json({ success: false, message: `الرسالة يجب أن تكون بين حرف و${MAX_MESSAGE_LENGTH} حرف.` }, 400);
-      }
-
-      if (!env.GEMINI_API_KEY) {
-        return json({ success: false, message: 'المساعد غير مُعدّ (المفتاح مفقود).' }, 503);
-      }
-
-      const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-      const history = cleanHistory(body.history);
-
-      // 🔒 جلب المنتجات من الخادم (Server-Side Source of Truth)
-      let productContext: string;
-      try {
-        const [products, categories] = await Promise.all([getProducts(), getCategories()]);
-        // بناء سياق ذكي: إذا كان السؤال يبدو بحث عن منتج، نبحث ونُرسل النتائج المطابقة فقط
-        const seemsLikeProductQuery = /(سعر|كم|متوف|منتج|قطع|طاولة|سرير|كنب|صالون|خشب|عطر|حذاء)/.test(message);
-        productContext = buildProductContext(products, seemsLikeProductQuery ? message : undefined);
-        // إرفاق أسماء الأقسام كمرجع
-        if (categories.length) {
-          productContext += `\n\nالأقسام المتاحة: ${categories.map((c) => String(c.name || c.id)).join('، ')}.`;
-        }
-      } catch (firestoreErr: unknown) {
-        console.error('Firestore fetch error:', (firestoreErr as Error)?.message || firestoreErr);
-        productContext = 'تعذر جلب قائمة المنتجات من الخادم حالياً.';
-      }
-
-      const augmentedMessage = `
-[قائمة المنتجات المتاحة في المتجر]:
-${productContext}
-
-[سؤال الزبون]:
-${message}
-      `;
-
-      const primaryModel = env.GEMINI_MODEL || DEFAULT_MODEL;
-      let result: { text?: string } | null = null;
-
-      // ✅ إعدادات النموذج الموحدة مع thinkingConfig حسب توثيق Google SDK
-      const generationConfig = {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.3,
-        maxOutputTokens: 800,
-        thinkingConfig: { thinkingLevel: 'LOW' as const },
-      } as const;
-
-      try {
-        result = (await ai.models.generateContent({
-          model: primaryModel,
-          contents: [
-            ...history,
-            { role: 'user', parts: [{ text: augmentedMessage }] },
-          ],
-          config: generationConfig as unknown as any,
-        })) as { text?: string };
-      } catch (err: unknown) {
-        console.warn(`Primary model (${primaryModel}) failed, switching to fallback (${FALLBACK_MODEL})...`);
-        result = (await ai.models.generateContent({
-          model: FALLBACK_MODEL,
-          contents: [
-            ...history,
-            { role: 'user', parts: [{ text: augmentedMessage }] },
-          ],
-          config: generationConfig as unknown as any,
-        })) as { text?: string };
-      }
-
-      const answer = result?.text?.trim();
-      if (!answer) {
-        return json({ success: false, message: 'لم أتمكن من إنشاء إجابة. حاول مجدداً.' }, 503);
-      }
-
-      return json({
-        success: true,
-        answer,
-        showFaqButton: isSupportTopic(message),
-      });
-    } catch (error: unknown) {
-      console.error('Dukan962 AI Error:', (error as Error)?.message || error);
-      if ((error as { status?: number }).status === 429) {
-        return json({ success: false, message: 'المساعد مشغول جداً حالياً، حاول بعد قليل.' }, 429);
-      }
-      // ❌ أزلنا debug_error من الرد للعميل — يبقى فقط في السيرفر
-      return json({ success: false, message: 'حدث خطأ مؤقت في الاتصال بالمساعد. جرب تاني شوي يا صديقي.' }, 503);
-    }
-  },
-};
