@@ -104,7 +104,10 @@ export default function App() {
       snapshot.forEach((doc) => {
         cats.push({ ...doc.data(), id: doc.id } as Category);
       });
+      // الأقسام التي لا تحتوي isActive تعتبر نشطة؛ نعطّل فقط ما عُطّل صراحةً من لوحة التحكم.
       setCategories(cats.filter(c => c.isActive !== false).sort((a, b) => (a.order || 0) - (b.order || 0)));
+    }, (error) => {
+      console.error('Error loading categories from Firestore:', error);
     });
 
     return () => {
