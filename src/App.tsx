@@ -104,7 +104,7 @@ export default function App() {
       snapshot.forEach((doc) => {
         cats.push({ ...doc.data(), id: doc.id } as Category);
       });
-      setCategories(cats.filter(c => c.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)));
+      setCategories(cats.filter(c => c.isActive !== false).sort((a, b) => (a.order || 0) - (b.order || 0)));
     });
 
     return () => {
