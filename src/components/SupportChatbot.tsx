@@ -39,11 +39,11 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [hasVideoError, setHasVideoError] = useState(false);
 
-  // 💡 حالات التحكم بالسحب والإفلات
+  // 💡 حالات جديدة للتحكم في السحب والإفلات (Dragging)
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
-  const hasDraggedRef = useRef(false); // لتمييز السحب عن النقر العادي
+  const hasDraggedRef = useRef(false); // لتمييز الضغطة العادية عن السحب
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -142,7 +142,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     }
   };
 
-  // 💡 دوال السحب والإفلات (تعمل باللمس والماوس)
+  // 💡 دوال السحب والإفلات
   const onPointerDown = (e: React.PointerEvent) => {
     if (isOpen) return; // لا تسمح بالسحب إذا كانت المحادثة مفتوحة
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -187,7 +187,6 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
         transition: isDragging ? 'none' : 'transform 0.1s ease-out'
       }}
     >
-
       <audio ref={audioRef} src="/nashmi-greeting.mp3" preload="auto" className="hidden" />
 
       {isOpen && (
