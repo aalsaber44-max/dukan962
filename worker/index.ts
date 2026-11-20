@@ -539,7 +539,6 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      {/* 💡 المتجر يغلف فقط واجهة المتجر */}
       <div 
         className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden pb-16 md:pb-0"
         data-theme={isLightTheme ? 'light' : 'dark'}
