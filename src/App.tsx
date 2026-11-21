@@ -899,9 +899,19 @@ export default function App() {
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
 
         {/* 💡 السطر المطلوب إضافته هنا */}
-        <SupportChatbot 
-          onOpenFAQ={() => setIsFAQPageOpen(true)} 
-          products={products} // 💡 تمرير المنتجات
+        <SupportChatbot
+          onOpenFAQ={() => setIsFAQPageOpen(true)}
+          products={products}
+          categories={categories}
+          onAddToCart={(product, quantity) => handleAddToCart(product, undefined, quantity)}
+          onOpenProduct={(product) => {
+            saveToRecentlyViewed(product);
+            setSelectedProductModal(product);
+          }}
+          onNavigateCategory={(categoryId) => {
+            setSelectedCategory(categoryId);
+            scrollToTop();
+          }}
         />
         
         <MobileBottomNav

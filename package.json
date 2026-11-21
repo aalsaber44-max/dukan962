@@ -4,15 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "npm run build && npx wrangler@latest dev",
     "build": "vite build",
-    "start": "tsx server.ts",
+    "start": "npx wrangler@latest dev",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "dev:worker": "npm run build && npx wrangler@latest dev",
     "deploy": "npm run build && npx wrangler@latest deploy",
-    "cf:types": "npx wrangler@latest types"
+    "cf:types": "npx wrangler@latest types",
+    "dev:web": "vite"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

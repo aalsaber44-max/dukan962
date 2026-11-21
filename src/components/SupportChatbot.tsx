@@ -1,20 +1,31 @@
-import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
   BookOpen,
   LoaderCircle,
   MessageCircle,
+  Plus,
   Send,
   Sparkles,
   X,
   Volume2,
+  Eye,
+  ArrowLeft,
 } from 'lucide-react';
+import { Product, Category } from '../types/furniture';
+import { availableQty } from '../utils/inventory';
+
+type ChatAction =
+  | { type: 'navigate_category'; categoryId: string }
+  | { type: 'add_to_cart'; productId: string; quantity: number }
+  | { type: 'show_products'; productIds: string[] };
 
 type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   showFaqButton?: boolean;
+  actions?: ChatAction[];
 };
 
 type ApiHistoryMessage = {
@@ -22,8 +33,22 @@ type ApiHistoryMessage = {
   text: string;
 };
 
+type CompactProductPayload = {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  stock: number;
+  desc: string;
+};
+
 interface SupportChatbotProps {
   onOpenFAQ: () => void;
+  products: Product[];
+  categories: Category[];
+  onAddToCart: (product: Product, quantity?: number) => void;
+  onOpenProduct: (product: Product) => void;
+  onNavigateCategory: (categoryId: string) => void;
 }
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -32,14 +57,23 @@ const WELCOME_MESSAGE: ChatMessage = {
   text: 'أهلاً بك في دكان 962 👋 أنا "نشمي"، مساعدك الشخصي للتسوق. كيف بقدر أساعدك اليوم؟',
 };
 
-export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => {
+const MAX_CONTEXT_PRODUCTS = 80;
+
+export const SupportChatbot: React.FC<SupportChatbotProps> = ({
+  onOpenFAQ,
+  products,
+  categories,
+  onAddToCart,
+  onOpenProduct,
+  onNavigateCategory,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [hasVideoError, setHasVideoError] = useState(false);
 
-  // 💡 حالات جديدة للتحكم في السحب والإفلات (Dragging)
+  // 💡 حالات التحكم في السحب والإفلات (Dragging)
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
@@ -49,6 +83,48 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
   const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hasPlayedSoundRef = useRef(false);
+
+  const productMap = useMemo(() => {
+    const map = new Map<string, Product>();
+    products.forEach((product) => map.set(product.id, product));
+    return map;
+  }, [products]);
+
+  const categoryNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach((category) => map.set(category.id, category.name));
+    return map;
+  }, [categories]);
+
+  // 📦 ملخص مضغوط للمنتجات: الاسم، السعر، القسم، المتوفر، وصف مختصر — لتقليل التوكنز
+  const compactProducts = useMemo<CompactProductPayload[]>(() => {
+    const active = products.filter((product) => product.isActive !== false);
+
+    const ranked = [...active].sort((a, b) => availableQty(b) - availableQty(a));
+
+    return ranked.slice(0, MAX_CONTEXT_PRODUCTS).map((product) => {
+      const basePrice = Number(product.basePrice) || 0;
+      const cheapestColor = Array.isArray(product.colors) && product.colors.length > 0
+        ? Math.min(...product.colors.map((color) => Number(color.price) || basePrice))
+        : basePrice;
+      // المنتجات غير المتتبَّعة تُعيد Infinity، و JSON يحوّلها إلى null — نستخدم رقماً كبيراً بدلاً منها
+      const available = availableQty(product);
+
+      return {
+        id: product.id,
+        name: product.name,
+        price: cheapestColor > 0 ? cheapestColor : basePrice,
+        category: categoryNameMap.get(product.categoryId) || product.categoryLabel || '',
+        stock: Number.isFinite(available) ? available : 999,
+        desc: (product.description || '').replace(/\s+/g, ' ').slice(0, 55),
+      };
+    });
+  }, [products, categoryNameMap]);
+
+  const compactCategories = useMemo(
+    () => categories.map((category) => ({ id: category.id, name: category.name })),
+    [categories]
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -64,6 +140,16 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
       }
     }
   }, [isOpen, messages, isSending]);
+
+  // تنفيذ أوامر الإضافة للسلة التي طلبها العميل صراحةً
+  const applyInstantActions = (actions: ChatAction[]) => {
+    actions.forEach((action) => {
+      if (action.type === 'add_to_cart') {
+        const product = productMap.get(action.productId);
+        if (product) onAddToCart(product, action.quantity);
+      }
+    });
+  };
 
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -102,7 +188,8 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
         body: JSON.stringify({
           message,
           history: previousMessages,
-          // ❌ لم نعد نُرسل productContext — الخادم يجلبه مباشرة من Firestore
+          products: compactProducts,
+          categories: compactCategories,
         }),
         signal: controller.signal,
       });
@@ -112,11 +199,17 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
         answer?: string;
         message?: string;
         showFaqButton?: boolean;
+        actions?: ChatAction[];
+        cached?: boolean;
       };
 
       if (!response.ok || !data.success || !data.answer) {
         throw new Error(data.message || 'تعذر الحصول على إجابة الآن. حاول مرة أخرى.');
       }
+
+      const actions: ChatAction[] = Array.isArray(data.actions) ? data.actions : [];
+
+      if (actions.length > 0) applyInstantActions(actions);
 
       setMessages((current) => [
         ...current,
@@ -125,6 +218,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
           role: 'assistant',
           text: data.answer as string,
           showFaqButton: Boolean(data.showFaqButton),
+          actions,
         },
       ]);
     } catch (error) {
@@ -177,10 +271,144 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
     e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
+  const renderProductCards = (productIds: string[]) => {
+    const found = productIds
+      .map((id) => productMap.get(id))
+      .filter((product): product is Product => Boolean(product))
+      .slice(0, 4);
+
+    if (found.length === 0) return null;
+
+    return (
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {found.map((product) => (
+          <div
+            key={product.id}
+            className="overflow-hidden rounded-xl border border-[#D4B06A]/25 bg-[#191511]"
+          >
+            <button
+              type="button"
+              onClick={() => onOpenProduct(product)}
+              className="block w-full text-right"
+            >
+              <div className="relative aspect-square w-full overflow-hidden bg-black/40">
+                {product.images?.[0] ? (
+                  <img
+                    src={product.images[0]}
+                    alt={product.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition duration-300 hover:scale-105"
+                  />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-[10px] text-[#8F877B]">
+                    لا توجد صورة
+                  </div>
+                )}
+              </div>
+              <div className="px-2 pt-2">
+                <p className="line-clamp-2 text-[11px] font-bold leading-5 text-[#F3EEE4]">{product.name}</p>
+                <p className="mt-1 text-[11px] font-black text-[#E8CC8A]">
+                  {Number(product.basePrice || 0).toFixed(2)} د.أ
+                </p>
+              </div>
+            </button>
+
+            <div className="flex items-center gap-1.5 px-2 pb-2 pt-1.5">
+              <button
+                type="button"
+                onClick={() => onAddToCart(product, 1)}
+                className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#D4B06A] px-2 py-1.5 text-[10px] font-extrabold text-[#17120A] transition hover:bg-[#E8CC8A]"
+              >
+                <Plus className="h-3 w-3" />
+                للسلة
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenProduct(product)}
+                aria-label={`عرض تفاصيل ${product.name}`}
+                className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 text-[#C8BFAF] transition hover:border-[#D4B06A]/40 hover:text-[#E8CC8A]"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderActions = (message: ChatMessage) => {
+    const actions = message.actions || [];
+    if (actions.length === 0) return null;
+
+    const showProductsActions = actions.filter(
+      (action): action is { type: 'show_products'; productIds: string[] } => action.type === 'show_products'
+    );
+    const navigateActions = actions.filter(
+      (action): action is { type: 'navigate_category'; categoryId: string } => action.type === 'navigate_category'
+    );
+    const addedActions = actions.filter(
+      (action): action is { type: 'add_to_cart'; productId: string; quantity: number } => action.type === 'add_to_cart'
+    );
+
+    return (
+      <div className="flex flex-col gap-2">
+        {addedActions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {addedActions.map((action) => {
+              const product = productMap.get(action.productId);
+              if (!product) return null;
+              return (
+                <span
+                  key={`${message.id}-added-${action.productId}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold text-emerald-300"
+                >
+                  <Plus className="h-3 w-3" />
+                  أُضيف للسلة: {product.name} × {action.quantity}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {navigateActions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {navigateActions.map((action) => {
+              const name =
+                action.categoryId === 'all'
+                  ? 'الصفحة الرئيسية'
+                  : categoryNameMap.get(action.categoryId) || 'قسم';
+              return (
+                <button
+                  key={`${message.id}-nav-${action.categoryId}`}
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onNavigateCategory(action.categoryId);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#D4B06A]/45 bg-[#D4B06A]/10 px-3 py-1.5 text-[10px] font-bold text-[#E8CC8A] transition hover:bg-[#D4B06A]/20"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  انتقل إلى {name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {showProductsActions.map((action) => (
+          <React.Fragment key={`${message.id}-products`}>
+            {renderProductCards(action.productIds)}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
   return (
     // 💡 الحاوية الرئيسية تتحرك باستخدام transform بناءً على حالة السحب
-    <div 
-      dir="rtl" 
+    <div
+      dir="rtl"
       className="fixed top-20 sm:top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start"
       style={{
         transform: `translate(${position.x}px, ${position.y}px)`,
@@ -267,6 +495,9 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({ onOpenFAQ }) => 
                   >
                     {message.text}
                   </div>
+
+                  {message.role === 'assistant' && renderActions(message)}
+
                   {message.showFaqButton && (
                     <button
                       type="button"
