@@ -3,15 +3,21 @@ import { GoogleGenAI } from '@google/genai';
 interface Env {
   GEMINI_API_KEY: string;
   GEMINI_MODEL?: string;
-  GEMINI_BASE_URL?: string; // اختياري: ضعه في Cloudflare إذا كان المزود له رابط مختلف
+  GEMINI_BASE_URL?: string;
   ASSETS: any;
   CHAT_LIMITER?: any;
 }
 
-const DEFAULT_MODEL = 'gemini-3.8-flash';
+// قائمة النماذج مرتبة حسب الأولوية والاستقرار (إذا تعطل الأول ينتقل تلقائياً للتالي)
+const FALLBACK_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash',
+];
+
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
-const AI_TIMEOUT_MS = 20000; // 20 ثانية كحد أقصى قبل إظهار سبب الخطأ الحقيقي
+const AI_TIMEOUT_MS = 12000; // 12 ثانية لكل محاولة حتى لا يتجاوز إجمالي الانتظار الحدود
 
 const STORE_KNOWLEDGE = `
 أنت "نشمي"، مساعد خدمة العملاء والبائع الرسمي لمتجر Dukan962 في الأردن.
@@ -76,6 +82,67 @@ function cleanHistory(value: unknown): Array<{ role: 'user' | 'model'; parts: Ar
     }));
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// دالة استدعاء Gemini مع إعادة المحاولة والتبديل التلقائي بين النماذج عند الضغط (503)
+async function generateWithFallback(
+  ai: GoogleGenAI,
+  models: string[],
+  contents: any[],
+  systemInstruction: string
+) {
+  let lastError: any = null;
+
+  for (const model of models) {
+    // محاولتان لكل نموذج قبل الانتقال للنموذج الاحتياطي التالي
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+      try {
+        const result = await ai.models.generateContent({
+          model,
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.3,
+            maxOutputTokens: 250,
+            abortSignal: controller.signal,
+          },
+        });
+        clearTimeout(timer);
+        return result;
+      } catch (err: any) {
+        clearTimeout(timer);
+        lastError = err;
+
+        const msg = String(err?.message || '');
+        const isOverloaded =
+          err?.status === 503 ||
+          err?.status === 429 ||
+          msg.includes('503') ||
+          msg.includes('UNAVAILABLE') ||
+          msg.includes('high demand');
+
+        console.warn(`Model ${model} (attempt ${attempt}) failed:`, msg);
+
+        // إذا كان الخطأ ضغط خوادم، انتظر قليلاً وأعد المحاولة أو انتقل للنموذج التالي
+        if (isOverloaded) {
+          if (attempt < 2) await sleep(600);
+          continue;
+        }
+
+        // إذا كان الخطأ ليس ضغط خوادم (مثل خطأ في المفتاح)، اخرج فوراً
+        throw err;
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -110,10 +177,9 @@ export default {
 
       const apiKey = (env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
       if (!apiKey) {
-        return json({ success: false, message: 'المساعد غير مُعدّ (المفتاح مفقود).' }, 503);
+        return json({ success: false, message: 'المساعد غير مُعدّ حالياً.' }, 503);
       }
 
-      // ✅ دعم الرابط المخصص إذا كان الـ API يختلف عن رابط جوجل الرسمي
       const baseUrl = (env.GEMINI_BASE_URL || '').trim();
       const ai = new GoogleGenAI({
         apiKey,
@@ -131,35 +197,22 @@ ${productContext}
 ${message}
       `;
 
-      // ✅ استخدام النموذج الجديد مباشرة دون التأثر بأي متغير قديم في Cloudflare
-      const primaryModel = DEFAULT_MODEL;
+      // إذا حددت نموذجاً في إعدادات Cloudflare يتم وضعه أولاً ثم النماذج الاحتياطية
+      const customModel = (env.GEMINI_MODEL || '').trim();
+      const modelsToTry = customModel
+        ? [customModel, ...FALLBACK_MODELS.filter((m) => m !== customModel)]
+        : FALLBACK_MODELS;
 
-      // ✅ مهلة 20 ثانية حتى لا يعلق 90 ثانية بصمت
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-
-      let result: any = null;
-      try {
-        result = await ai.models.generateContent({
-          model: primaryModel,
-          contents: [
-            ...history,
-            { role: 'user', parts: [{ text: augmentedMessage }] },
-          ],
-          config: {
-            systemInstruction: STORE_KNOWLEDGE,
-            temperature: 0.3,
-            maxOutputTokens: 250,
-            abortSignal: controller.signal,
-          },
-        });
-      } finally {
-        clearTimeout(timer);
-      }
+      const result = await generateWithFallback(
+        ai,
+        modelsToTry,
+        [...history, { role: 'user', parts: [{ text: augmentedMessage }] }],
+        STORE_KNOWLEDGE
+      );
 
       const answer = result?.text?.trim();
       if (!answer) {
-        return json({ success: false, message: 'لم أتمكن من إنشاء إجابة. حاول مجدداً.' }, 503);
+        return json({ success: false, message: 'عذراً، لم أتمكن من صياغة رد واضح. جرب تسألني مرة ثانية.' }, 503);
       }
 
       return json({
@@ -169,23 +222,19 @@ ${message}
       });
 
     } catch (error: any) {
-      console.error('Dukan962 AI Error:', error?.message || error);
-
-      // ✅ إظهار سبب الخطأ الحقيقي في رسالة الخادم لسهولة التشخيص
-      const detail = error?.message ? ` (${error.message})` : '';
+      // يظهر السبب التقني الكامل في سجل Cloudflare Workers فقط
+      console.error('Dukan962 AI Final Error:', error?.message || error);
 
       if (error?.name === 'AbortError') {
         return json({
           success: false,
-          message: `تأخر الخادم في الرد لأكثر من 20 ثانية${detail}`,
+          message: 'المساعد استغرق وقتاً طويلاً للرد، جرب تبعت سؤالك مرة ثانية 🙏',
         }, 504);
       }
-      if (error?.status === 429) {
-        return json({ success: false, message: 'المساعد مشغول جداً حالياً، حاول بعد قليل.' }, 429);
-      }
+
       return json({
         success: false,
-        message: `تعذر الاتصال بالمساعد${detail}`,
+        message: 'المساعد نشمي مشغول شوي حالياً بسبب ضغط الطلبات، جرب تبعت رسالتك كمان ثواني 🙏',
       }, 503);
     }
   },
