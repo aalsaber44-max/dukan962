@@ -9,7 +9,6 @@ interface Env {
 }
 
 const DEFAULT_MODEL = 'gemini-3.8-flash';
-const FALLBACK_MODEL = 'gemini-3.8-flash';
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
 const AI_TIMEOUT_MS = 20000; // 20 ثانية كحد أقصى قبل إظهار سبب الخطأ الحقيقي
@@ -132,7 +131,8 @@ ${productContext}
 ${message}
       `;
 
-      const primaryModel = (env.GEMINI_MODEL || '').trim() || DEFAULT_MODEL;
+      // ✅ استخدام النموذج الجديد مباشرة دون التأثر بأي متغير قديم في Cloudflare
+      const primaryModel = DEFAULT_MODEL;
 
       // ✅ مهلة 20 ثانية حتى لا يعلق 90 ثانية بصمت
       const controller = new AbortController();
