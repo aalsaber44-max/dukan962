@@ -1,14 +1,23 @@
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 
+// ==========================================
+// 1. واجهة البيئة (Environment Variables)
+// ==========================================
 interface Env {
   GEMINI_API_KEY: string;
   GEMINI_MODEL?: string;
   GEMINI_BASE_URL?: string;
+  GROQ_API_KEY?: string;
+  GROQ_MODEL?: string;
+  OPENROUTER_API_KEY?: string;
+  OPENROUTER_MODEL?: string;
   ASSETS: any;
   CHAT_LIMITER?: any;
 }
 
-// النموذج الأساسي المثبّت، ثم سلسلة احتياطية عند ضغط الخادم (503/429)
+// ==========================================
+// 2. الثوابت والإعدادات
+// ==========================================
 const PRIMARY_MODEL = 'gemini-3.8-flash';
 const FALLBACK_MODELS = [
   'gemini-2.5-flash',
@@ -16,18 +25,21 @@ const FALLBACK_MODELS = [
   'gemini-2.0-flash',
 ];
 
+const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
+const DEFAULT_OPENROUTER_MODEL = 'openrouter/free';
+
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_MESSAGES = 6;
-const AI_TIMEOUT_MS = 15000;
-// ميزانية الرد: الرد نفسه قصير، لكن التفكير يستهلك من نفس الميزانية
-// لذلك نرفعها فوق حاجة الرد بكثير + نضبط مستوى التفكير على low
+const AI_TIMEOUT_MS = 15000; // وقت الانتظار لكل مزود على حدة
+const GLOBAL_TIMEOUT_MS = 25000; // وقت الانتظار الإجمالي للطلب بالكامل
 const MAX_OUTPUT_TOKENS = 1200;
-const CACHE_TTL_SECONDS = 60 * 60 * 6; // 6 ساعات للأسئلة المتكررة
+const CACHE_TTL_SECONDS = 60 * 60 * 6; 
 const MEMORY_CACHE_LIMIT = 120;
 const MAX_ACTIONS = 4;
 
-// ---------- الأنواع ----------
-
+// ==========================================
+// 3. الأنواع (Types)
+// ==========================================
 type CompactProduct = {
   id: string;
   name: string;
@@ -37,7 +49,10 @@ type CompactProduct = {
   desc: string;
 };
 
-type CompactCategory = { id: string; name: string };
+type CompactCategory = { 
+  id: string; 
+  name: string 
+};
 
 type ChatAction =
   | { type: 'navigate_category'; categoryId: string }
@@ -50,8 +65,9 @@ type ChatPayload = {
   actions: ChatAction[];
 };
 
-// ---------- تعليمات نشمي ----------
-
+// ==========================================
+// 4. تعليمات نشمي (System Prompt)
+// ==========================================
 const STORE_KNOWLEDGE = `
 أنت "نشمي"، مساعد خدمة العملاء والبائع الرسمي لمتجر Dukan962 في الأردن.
 أجب بالعربية الواضحة واللطيفة، ويمكنك استخدام اللهجة الأردنية البسيطة.
@@ -77,26 +93,26 @@ const STORE_KNOWLEDGE = `
 8. لا تطلب كلمات مرور أو أرقام بطاقات.
 
 قواعد الأوامر (actions):
-- تُرجع دائماً رداً مهيكلاً يحتوي answer و actions.
-- استخدم "show_products" فقط عندما تذكر منتجات محددة موجودة في القائمة، وضع معرّفاتها الحقيقية (id) كما هي مكتوبة، بحد أقصى 4 منتجات.
-- استخدم "navigate_category" عندما يطلب العميل الانتقال إلى قسم معين، وcategoryId يجب أن يكون من قائمة الأقسام المرفقة أو "all" للرئيسية.
-- استخدم "add_to_cart" فقط إذا طلب العميل صراحةً إضافة منتج إلى السلة. لا تضف منتجات من تلقاء نفسك، ولا تتجاوز الكمية المتاحة.
+- تُرجع دائماً رداً مهيكلاً بصيغة JSON يحتوي على المفاتيح: answer (نص), showFaqButton (boolean), actions (مصفوفة).
+- استخدم "show_products" فقط عندما تذكر منتجات محددة موجودة في القائمة، وضع معرّفاتها الحقيقية (id) كما هي مكتوبة، بحد أقصى 4 منتجات: {"type": "show_products", "productIds": ["id1"]}.
+- استخدم "navigate_category" عندما يطلب العميل الانتقال إلى قسم معين: {"type": "navigate_category", "categoryId": "id"}.
+- استخدم "add_to_cart" فقط إذا طلب العميل صراحةً إضافة منتج إلى السلة: {"type": "add_to_cart", "productId": "id", "quantity": 1}.
 - لا تخترع معرّفات (id) غير موجودة في القوائم المرفقة. إن لم تكن متأكداً اترك actions فارغة [].
-- إذا لم تحتج أي أمر، أعد actions: [].
 `;
 
-// ---------- مخطّط الرد المهيكل ----------
-
+// ==========================================
+// 5. مخطّط الرد المهيكل (JSON Schema)
+// ==========================================
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
-    answer: {
-      type: Type.STRING,
-      description: 'الرد النصي المختصر الموجه للعميل بالعربية.',
+    answer: { 
+      type: Type.STRING, 
+      description: 'الرد النصي المختصر الموجه للعميل بالعربية.' 
     },
-    showFaqButton: {
-      type: Type.BOOLEAN,
-      description: 'true إذا كان السؤال عن التوصيل أو الدفع أو طريقة الطلب.',
+    showFaqButton: { 
+      type: Type.BOOLEAN, 
+      description: 'true إذا كان السؤال عن التوصيل أو الدفع أو طريقة الطلب.' 
     },
     actions: {
       type: Type.ARRAY,
@@ -104,13 +120,16 @@ const RESPONSE_SCHEMA = {
       items: {
         type: Type.OBJECT,
         properties: {
-          type: {
-            type: Type.STRING,
-            enum: ['navigate_category', 'add_to_cart', 'show_products'],
+          type: { 
+            type: Type.STRING, 
+            enum: ['navigate_category', 'add_to_cart', 'show_products'] 
           },
           categoryId: { type: Type.STRING },
           productId: { type: Type.STRING },
-          productIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+          productIds: { 
+            type: Type.ARRAY, 
+            items: { type: Type.STRING } 
+          },
           quantity: { type: Type.INTEGER },
         },
         required: ['type'],
@@ -122,15 +141,16 @@ const RESPONSE_SCHEMA = {
   propertyOrdering: ['answer', 'showFaqButton', 'actions'],
 };
 
-// ---------- أدوات ----------
-
+// ==========================================
+// 6. الدوال المساعدة (Helpers)
+// ==========================================
 function json(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-      ...extraHeaders,
+    headers: { 
+      'Content-Type': 'application/json; charset=utf-8', 
+      'Cache-Control': 'no-store', 
+      ...extraHeaders 
     },
   });
 }
@@ -138,10 +158,10 @@ function json(data: unknown, status = 200, extraHeaders: Record<string, string> 
 function isSupportTopic(message: string): boolean {
   const text = message.toLowerCase();
   const terms = [
-    'توصيل', 'التوصيل', 'الشحن', 'اشحن', 'يوصل', 'التسليم', 'المندوب',
-    'دفع', 'الدفع', 'كاش', 'نقدي', 'كليك', 'cliq', 'تحويل',
-    'طلب', 'الطلب', 'اطلب', 'أطلب', 'تأكيد', 'تاكيد',
-    'اتمام', 'إتمام', 'السلة', 'checkout', 'order', 'delivery', 'payment',
+    'توصيل', 'التوصيل', 'الشحن', 'اشحن', 'يوصل', 'التسليم', 'المندوب', 
+    'دفع', 'الدفع', 'كاش', 'نقدي', 'كليك', 'cliq', 'تحويل', 
+    'طلب', 'الطلب', 'اطلب', 'أطلب', 'تأكيد', 'تاكيد', 
+    'اتمام', 'إتمام', 'السلة', 'checkout', 'order', 'delivery', 'payment'
   ];
   return terms.some((term) => text.includes(term));
 }
@@ -152,14 +172,14 @@ function cleanHistory(value: unknown): Array<{ role: 'user' | 'model'; parts: Ar
     .slice(-MAX_HISTORY_MESSAGES)
     .filter((item): item is { role: string; text: string } => {
       return Boolean(
-        item && typeof item === 'object' &&
-        typeof (item as { text?: unknown }).text === 'string' &&
+        item && typeof item === 'object' && 
+        typeof (item as { text?: unknown }).text === 'string' && 
         ['user', 'model'].includes(String((item as { role?: unknown }).role))
       );
     })
-    .map((item) => ({
-      role: item.role as 'user' | 'model',
-      parts: [{ text: item.text.slice(0, MAX_MESSAGE_LENGTH) }],
+    .map((item) => ({ 
+      role: item.role as 'user' | 'model', 
+      parts: [{ text: item.text.slice(0, MAX_MESSAGE_LENGTH) }] 
     }));
 }
 
@@ -173,7 +193,9 @@ function cleanCategories(value: unknown): CompactCategory[] {
     const item = raw as { id?: unknown; name?: unknown };
     const id = typeof item.id === 'string' ? item.id.trim() : '';
     const name = typeof item.name === 'string' ? item.name.trim() : '';
+    
     if (!id || !name || seen.has(id)) continue;
+    
     seen.add(id);
     result.push({ id, name });
   }
@@ -190,6 +212,7 @@ function cleanProducts(value: unknown): CompactProduct[] {
     const item = raw as Record<string, unknown>;
     const id = typeof item.id === 'string' ? item.id.trim() : '';
     const name = typeof item.name === 'string' ? item.name.trim() : '';
+    
     if (!id || !name || seen.has(id)) continue;
     seen.add(id);
 
@@ -205,16 +228,14 @@ function cleanProducts(value: unknown): CompactProduct[] {
   return result;
 }
 
-// سطر واحد لكل منتج لتقليل التوكنز
 function buildCatalog(products: CompactProduct[]): string {
   if (products.length === 0) return 'لا توجد منتجات متاحة حالياً.';
-  return products
-    .map((p) => {
-      const stockLabel = p.stock > 0 ? `متوفر:${p.stock}` : 'نفدت الكمية';
-      const desc = p.desc ? ` | ${p.desc}` : '';
-      return `- id=${p.id} | ${p.name} | ${p.price} د.أ | ${p.category || 'غير مصنّف'} | ${stockLabel}${desc}`;
-    })
-    .join('\n');
+  
+  return products.map((p) => {
+    const stockLabel = p.stock > 0 ? `متوفر:${p.stock}` : 'نفدت الكمية';
+    const desc = p.desc ? ` | ${p.desc}` : '';
+    return `- id=${p.id} | ${p.name} | ${p.price} د.أ | ${p.category || 'غير مصنّف'} | ${stockLabel}${desc}`;
+  }).join('\n');
 }
 
 function buildCategoryList(categories: CompactCategory[]): string {
@@ -222,15 +243,9 @@ function buildCategoryList(categories: CompactCategory[]): string {
   return categories.map((c) => `- id=${c.id} | ${c.name}`).join('\n');
 }
 
-// ---------- التحقق من الأوامر قبل إرجاعها للواجهة ----------
-
-function sanitizeActions(
-  raw: unknown,
-  products: CompactProduct[],
-  categories: CompactCategory[]
-): ChatAction[] {
+function sanitizeActions(raw: unknown, products: CompactProduct[], categories: CompactCategory[]): ChatAction[] {
   if (!Array.isArray(raw)) return [];
-
+  
   const productMap = new Map(products.map((p) => [p.id, p]));
   const categoryIds = new Set<string>(['all', ...categories.map((c) => c.id)]);
   const actions: ChatAction[] = [];
@@ -238,9 +253,11 @@ function sanitizeActions(
   for (const entry of raw) {
     if (actions.length >= MAX_ACTIONS) break;
     if (!entry || typeof entry !== 'object') continue;
+    
     const action = entry as Record<string, unknown>;
     const type = String(action.type || '');
 
+    // 1. أمر الانتقال لقسم
     if (type === 'navigate_category') {
       const categoryId = typeof action.categoryId === 'string' ? action.categoryId.trim() : '';
       if (!categoryId || !categoryIds.has(categoryId)) continue;
@@ -248,22 +265,26 @@ function sanitizeActions(
       continue;
     }
 
+    // 2. أمر إضافة للسلة
     if (type === 'add_to_cart') {
       const productId = typeof action.productId === 'string' ? action.productId.trim() : '';
       const product = productMap.get(productId);
       if (!product || product.stock <= 0) continue;
+      
       const requested = Math.floor(Number(action.quantity) || 1);
       const quantity = Math.min(Math.max(1, requested), product.stock);
       actions.push({ type: 'add_to_cart', productId: product.id, quantity });
       continue;
     }
 
+    // 3. أمر عرض منتجات
     if (type === 'show_products') {
       const ids = Array.isArray(action.productIds) ? action.productIds : [];
       const productIds = ids
         .map((id) => (typeof id === 'string' ? id.trim() : ''))
         .filter((id): id is string => Boolean(id) && productMap.has(id))
         .slice(0, 4);
+        
       if (productIds.length === 0) continue;
       actions.push({ type: 'show_products', productIds });
     }
@@ -272,15 +293,16 @@ function sanitizeActions(
   return actions;
 }
 
-// ---------- كاش طبقتين: ذاكرة الـ isolate + Cache API ----------
-
+// ==========================================
+// 7. الكاش (Caching)
+// ==========================================
 const memoryCache = new Map<string, { expiresAt: number; payload: ChatPayload }>();
 
 function getEdgeCache(): any {
-  try {
-    return (globalThis as any).caches?.default ?? null;
-  } catch {
-    return null;
+  try { 
+    return (globalThis as any).caches?.default ?? null; 
+  } catch { 
+    return null; 
   }
 }
 
@@ -295,9 +317,10 @@ async function hashKey(input: string): Promise<string> {
 async function readCache(key: string): Promise<ChatPayload | null> {
   const now = Date.now();
   const local = memoryCache.get(key);
-  if (local) {
-    if (local.expiresAt > now) return local.payload;
-    memoryCache.delete(key);
+  
+  if (local) { 
+    if (local.expiresAt > now) return local.payload; 
+    memoryCache.delete(key); 
   }
 
   const cache = getEdgeCache();
@@ -306,12 +329,14 @@ async function readCache(key: string): Promise<ChatPayload | null> {
   try {
     const hit = await cache.match(new Request(`https://nashmi-cache.internal/chat/${key}`));
     if (!hit) return null;
+    
     const payload = (await hit.json()) as ChatPayload;
     if (!payload || typeof payload.answer !== 'string' || !payload.answer.trim()) return null;
+    
     memoryCache.set(key, { expiresAt: now + CACHE_TTL_SECONDS * 1000, payload });
     return payload;
-  } catch {
-    return null;
+  } catch { 
+    return null; 
   }
 }
 
@@ -320,6 +345,7 @@ async function writeCache(key: string, payload: ChatPayload): Promise<void> {
     const oldest = memoryCache.keys().next();
     if (!oldest.done) memoryCache.delete(oldest.value);
   }
+  
   memoryCache.set(key, { expiresAt: Date.now() + CACHE_TTL_SECONDS * 1000, payload });
 
   const cache = getEdgeCache();
@@ -336,102 +362,13 @@ async function writeCache(key: string, payload: ChatPayload): Promise<void> {
       })
     );
   } catch {
-    // الكاش تحسين أداء فقط — نتجاهل فشله
+    // تجاهل فشل الكاش
   }
 }
 
-// ---------- استدعاء Gemini ----------
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// تقليل التفكير للنماذج التي تدعمه حتى لا يأكل ميزانية JSON
-function thinkingConfigFor(model: string): { thinkingConfig?: { thinkingLevel?: ThinkingLevel; thinkingBudget?: number } } {
-  const name = model.toLowerCase();
-  if (name.startsWith('gemini-3')) {
-    return { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } };
-  }
-  if (name.startsWith('gemini-2.5')) {
-    return { thinkingConfig: { thinkingBudget: 0 } };
-  }
-  // gemini-2.0 لا يدعم إعدادات التفكير
-  return {};
-}
-
-async function generateWithFallback(
-  ai: GoogleGenAI,
-  models: string[],
-  contents: any[],
-  systemInstruction: string
-): Promise<string> {
-  let lastError: any = null;
-
-  for (const model of models) {
-    // محاولتان لكل نموذج قبل الانتقال للنموذج الاحتياطي التالي
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-
-      try {
-        const result = await ai.models.generateContent({
-          model,
-          contents,
-          config: {
-            systemInstruction,
-            temperature: 0.3,
-            maxOutputTokens: MAX_OUTPUT_TOKENS,
-            responseMimeType: 'application/json',
-            responseSchema: RESPONSE_SCHEMA as any,
-            abortSignal: controller.signal,
-            ...thinkingConfigFor(model),
-          },
-        });
-        clearTimeout(timer);
-
-        const finishReason = String((result?.candidates?.[0] as any)?.finishReason || '');
-        const text = String(result?.text || '');
-
-        // رد مقطوع = JSON غير صالح، لذا نعامله كفشل وننتقل للمحاولة/النموذج التالي
-        if (finishReason === 'MAX_TOKENS') {
-          lastError = new Error('MAX_TOKENS');
-          console.warn(
-            `Model ${model} (attempt ${attempt}) truncated at ${MAX_OUTPUT_TOKENS} tokens`
-          );
-          if (attempt < 2) await sleep(400);
-          continue;
-        }
-
-        return text;
-      } catch (err: any) {
-        clearTimeout(timer);
-        lastError = err;
-
-        const message = String(err?.message || '');
-        const isOverloaded =
-          err?.status === 503 ||
-          err?.status === 429 ||
-          message.includes('503') ||
-          message.includes('429') ||
-          message.includes('UNAVAILABLE') ||
-          message.includes('high demand');
-
-        console.warn(`Model ${model} (attempt ${attempt}) failed:`, message);
-
-        if (isOverloaded) {
-          if (attempt < 2) await sleep(600);
-          continue;
-        }
-
-        // خطأ غير متعلق بالضغط (مثل مفتاح خاطئ) — لا فائدة من التبديل
-        throw err;
-      }
-    }
-  }
-
-  throw lastError;
-}
-
+// ==========================================
+// 8. التحقق من الردود المهيكلة (JSON Parser)
+// ==========================================
 function parseModelJson(raw: string): { answer: string; showFaqButton: boolean; actions: unknown } | null {
   if (!raw) return null;
 
@@ -446,10 +383,14 @@ function parseModelJson(raw: string): { answer: string; showFaqButton: boolean; 
 
   try {
     const parsed = JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
-    const answer = typeof parsed.answer === 'string' ? parsed.answer.trim() : '';
-    if (!answer) return null;
+    
+    // التحقق الصارم من بنية الرد
+    if (typeof parsed.answer !== 'string' || !parsed.answer.trim()) return null;
+    if (parsed.showFaqButton !== undefined && typeof parsed.showFaqButton !== 'boolean') return null;
+    if (!Array.isArray(parsed.actions)) return null;
+
     return {
-      answer,
+      answer: parsed.answer.trim(),
       showFaqButton: Boolean(parsed.showFaqButton),
       actions: parsed.actions,
     };
@@ -458,21 +399,235 @@ function parseModelJson(raw: string): { answer: string; showFaqButton: boolean; 
   }
 }
 
-// ---------- Worker ----------
+// ==========================================
+// 9. دوال الاتصال بمزودي الذكاء الاصطناعي
+// ==========================================
+function sleep(ms: number) { 
+  return new Promise((resolve) => setTimeout(resolve, ms)); 
+}
 
+function thinkingConfigFor(model: string): { thinkingConfig?: { thinkingLevel?: ThinkingLevel; thinkingBudget?: number } } {
+  const name = model.toLowerCase();
+  if (name.startsWith('gemini-3')) {
+    return { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } };
+  }
+  if (name.startsWith('gemini-2.5')) {
+    return { thinkingConfig: { thinkingBudget: 0 } };
+  }
+  return {};
+}
+
+async function callOpenAICompatible(
+  endpoint: string,
+  apiKey: string,
+  model: string,
+  contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }>,
+  systemInstruction: string,
+  extraHeaders: Record<string, string> = {},
+  timeoutMs: number = AI_TIMEOUT_MS
+): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  const messages = [
+    { role: 'system', content: systemInstruction },
+    ...contents.map((item) => ({
+      role: item.role === 'model' ? 'assistant' : 'user',
+      content: item.parts.map((p) => p.text).join('\n'),
+    })),
+  ];
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${apiKey}`, 
+        'Content-Type': 'application/json', 
+        ...extraHeaders 
+      },
+      body: JSON.stringify({ 
+        model, 
+        messages, 
+        temperature: 0.3, 
+        max_tokens: MAX_OUTPUT_TOKENS, 
+        response_format: { type: 'json_object' } 
+      }),
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      throw new Error(`API error (${response.status}): ${await response.text()}`);
+    }
+    
+    const data = (await response.json()) as any;
+    const text = data?.choices?.[0]?.message?.content;
+    
+    if (!text) throw new Error('Provider returned empty content');
+    return String(text);
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+// ==========================================
+// 10. نظام التبديل الاحتياطي (Failover)
+// ==========================================
+async function generateParsedResponse(
+  requestStartTime: number,
+  ai: GoogleGenAI | null,
+  models: string[],
+  contents: any[],
+  systemInstruction: string,
+  groq?: { apiKey: string; model: string },
+  openRouter?: { apiKey: string; model: string }
+): Promise<{ answer: string; showFaqButton: boolean; actions: unknown }> {
+  
+  let lastError: any = null;
+  const timeLeft = () => GLOBAL_TIMEOUT_MS - (Date.now() - requestStartTime);
+
+  // 1. محاولة Gemini
+  if (ai) {
+    for (const model of models) {
+      if (timeLeft() <= 2000) break;
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), Math.min(AI_TIMEOUT_MS, timeLeft()));
+
+      try {
+        const result = await ai.models.generateContent({
+          model, 
+          contents,
+          config: { 
+            systemInstruction, 
+            temperature: 0.3, 
+            maxOutputTokens: MAX_OUTPUT_TOKENS, 
+            responseMimeType: 'application/json', 
+            responseSchema: RESPONSE_SCHEMA as any, 
+            abortSignal: controller.signal, 
+            ...thinkingConfigFor(model) 
+          },
+        });
+        clearTimeout(timer);
+
+        if (String((result?.candidates?.[0] as any)?.finishReason) === 'MAX_TOKENS') {
+          throw new Error('MAX_TOKENS');
+        }
+        
+        const parsed = parseModelJson(String(result?.text || ''));
+        if (parsed) return parsed;
+        
+        console.warn(`Gemini ${model} returned invalid JSON. Moving to next...`);
+        lastError = new Error('Invalid JSON from Gemini');
+      } catch (err: any) {
+        clearTimeout(timer);
+        lastError = err;
+        
+        const message = String(err?.message || '').toLowerCase();
+        const status = err?.status || err?.code;
+        const isOverloaded = status === 503 || status === 429 || message.includes('503') || message.includes('429') || message.includes('unavailable') || message.includes('high demand');
+
+        if (isOverloaded && timeLeft() > 3000) {
+          console.warn(`Gemini ${model} overloaded. Retrying once...`);
+          await sleep(1000);
+          try {
+            const retryController = new AbortController();
+            const retryTimer = setTimeout(() => retryController.abort(), Math.min(AI_TIMEOUT_MS, timeLeft()));
+            
+            const result2 = await ai.models.generateContent({
+              model, 
+              contents,
+              config: { 
+                systemInstruction, 
+                temperature: 0.3, 
+                maxOutputTokens: MAX_OUTPUT_TOKENS, 
+                responseMimeType: 'application/json', 
+                responseSchema: RESPONSE_SCHEMA as any, 
+                abortSignal: retryController.signal, 
+                ...thinkingConfigFor(model) 
+              },
+            });
+            clearTimeout(retryTimer);
+            
+            const parsed2 = parseModelJson(String(result2?.text || ''));
+            if (parsed2) return parsed2;
+          } catch { 
+            console.warn(`Retry for ${model} failed.`); 
+          }
+        } else {
+          console.warn(`Gemini ${model} failed (${status}): ${message}. Moving to next...`);
+        }
+      }
+    }
+  }
+
+  // 2. محاولة Groq
+  if (groq?.apiKey && timeLeft() > 2000) {
+    console.warn('Falling back to Groq...');
+    try {
+      const raw = await callOpenAICompatible(
+        'https://api.groq.com/openai/v1/chat/completions', 
+        groq.apiKey, 
+        groq.model, 
+        contents, 
+        systemInstruction, 
+        {}, 
+        Math.min(AI_TIMEOUT_MS, timeLeft())
+      );
+      const parsed = parseModelJson(raw);
+      if (parsed) return parsed;
+      console.warn('Groq returned invalid JSON. Moving to OpenRouter...');
+    } catch (err) {
+      console.error('Groq failed:', err);
+      lastError = err;
+    }
+  }
+
+  // 3. محاولة OpenRouter
+  if (openRouter?.apiKey && timeLeft() > 2000) {
+    console.warn('Falling back to OpenRouter...');
+    try {
+      const raw = await callOpenAICompatible(
+        'https://openrouter.ai/api/v1/chat/completions', 
+        openRouter.apiKey, 
+        openRouter.model, 
+        contents, 
+        systemInstruction, 
+        { 'HTTP-Referer': 'https://dukan962.com', 'X-Title': 'Dukan962 Nashmi Assistant' }, 
+        Math.min(AI_TIMEOUT_MS, timeLeft())
+      );
+      const parsed = parseModelJson(raw);
+      if (parsed) return parsed;
+      console.warn('OpenRouter returned invalid JSON.');
+    } catch (err) {
+      console.error('OpenRouter failed:', err);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('All AI providers failed or returned invalid JSON.');
+}
+
+// ==========================================
+// 11. معالج الطلبات الرئيسي (Worker Fetch Handler)
+// ==========================================
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const requestStartTime = Date.now();
     const url = new URL(request.url);
-
+    
     if (url.pathname !== '/api/chat') {
       return env.ASSETS.fetch(request);
     }
-
+    
     if (request.method !== 'POST') {
       return json({ success: false, message: 'طريقة الطلب غير مدعومة.' }, 405);
     }
 
     try {
+      // 1. حماية من الإغراق (Rate Limiting)
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       if (env.CHAT_LIMITER) {
         const limit = await env.CHAT_LIMITER.limit({ key: ip });
@@ -481,13 +636,9 @@ export default {
         }
       }
 
-      const body = await request.json() as {
-        message?: unknown;
-        history?: unknown;
-        products?: unknown;
-        categories?: unknown;
-      };
-
+      // 2. استقبال البيانات والتحقق منها
+      const body = await request.json() as { message?: unknown; history?: unknown; products?: unknown; categories?: unknown };
+      
       if (typeof body.message !== 'string') {
         return json({ success: false, message: 'اكتب سؤالك أولاً.' }, 400);
       }
@@ -497,75 +648,60 @@ export default {
         return json({ success: false, message: `الرسالة يجب أن تكون بين حرف و${MAX_MESSAGE_LENGTH} حرف.` }, 400);
       }
 
-      const apiKey = (env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
-      if (!apiKey) {
+      // 3. التحقق من مفاتيح الـ API
+      const geminiApiKey = (env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+      const groqApiKey = (env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+      const openRouterApiKey = (env.OPENROUTER_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+
+      if (!geminiApiKey && !groqApiKey && !openRouterApiKey) {
         return json({ success: false, message: 'المساعد غير مُعدّ حالياً.' }, 503);
       }
 
+      // 4. تجهيز البيانات
       const history = cleanHistory(body.history);
       const products = cleanProducts(body.products);
       const categories = cleanCategories(body.categories);
       const catalog = buildCatalog(products);
       const categoryList = buildCategoryList(categories);
 
-      // الكاش للرسالة الأولى فقط (بدون سياق محادثة) حتى لا نعيد ردوداً خارج السياق
+      // 5. الكاش (فقط للرسالة الأولى بدون تاريخ محادثة)
       const cacheable = history.length === 0;
-      const cacheKey = cacheable
-        ? await hashKey(`${message.toLowerCase()}\n${catalog}\n${categoryList}`)
-        : '';
+      const cacheKey = cacheable ? await hashKey(`${message.toLowerCase()}\n${catalog}\n${categoryList}`) : '';
 
       if (cacheable) {
         const cached = await readCache(cacheKey);
         if (cached) {
           return json(
-            {
-              success: true,
-              answer: cached.answer,
-              actions: cached.actions,
-              showFaqButton: cached.showFaqButton,
-              cached: true,
-            },
-            200,
+            { success: true, answer: cached.answer, actions: cached.actions, showFaqButton: cached.showFaqButton, cached: true }, 
+            200, 
             { 'X-Nashmi-Cache': 'HIT' }
           );
         }
       }
 
+      // 6. تجهيز مزودي الذكاء الاصطناعي
       const baseUrl = (env.GEMINI_BASE_URL || '').trim();
-      const ai = new GoogleGenAI({
-        apiKey,
-        ...(baseUrl ? { httpOptions: { baseUrl } } : {}),
-      });
+      const ai = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey, ...(baseUrl ? { httpOptions: { baseUrl } } : {}) }) : null;
 
-      const augmentedMessage = `[الأقسام المتاحة في المتجر]:
-${categoryList}
+      const augmentedMessage = `[الأقسام المتاحة في المتجر]:\n${categoryList}\n\n[قائمة المنتجات المتاحة حالياً في المتجر]:\n${catalog}\n\n[سؤال الزبون]:\n${message}`;
 
-[قائمة المنتجات المتاحة حالياً في المتجر]:
-${catalog}
-
-[سؤال الزبون]:
-${message}`;
-
-      // النموذج المثبّت أولاً، ثم الاحتياطية
       const customModel = (env.GEMINI_MODEL || '').trim();
       const primary = customModel || PRIMARY_MODEL;
       const modelsToTry = [primary, ...FALLBACK_MODELS.filter((m) => m !== primary)];
+      const groqModel = (env.GROQ_MODEL || '').trim() || DEFAULT_GROQ_MODEL;
+      const openRouterModel = (env.OPENROUTER_MODEL || '').trim() || DEFAULT_OPENROUTER_MODEL;
 
-      const raw = await generateWithFallback(
-        ai,
-        modelsToTry,
+      // 7. تنفيذ الطلب عبر نظام التبديل الاحتياطي
+      const parsed = await generateParsedResponse(
+        requestStartTime,
+        ai, modelsToTry,
         [...history, { role: 'user', parts: [{ text: augmentedMessage }] }],
-        STORE_KNOWLEDGE
+        STORE_KNOWLEDGE,
+        groqApiKey ? { apiKey: groqApiKey, model: groqModel } : undefined,
+        openRouterApiKey ? { apiKey: openRouterApiKey, model: openRouterModel } : undefined
       );
 
-      const parsed = parseModelJson(raw);
-      if (!parsed) {
-        return json({
-          success: false,
-          message: 'عذراً، لم أتمكن من صياغة رد واضح. جرب تسألني مرة ثانية.',
-        }, 503);
-      }
-
+      // 8. التحقق النهائي من الأوامر وإرجاع الرد
       const payload: ChatPayload = {
         answer: parsed.answer,
         showFaqButton: parsed.showFaqButton || isSupportTopic(message),
@@ -577,31 +713,19 @@ ${message}`;
       }
 
       return json(
-        {
-          success: true,
-          answer: payload.answer,
-          actions: payload.actions,
-          showFaqButton: payload.showFaqButton,
-          cached: false,
-        },
-        200,
+        { success: true, answer: payload.answer, actions: payload.actions, showFaqButton: payload.showFaqButton, cached: false }, 
+        200, 
         { 'X-Nashmi-Cache': 'MISS' }
       );
+
     } catch (error: any) {
-      // يظهر السبب التقني الكامل في سجل Cloudflare Workers فقط
       console.error('Dukan962 AI Final Error:', error?.message || error);
-
-      if (error?.name === 'AbortError') {
-        return json({
-          success: false,
-          message: 'المساعد استغرق وقتاً طويلاً للرد، جرب تبعت سؤالك مرة ثانية 🙏',
-        }, 504);
+      
+      if (error?.name === 'AbortError' || Date.now() - requestStartTime >= GLOBAL_TIMEOUT_MS) {
+        return json({ success: false, message: 'المساعد استغرق وقتاً طويلاً للرد، جرب تبعت سؤالك مرة ثانية 🙏' }, 504);
       }
-
-      return json({
-        success: false,
-        message: 'المساعد نشمي مشغول شوي حالياً بسبب ضغط الطلبات، جرب تبعت رسالتك كمان ثواني 🙏',
-      }, 503);
+      
+      return json({ success: false, message: 'المساعد نشمي مشغول شوي حالياً، جرب تبعت رسالتك كمان ثواني 🙏' }, 503);
     }
   },
 };
