@@ -151,7 +151,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto"
+      className="storefront-product-detail fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs overflow-y-auto"
       onClick={onClose}
     >
       <div

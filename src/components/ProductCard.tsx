@@ -65,7 +65,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={spotlightMove}
-      className="luxury-card spotlight group flex flex-col bg-[#141210] rounded-[20px] sm:rounded-[24px] ring-1 ring-white/10 shadow-soft transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-lift hover:ring-[#D4AF37]/30 cursor-pointer overflow-hidden"
+      className="storefront-product-card luxury-card spotlight group flex flex-col bg-[#141210] rounded-[24px] ring-1 ring-white/10 shadow-soft transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-lift hover:ring-[#D4AF37]/30 cursor-pointer overflow-hidden"
     >
       {/* مسند العرض: خلفية عاجية دافئة تُظهر المنتج بوضوح */}
       <div className="relative m-1.5 sm:m-2 aspect-[4/3] overflow-hidden rounded-[15px] sm:rounded-[18px] bg-gradient-to-b from-[#EFE9DE] to-[#DCD4C5] shadow-[inset_0_0_40px_rgba(90,70,30,0.12)]">

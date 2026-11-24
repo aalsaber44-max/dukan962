@@ -702,3 +702,153 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ───────────────────────────────────────────
+   Dukan 962 — Luxury storefront refresh
+   ─────────────────────────────────────────── */
+
+.storefront-theme {
+  --store-bg: #09090b;
+  --store-surface: #111113;
+  --store-panel: #171719;
+  --store-panel-soft: #1e1e20;
+  --store-text: #f5f3ee;
+  --store-muted: #aaa7a0;
+  --store-subtle: #77746e;
+  --store-border: rgb(255 255 255 / 0.09);
+  --store-border-strong: rgb(255 255 255 / 0.15);
+  --store-accent: #d4af37;
+  --store-accent-strong: #ead17b;
+  --store-accent-contrast: #17140b;
+  --store-shadow: 0 18px 48px -24px rgb(0 0 0 / 0.65);
+  background:
+    radial-gradient(ellipse at 50% -18rem, rgb(212 175 55 / 0.12), transparent 58%),
+    var(--store-bg);
+}
+
+.storefront-theme[data-theme="light"] {
+  --store-bg: #faf9f6;
+  --store-surface: #fff;
+  --store-panel: #fff;
+  --store-panel-soft: #f4f1e9;
+  --store-text: #25231e;
+  --store-muted: #77736b;
+  --store-subtle: #98938a;
+  --store-border: #e9e5dc;
+  --store-border-strong: #dcd5c7;
+  --store-accent: #b48a28;
+  --store-accent-strong: #c7a54e;
+  --store-accent-contrast: #fff;
+  --store-shadow: 0 18px 48px -28px rgb(70 57 30 / 0.24);
+  background:
+    radial-gradient(ellipse at 50% -18rem, rgb(180 138 40 / 0.10), transparent 58%),
+    var(--store-bg);
+}
+
+.storefront-navbar {
+  border-bottom: 1px solid transparent;
+}
+
+.storefront-theme[data-theme="light"] .storefront-navbar {
+  color: var(--store-text);
+}
+
+.storefront-theme[data-theme="light"] .storefront-navbar[class*="backdrop-blur"] {
+  background-color: rgb(250 249 246 / 0.88);
+  border-color: var(--store-border);
+  box-shadow: 0 10px 32px -24px rgb(57 48 31 / 0.38);
+}
+
+.storefront-hero-shell {
+  isolation: isolate;
+}
+
+.storefront-hero-shell > div:first-child > div:first-child {
+  background: linear-gradient(135deg, rgb(212 175 55 / 0.58), rgb(255 255 255 / 0.06) 45%, rgb(212 175 55 / 0.22));
+}
+
+.storefront-hero-shell > div:first-child > div:first-child > div:first-child {
+  min-height: 430px;
+  box-shadow: 0 34px 100px -54px rgb(0 0 0 / 0.9);
+}
+
+@media (min-width: 640px) {
+  .storefront-hero-shell > div:first-child > div:first-child > div:first-child {
+    min-height: 500px;
+  }
+}
+
+.storefront-categories h2,
+.storefront-theme #catalog > div:first-child h2 {
+  letter-spacing: -0.035em;
+}
+
+.storefront-categories .spotlight {
+  border-radius: 1.5rem;
+  box-shadow: var(--store-shadow);
+  transition: transform 500ms cubic-bezier(0.2, 0.75, 0.25, 1), box-shadow 500ms ease;
+}
+
+.storefront-categories .spotlight:hover {
+  transform: translateY(-5px);
+}
+
+.storefront-product-card {
+  border: 1px solid var(--store-border);
+  border-radius: 1.5rem;
+  background: linear-gradient(160deg, var(--store-panel), var(--store-surface));
+  box-shadow: var(--store-shadow);
+}
+
+.storefront-product-card > div:first-child {
+  border-radius: 1.15rem;
+  margin: 0.65rem;
+  background: linear-gradient(145deg, #f8f6f0, #e9e4d8);
+  box-shadow: inset 0 0 0 1px rgb(40 34 22 / 0.05);
+}
+
+.storefront-product-card > div:last-child {
+  padding: 0.6rem 1.1rem 1.1rem;
+}
+
+.storefront-product-card h3 {
+  letter-spacing: -0.02em;
+}
+
+.storefront-product-detail > div {
+  border: 1px solid var(--store-border-strong);
+  box-shadow: 0 32px 100px -36px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(212 175 55 / 0.08);
+}
+
+.storefront-footer {
+  border-top: 1px solid var(--store-border);
+  background: linear-gradient(180deg, var(--store-surface), var(--store-bg));
+}
+
+.storefront-theme[data-theme="light"] .storefront-product-card,
+.storefront-theme[data-theme="light"] .storefront-product-detail > div {
+  color: var(--store-text);
+  background-color: var(--store-surface);
+  border-color: var(--store-border);
+  box-shadow: var(--store-shadow);
+}
+
+.storefront-theme[data-theme="light"] .storefront-footer {
+  color: var(--store-text);
+  background: linear-gradient(180deg, #fff, #f5f2eb);
+}
+
+.storefront-theme :where(button, a, input) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 639px) {
+  .storefront-hero-shell > div:first-child > div:first-child > div:first-child {
+    min-height: 480px;
+    aspect-ratio: auto;
+  }
+
+  .storefront-product-card {
+    border-radius: 1.25rem;
+  }
+}

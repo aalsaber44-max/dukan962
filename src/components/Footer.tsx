@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({
     : "أقسام المتجر";
 
   return (
-    <footer className="relative bg-[#09090B] text-[#F3EEE4] pt-16 pb-8 mt-10">
+    <footer className="storefront-footer relative bg-[#09090B] text-[#F3EEE4] pt-16 pb-8 mt-10">
       <div aria-hidden="true" className="absolute top-0 inset-x-0 gold-rule" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">

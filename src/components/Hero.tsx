@@ -37,8 +37,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
   const badge = String(displayData.badgeText || 'يوجد معاينة').replace(/^[^\p{L}\p{N}]+/u, '');
 
   return (
-    <section className="relative">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-8 sm:pb-14">
+    <section className="storefront-hero-shell relative">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-10 sm:pb-16">
         {/* إطار البنر */}
         <div className="relative rounded-[24px] sm:rounded-[34px] p-px bg-gradient-to-b from-[#D4AF37]/50 via-white/10 to-white/5 shadow-lift">
           <div className="relative isolate overflow-hidden rounded-[23px] sm:rounded-[33px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#09090B]">
@@ -55,7 +55,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               referrerPolicy="no-referrer"
               fetchPriority="high"
               decoding="async"
-              className="absolute inset-0 w-full h-full object-contain z-10 animate-kenburns"
+              className="absolute inset-0 w-full h-full object-cover sm:object-contain z-10 animate-kenburns"
             />
 
             {/* تعتيم الخلفية لضمان وضوح النصوص */}

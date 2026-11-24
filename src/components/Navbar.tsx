@@ -108,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className={`sticky top-0 z-40 transition-all duration-500 ${
+      className={`storefront-navbar sticky top-0 z-40 transition-all duration-500 ${
         scrolled
           ? 'bg-[#09090B]/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.06),0_20px_40px_-24px_rgba(0,0,0,0.9)]'
           : 'bg-[#09090B]/0'
