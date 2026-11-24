@@ -1,0 +1,935 @@
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { Sparkles, MessageCircle, Flame, Clock, HelpCircle } from 'lucide-react';
+import { Navbar } from './components/Navbar';
+import { Hero } from './components/Hero';
+import { CategoryBoxes } from './components/CategoryBoxes';
+import { CategoryVideoBanner } from './components/CategoryVideoBanner';
+import { FilterBar } from './components/FilterBar';
+import { ProductCard } from './components/ProductCard';
+import { ProductDetailsPage } from './components/ProductDetailsPage';
+import { FloatingActions } from './components/FloatingActions';
+import { availableQty, qtyInCart, reconcileCart, refreshCartData } from './utils/inventory';
+import { CartDrawer } from './components/CartDrawer';
+import { WishlistDrawer } from './components/WishlistDrawer';
+import { CheckoutModal } from './components/CheckoutModal';
+import { AdminAuthModal } from './components/AdminAuthModal';
+import { Footer } from './components/Footer';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Product, CartItem, ProductColor, Category } from './types/furniture';
+import { Toast, ToastData, ToastVariant } from './components/Toast';
+import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
+import { STORE_PHONE_INTL } from './utils/jordanLocations';
+import { useScrollReveal } from './utils/reveal';
+
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { RecentlyViewed } from './components/RecentlyViewed';
+import { OrderTrackingModal } from './components/OrderTrackingModal';
+import { FAQPage } from './components/FAQPage'; //استيراد صفحة الأسئلة الشائعة
+import { SupportChatbot } from './components/SupportChatbot';
+
+import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
+import { db, testFirestoreConnection } from './firebase';
+
+const AdminDashboard = lazy(() =>
+  import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+
+const AdminDashboardFallback = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
+    <div className="flex items-center gap-3 text-sm font-bold text-[var(--sf-accent)]">
+      <span className="w-5 h-5 rounded-full border-2 border-[var(--sf-border-strong)] border-t-[#E8CC8A] animate-spin"/>
+      جارٍ تحميل لوحة التحكم...
+    </div>
+  </div>
+);
+
+const homeCategoryData: Category = {
+  id: 'all',
+  name: 'الرئيسية',
+  image: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  bannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  mobileBannerImage: 'https://i.postimg.cc/TPJ91jBX/Designer1.png',
+  title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
+  description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
+  buttonText: 'استكشف تشكيلاتنا الآن',
+  badgeText: 'جودة تستحق الاقتناء',
+  isActive: true,
+  order: 0
+};
+
+export default function App() {
+  const [isLightTheme, setIsLightTheme] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('dukan962_store_theme') === 'light';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isLightTheme ? 'light': 'dark';
+    try {
+      localStorage.setItem('dukan962_store_theme', isLightTheme ? 'light': 'dark');
+    } catch {}
+  }, [isLightTheme]);
+
+  useScrollReveal();
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+
+  useEffect(() => {
+    const unsubscribeProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const prods: Product[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        prods.push({ 
+          ...data,
+          id: doc.id, 
+          name: data.name || 'منتج بدون اسم',
+          description: data.description || 'لا يوجد وصف',
+          basePrice: Number(data.basePrice) || 0,
+          originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+          images: Array.isArray(data.images) ? data.images : [],
+          colors: Array.isArray(data.colors) ? data.colors : [],
+        } as Product);
+      });
+      setProducts(prods);
+      setProductsLoaded(true);
+    }, (error) => {
+      console.error('Error loading products:', error);
+      setProductsLoaded(true);
+    });
+
+    const unsubscribeCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
+      const cats: Category[] = [];
+      snapshot.forEach((doc) => {
+        cats.push({ ...doc.data(), id: doc.id } as Category);
+      });
+      setCategories(cats.filter(c => c.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)));
+    });
+
+    return () => {
+      unsubscribeProducts();
+      unsubscribeCategories();
+    };
+  }, []);
+
+  useEffect(() => {
+    testFirestoreConnection();
+  }, []);
+
+  useEffect(() => {
+    if (!productsLoaded || products.length === 0 || cart.length === 0) return;
+    setCart((prev) => refreshCartData(prev, products));
+  }, [products, productsLoaded]);
+
+  useEffect(() => {
+    const seedCategories = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'categories'));
+        
+        const defaultCategories = [
+          { id: 'tables', name: 'طاولات', image: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', bannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', mobileBannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', title: 'طاولات عصرية تجمع بين الأناقة والعملية', description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات', buttonText: 'استكشف طاولات العرض الآن', badgeText: 'يوجد معاينة عند وصول الطلب', isActive: true, order: 1 },
+          { id: 'shoes', name: 'أحذية', image: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', bannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', mobileBannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', title: 'أحدث صيحات الأحذية', description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.', buttonText: 'استكشف الأحذية الآن', badgeText: 'خامات أصلية', isActive: true, order: 2 },
+          { id: 'perfumes', name: 'عطور', image: 'https://i.postimg.cc/R0LRh1yY/Designer.png', bannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', mobileBannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', title: 'عطور تدوم طويلاً', description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.', buttonText: 'استكشف العطور الآن', badgeText: 'عطور فاخرة', isActive: true, order: 3 },
+          { id: 'ramadan', name: 'زينة رمضان', image: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', bannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', mobileBannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', title: 'زينة رمضان.. أضف البهجة لبيتك', description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.', buttonText: 'استكشف زينة رمضان', badgeText: 'أجواء رمضانية', isActive: true, order: 4 }
+        ];
+
+        if (snapshot.empty) {
+          for (const defaultCat of defaultCategories) {
+            await setDoc(doc(db, 'categories', defaultCat.id), defaultCat);
+          }
+          return;
+        }
+
+        for (const defaultCat of defaultCategories) {
+          const existingDoc = snapshot.docs.find((d) => d.id === defaultCat.id);
+          if (!existingDoc) continue;
+
+          const currentData = existingDoc.data();
+          const missingDefaults = Object.fromEntries(
+            Object.entries(defaultCat).filter(([key]) =>
+              currentData[key] === undefined
+            )
+          );
+          if (Object.keys(missingDefaults).length > 0) {
+            await setDoc(doc(db, 'categories', defaultCat.id), missingDefaults, { merge: true });
+          }
+        }
+      } catch (error) {
+        console.error('Error seeding categories:', error);
+      }
+    };
+
+    seedCategories();
+  }, []);
+
+  useEffect(() => {
+    const migrateOldProducts = async () => {
+      const savedOldProducts = localStorage.getItem('dukan962_products_v3');
+      
+      if (savedOldProducts) {
+        const oldProducts = JSON.parse(savedOldProducts);
+        
+        if (oldProducts.length > 0) {
+          const confirmMigration = window.confirm(
+            `وجدنا ${oldProducts.length} منتج محفوظ في هذا المتصفح من قبل. هل تريد رفعهم إلى السحابة (Firebase) الآن؟`);
+          
+          if (confirmMigration) {
+            try {
+              for (const prod of oldProducts) {
+                await setDoc(doc(db, 'products', prod.id), prod);
+              }
+              localStorage.removeItem('dukan962_products_v3');
+              alert('تم رفع جميع المنتجات والتعديلات إلى السحابة بنجاح!');
+              window.location.reload(); 
+            } catch (error) {
+              console.error('Error migrating data:', error);
+              alert('حدث خطأ أثناء الرفع. تأكد من اتصالك بالإنترنت.');
+            }
+          }
+        }
+      }
+    };
+    setTimeout(migrateOldProducts, 1500); 
+  }, []);
+
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('dukan962_cart');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const [wishlist, setWishlist] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('dukan962_wishlist');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); 
+  const [sortBy, setSortBy] = useState<'featured'| 'newest'| 'price-asc'| 'price-desc'>('featured');
+  const [selectedColor, setSelectedColor] = useState<string>('');
+
+  const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
+  const [isFAQPageOpen, setIsFAQPageOpen] = useState(false); //حالة صفحة الأسئلة
+
+  const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('dukan962_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem('dukan962_wishlist', JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  const dismissToast = () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(null);
+  };
+
+  const showToast = (
+    message: string,
+    options: { variant?: ToastVariant; actionLabel?: string; onAction?: () => void } = {}
+  ) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ id: Date.now(), message, variant: options.variant ?? 'success', ...options });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  const saveToRecentlyViewed = (product: Product) => {
+    try {
+      const savedIds: string[] = JSON.parse(localStorage.getItem('dukan962_recently_viewed') || '[]');
+      const newIds = [product.id, ...savedIds.filter(id => id !== product.id)].slice(0, 6);
+      localStorage.setItem('dukan962_recently_viewed', JSON.stringify(newIds));
+    } catch {}
+  };
+
+  const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
+    const liveProduct = products.find((p) => p.id === product.id);
+    if (productsLoaded && !liveProduct) {
+      showToast('هذا المنتج لم يعد متوفراً في المتجر', { variant: 'warning'});
+      return;
+    }
+    
+    const live = liveProduct || product;
+    const liveColors = Array.isArray(live.colors) ? live.colors : [];
+    
+    let activeColor: ProductColor;
+
+    if (chosenColor && chosenColor.name) {
+      const matchedColor = liveColors.find((c) => c.name === chosenColor.name);
+      if (liveColors.length > 0 && !matchedColor) {
+        showToast(`عذراً، اللون "${chosenColor.name}"لم يعد متاحاً لهذا المنتج. يرجى اختيار لون آخر.`, { variant: 'warning'});
+        return;
+      }
+      activeColor = matchedColor || chosenColor;
+    } else if (liveColors.length > 0) {
+      activeColor = liveColors[0];
+    } else {
+      activeColor = {
+        name: 'افتراضي',
+        hex: '#3E2723',
+        price: live.basePrice,
+        image: live.images?.[0] || '',
+      };
+    }
+
+    const canAdd = availableQty(live) - qtyInCart(cart, product.id);
+    if (canAdd <= 0) {
+      showToast(`"${product.name}"نفدت الكمية المتاحة`, { variant: 'warning'});
+      return;
+    }
+    const requestedQty = Math.max(1, Math.floor(Number(quantity) || 1));
+    const addQty = Math.min(requestedQty, canAdd);
+
+    setCart((prev) => {
+      const existingIdx = prev.findIndex(
+        (item) => item.product.id === product.id && item.selectedColor.name === activeColor.name
+      );
+
+      if (existingIdx > -1) {
+        const next = [...prev];
+        next[existingIdx] = {
+          ...next[existingIdx],
+          product: live,
+          selectedColor: activeColor,
+          quantity: next[existingIdx].quantity + addQty,
+        };
+        return next;
+      } else {
+        return [...prev, { product: live, quantity: addQty, selectedColor: activeColor }];
+      }
+    });
+
+    if (addQty < requestedQty) {
+      showToast(`تمت إضافة ${addQty} فقط من "${product.name}"(المتاح ${availableQty(live)})`, {
+        variant: 'warning',
+        actionLabel: 'عرض السلة',
+        onAction: () => setIsCartOpen(true),
+      });
+      return;
+    }
+
+    showToast(`${product.name} (${activeColor.name})`, {
+      variant: 'cart',
+      actionLabel: 'عرض السلة',
+      onAction: () => setIsCartOpen(true),
+    });
+  };
+
+  const handleUpdateCartQuantity = (id: string, colorName: string, delta: number) => {
+    if (delta > 0) {
+      const live = products.find((p) => p.id === id);
+      if (live && availableQty(live) - qtyInCart(cart, id) < delta) {
+        showToast(`الكمية المتاحة من "${live.name}"${availableQty(live)} فقط`, { variant: 'warning'});
+        return;
+      }
+    }
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.product.id === id && item.selectedColor.name === colorName) {
+            const newQ = item.quantity + delta;
+            return newQ > 0 ? { ...item, quantity: newQ } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const handleRemoveFromCart = (id: string, colorName: string) => {
+    setCart((prev) =>
+      prev.filter((item) => !(item.product.id === id && item.selectedColor.name === colorName))
+    );
+  };
+
+  const handleToggleWishlist = (product: Product) => {
+    setWishlist((prev) => {
+      const exists = prev.some((p) => p.id === product.id);
+      if (exists) {
+        showToast(product.name, { variant: 'remove'});
+        return prev.filter((p) => p.id !== product.id);
+      } else {
+        showToast(product.name, {
+          variant: 'wishlist',
+          actionLabel: 'عرض المفضلة',
+          onAction: () => setIsWishlistOpen(true),
+        });
+        return [...prev, product];
+      }
+    });
+  };
+
+  const handleResetFilters = () => {
+    setSelectedCategory('all');
+    setSearchQuery('');
+    setPriceRange([0, 1000]);
+    setSelectedColor('');
+  };
+
+  const goHome = () => {
+    handleResetFilters();
+    scrollToTop();
+  };
+
+  const filteredProducts = useMemo(() => {
+    const filtered = products.filter((prod) => {
+      if (prod.isActive === false) return false;
+
+      const matchesCategory = selectedCategory === 'all'|| prod.categoryId === selectedCategory;
+
+      const matchesSearch =
+        searchQuery.trim() === ''||
+        prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prod.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(prod.itemNumber).includes(searchQuery.trim());
+
+      const matchesPrice = prod.basePrice >= priceRange[0] && prod.basePrice <= priceRange[1];
+
+      const matchesColor =
+        selectedColor === ''||
+        prod.colors?.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
+
+      return matchesCategory && matchesSearch && matchesPrice && matchesColor;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy === 'price-asc') return Number(a.basePrice) - Number(b.basePrice);
+      if (sortBy === 'price-desc') return Number(b.basePrice) - Number(a.basePrice);
+      if (sortBy === 'newest') {
+        return (
+          String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+          (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
+        );
+      }
+      return Number(b.isBestSeller || false) - Number(a.isBestSeller || false);
+    });
+
+    return filtered;
+  }, [products, selectedCategory, searchQuery, priceRange, selectedColor, sortBy]);
+
+  const relatedProducts = useMemo(
+    () =>
+      selectedProductModal
+        ? products
+            .filter((p) => p.isActive !== false && p.id !== selectedProductModal.id)
+            .sort(
+              (a, b) =>
+                Number(b.categoryId === selectedProductModal.categoryId) -
+                Number(a.categoryId === selectedProductModal.categoryId)
+            )
+            .slice(0, 4)
+        : [],
+    [products, selectedProductModal]
+  );
+
+  const offersProducts = useMemo(() => {
+    return products
+      .filter((p) => p.isActive !== false && Number(p.originalPrice) > Number(p.basePrice))
+      .slice(0, 4);
+  }, [products]);
+
+  const newArrivalsProducts = useMemo(() => {
+    return [...products]
+      .filter((p) => p.isActive !== false)
+      .sort(
+        (a, b) =>
+          String(b.createdAt || '').localeCompare(String(a.createdAt || '')) ||
+          (Number(b.itemNumber) || 0) - (Number(a.itemNumber) || 0)
+      )
+      .slice(0, 4);
+  }, [products]);
+
+  const cartTotalCount = useMemo(
+    () => cart.reduce((sum, item) => sum + item.quantity, 0),
+    [cart]
+  );
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth'});
+  };
+
+  const scrollToCatalog = () => {
+    const el = document.getElementById('catalog');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth'});
+    }
+  };
+
+  const scrollToCategories = () => {
+    document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth'});
+  };
+
+  const activeFilters: ActiveFilter[] = [];
+  if (selectedCategory !== 'all') {
+    activeFilters.push({
+      key: 'category',
+      label: categories.find((c) => c.id === selectedCategory)?.name || 'قسم محدد',
+      onRemove: () => setSelectedCategory('all'),
+    });
+  }
+  if (searchQuery.trim() !== '') {
+    activeFilters.push({ key: 'search', label: `بحث: ${searchQuery.trim()}`, onRemove: () => setSearchQuery('') });
+  }
+  if (selectedColor !== '') {
+    activeFilters.push({ key: 'color', label: `اللون: ${selectedColor}`, onRemove: () => setSelectedColor('') });
+  }
+  if (priceRange[0] !== 0 || priceRange[1] !== 1000) {
+    activeFilters.push({
+      key: 'price',
+      label: `${priceRange[0]} - ${priceRange[1]} د.أ`,
+      onRemove: () => setPriceRange([0, 1000]),
+    });
+  }
+
+  const currentCategoryData = selectedCategory === 'all'? homeCategoryData 
+    : categories.find(c => c.id === selectedCategory) || homeCategoryData;
+
+  useEffect(() => {
+    const setMetaDescription = (content: string) => {
+      let tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.name = 'description';
+        document.head.appendChild(tag);
+      }
+      tag.content = content;
+    };
+
+    if (selectedProductModal) {
+      const price = Number(selectedProductModal.basePrice || 0).toFixed(2);
+      document.title = `${selectedProductModal.name} | ${price} د. أ | دكان 962`;
+      setMetaDescription(
+        `${selectedProductModal.name} بسعر ${price} دينار أردني — ${selectedProductModal.description?.slice(0, 120) || 'منتج مختار بعناية...'}`);
+      return;
+    }
+
+    if (selectedCategory !== 'all'&& currentCategoryData) {
+      document.title = `${currentCategoryData.name} | دكان 962`;
+      setMetaDescription(
+        currentCategoryData.description ||
+          `تشكيلة ${currentCategoryData.name} المميزة في دكان 962 — جودة عالية وأسعار منافسة...`);
+      return;
+    }
+
+    document.title = 'دكان 962 | DUKAN 962 — وجهتك الأولى للتسوق الشامل';
+    setMetaDescription(
+      'دكان 962 للأثاث - تشكيلة طاولات وسط وصالون، طاولات شاشة وتلفزيون ومدافئ ديكور خشب تايلندي ثقيل. توصيل لكافة المحافظات بالدينار الأردني.');
+  }, [selectedCategory, selectedProductModal, currentCategoryData]);
+
+  return (
+    <ErrorBoundary>
+      {/*المتجر يغلف فقط واجهة المتجر */}
+      <div 
+        className="storefront-theme min-h-screen flex flex-col text-[var(--sf-text)] overflow-x-hidden pb-16 md:pb-0" data-theme={isLightTheme ? 'light': 'dark'}
+      >
+        
+        <Toast toast={toast} onDismiss={dismissToast} />
+
+        <Navbar
+          categories={categories}
+          currentCategoryData={currentCategoryData}
+          cartCount={cartTotalCount}
+          wishlistCount={wishlist.length}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onOpenAdmin={() => setIsAdminAuthOpen(true)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToTop();
+          }}
+          isLightTheme={isLightTheme}
+          onToggleTheme={() => setIsLightTheme((current) => !current)}
+          products={products}
+          onSelectProduct={(p) => {
+            saveToRecentlyViewed(p);
+            setSelectedProductModal(p);
+          }}
+        />
+
+        <Hero onExploreClick={scrollToCatalog} categoryData={currentCategoryData} />
+
+        <CategoryBoxes
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToTop();
+          }}
+        />
+
+        {selectedCategory === 'all'&& (
+          <>
+            {offersProducts.length > 0 && (
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-[var(--sf-border)]">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5"data-reveal>
+                  <div>
+                    <span className="sf-eyebrow mb-2">مختارات الموسم</span>
+                    <h2 className="text-[22px] sm:text-3xl font-bold text-[var(--sf-text)] flex items-center gap-2 leading-tight">
+                      <Flame className="w-5 h-5 text-rose-500"strokeWidth={1.8} />
+                      عروض وخصومات
+                    </h2>
+                    <p className="text-[12px] sm:text-sm text-[var(--sf-muted)] mt-2">أفضل العروض المختارة لك بأسعار لا تقاوم.</p>
+                  </div>
+                </div>
+                <div aria-hidden="true" className="sf-hairline mb-6"/>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 sm:gap-x-5 gap-y-9">
+                  {offersProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isWishlisted={wishlist.some((w) => w.id === product.id)}
+                      onToggleWishlist={handleToggleWishlist}
+                      onAddToCart={(p) => handleAddToCart(p)}
+                      onQuickView={(p) => {
+                        saveToRecentlyViewed(p);
+                        setSelectedProductModal(p);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {newArrivalsProducts.length > 0 && (
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-[var(--sf-border)]">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5"data-reveal>
+                  <div>
+                    <span className="sf-eyebrow mb-2">وصل حديثاً</span>
+                    <h2 className="text-[22px] sm:text-3xl font-bold text-[var(--sf-text)] flex items-center gap-2 leading-tight">
+                      <Clock className="w-5 h-5 text-[var(--sf-success)]"strokeWidth={1.8} />
+                      وصل حديثاً
+                    </h2>
+                    <p className="text-[12px] sm:text-sm text-[var(--sf-muted)] mt-2">أحدث المنتجات التي أضفناها للمتجر مؤخراً.</p>
+                  </div>
+                </div>
+                <div aria-hidden="true" className="sf-hairline mb-6"/>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 sm:gap-x-5 gap-y-9">
+                  {newArrivalsProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isWishlisted={wishlist.some((w) => w.id === product.id)}
+                      onToggleWishlist={handleToggleWishlist}
+                      onAddToCart={(p) => handleAddToCart(p)}
+                      onQuickView={(p) => {
+                        saveToRecentlyViewed(p);
+                        setSelectedProductModal(p);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-[var(--sf-border)]">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6"data-reveal>
+            <div>
+              <span className="sf-eyebrow mb-2">المتجر</span>
+              <h2 className="text-[24px] leading-tight sm:text-4xl font-bold text-[var(--sf-text)] text-balance">
+                {selectedCategory !== 'all'? `أحدث منتجات ${currentCategoryData.name}`: 'الأكثر مبيعاً وأحدث التشكيلات'}
+              </h2>
+              <p className="text-[12px] sm:text-sm text-[var(--sf-muted)] mt-2">
+                اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
+              </p>
+            </div>
+
+            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full border border-[var(--sf-border)] bg-[var(--sf-surface)] text-[11px] font-bold text-[var(--sf-muted)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--sf-success)]"/>
+              الأسعار بالدينار الأردني (د.أ)
+            </div>
+          </div>
+          <div aria-hidden="true" className="sf-hairline mb-6"/>
+
+          {selectedCategory !== 'all'&& currentCategoryData.videoUrl && (
+            <CategoryVideoBanner
+              videoUrl={currentCategoryData.videoUrl}
+              poster={currentCategoryData.image}
+              title={currentCategoryData.name}
+            />
+          )}
+
+          {(currentCategoryData.name.includes('عطور') || selectedCategory === 'perfumes') && (
+            <div className="mb-8 relative overflow-hidden rounded-[22px] bg-[var(--sf-panel)] border border-[var(--sf-border)] shadow-soft p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6"data-reveal>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--sf-accent-soft),transparent_50%)] pointer-events-none"/>
+              
+              <div className="relative z-10 text-center sm:text-right flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--sf-accent-soft)] text-[var(--sf-accent)] text-[11px] font-bold mb-3 border border-[var(--sf-border-strong)]">
+                  <Sparkles className="w-3.5 h-3.5"/>
+                  خدمة حصرية
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-[var(--sf-text)] font-serif mb-2">
+                  لم تجد عطرك المفضل؟ نوفر لك <span className="text-[var(--sf-accent)]">عطور حسب الطلب</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-[var(--sf-muted)] leading-relaxed max-w-xl">
+                  أرسل لنا اسم البراند ونوع العطر والحجم المطلوب، وسنقوم بتجهيز التركيبة الخاصة بك ومراجعتها.
+                  سنبلغك بالسعر ووقت التجهيز فوراً.
+                </p>
+              </div>
+
+              <div className="relative z-10 shrink-0">
+                <a
+                  href={`https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
+                    'مرحباً دكان 962،\nأرغب في طلب عطر مخصص (Custom Made).\n\nتفاصيل طلبي:\n- اسم البراند: \n- نوع العطر: \n- الحجم المطلوب: \n\nأرجو إبلاغي بالسعر ووقت التجهيز. شكراً لكم!')}`}
+                  target="_blank"rel="noopener noreferrer" className="sf-btn sf-btn-gold">
+                  <MessageCircle className="w-5 h-5"/>
+                  اطلب عطرك المخصص الآن
+                </a>
+              </div>
+            </div>
+          )}
+
+          <FilterBar
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            priceRange={priceRange}
+            onPriceRangeChange={setPriceRange}
+            selectedColor={selectedColor}
+            onSelectColor={setSelectedColor}
+            onResetFilters={handleResetFilters}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <p className="text-xs text-[var(--sf-muted)]">
+              {productsLoaded ? `${filteredProducts.length} منتج`: ''}
+            </p>
+            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar max-w-full">
+              <span className="text-[9.5px] font-semibold tracking-[0.18em] uppercase text-[var(--sf-subtle)] shrink-0">ترتيب حسب</span>
+              {([
+                ['featured', 'الأكثر مبيعاً'],
+                ['newest', 'الأحدث'],
+                ['price-asc', 'الأقل سعراً'],
+                ['price-desc', 'الأعلى سعراً'],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setSortBy(value)}
+                  aria-pressed={sortBy === value}
+                                    data-active={sortBy === value}
+                  className="shrink-0 text-[11.5px] font-medium sf-link-quiet whitespace-nowrap cursor-pointer"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <RecentlyViewed 
+            products={products} 
+            cart={cart} 
+            onQuickView={(p) => {
+              saveToRecentlyViewed(p);
+              setSelectedProductModal(p);
+            }} 
+          />
+
+          {!productsLoaded ? (
+            <ProductSkeletonGrid />
+          ) : filteredProducts.length === 0 ? (
+            <EmptyState
+              variant={products.length === 0 ? 'no-products': 'no-results'}
+              searchQuery={searchQuery}
+              activeFilters={activeFilters}
+              onReset={handleResetFilters}
+              onBrowseCategories={scrollToCategories}
+            />
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 sm:gap-x-6 gap-y-10">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isWishlisted={wishlist.some((w) => w.id === product.id)}
+                  onToggleWishlist={handleToggleWishlist}
+                  onAddToCart={(p) => handleAddToCart(p)}
+                  onQuickView={(p) => {
+                    saveToRecentlyViewed(p);
+                    setSelectedProductModal(p);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </main>
+
+        {/*قسم الدعوة لزيارة الأسئلة الشائعة */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full border-t border-[var(--sf-border)]">
+          <div className="relative overflow-hidden rounded-[22px] bg-[var(--sf-panel)] border border-[var(--sf-border)] shadow-soft p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6"data-reveal>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--sf-accent-soft),transparent_50%)] pointer-events-none"/>
+            
+            <div className="relative z-10 text-center sm:text-right flex-1">
+                              <h3 className="text-xl sm:text-2xl font-bold text-[var(--sf-text)] mb-2">
+                هل لديك استفسار قبل الطلب؟
+              </h3>
+              <p className="text-xs sm:text-sm text-[var(--sf-muted)] leading-relaxed max-w-xl">
+                كل ما تحتاج معرفته عن التوصيل، الدفع، والمعاينة موجود في صفحة مخصصة لراحتتك.
+              </p>
+            </div>
+
+            <div className="relative z-10 shrink-0">
+              <button
+                onClick={() => setIsFAQPageOpen(true)}
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[var(--sf-accent)] hover:bg-[var(--sf-accent-strong)] text-[var(--sf-accent-contrast)] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer">
+                <HelpCircle className="w-5 h-5"/>
+                الأسئلة الشائعة وطريقة الطلب
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <Footer
+          categories={categories}
+          currentCategoryData={currentCategoryData}
+          onSelectCategory={(cat) => {
+            setSelectedCategory(cat);
+            scrollToTop();
+          }}
+          onOpenAdmin={() => setIsAdminAuthOpen(true)}
+          onOpenTracking={() => setIsOrderTrackingOpen(true)}
+        />
+
+        <ProductDetailsPage
+          product={selectedProductModal}
+          isWishlisted={Boolean(selectedProductModal && wishlist.some((w) => w.id === selectedProductModal.id))}
+          onToggleWishlist={handleToggleWishlist}
+          onClose={() => setSelectedProductModal(null)}
+          onAddToCart={handleAddToCart}
+          relatedProducts={relatedProducts}
+          onSelectProduct={(p) => {
+            saveToRecentlyViewed(p);
+            setSelectedProductModal(p);
+          }}
+        />
+
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          items={cart}
+          onUpdateQuantity={handleUpdateCartQuantity}
+          onRemoveItem={handleRemoveFromCart}
+          onProceedToCheckout={() => {
+            if (!productsLoaded) {
+              showToast('انتظر لحظة حتى يتم تحديث بيانات المنتجات والمخزون', { variant: 'warning'});
+              return;
+            }
+            const { cart: reconciled, messages } = reconcileCart(cart, products);
+            setCart(reconciled);
+            if (messages.length > 0) {
+              showToast(
+                messages[0] + (messages.length > 1 ? `(و${messages.length - 1} تنبيهات أخرى)`: ''),
+                { variant: 'warning'}
+              );
+              return;
+            }
+            setIsCartOpen(false);
+            setIsCheckoutOpen(true);
+          }}
+        />
+
+        <WishlistDrawer
+          isOpen={isWishlistOpen}
+          onClose={() => setIsWishlistOpen(false)}
+          wishlist={wishlist}
+          onRemoveFromWishlist={handleToggleWishlist}
+          onAddToCart={(p) => handleAddToCart(p)}
+        />
+
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          items={cart}
+          products={products}
+          onCartChange={setCart}
+          onSuccessOrder={() => {
+            setCart([]);
+            localStorage.removeItem('dukan962_cart');
+          }}
+        />
+
+        <OrderTrackingModal
+          isOpen={isOrderTrackingOpen}
+          onClose={() => setIsOrderTrackingOpen(false)}
+        />
+
+        {/*صفحة الأسئلة الشائعة */}
+        <FAQPage
+          isOpen={isFAQPageOpen}
+          onClose={() => setIsFAQPageOpen(false)}
+        />
+
+        <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
+
+        {/*السطر المطلوب إضافته هنا */}
+        <SupportChatbot
+          onOpenFAQ={() => setIsFAQPageOpen(true)}
+          products={products}
+          categories={categories}
+          onAddToCart={(product, quantity) => handleAddToCart(product, undefined, quantity)}
+          onOpenProduct={(product) => {
+            saveToRecentlyViewed(product);
+            setSelectedProductModal(product);
+          }}
+          onNavigateCategory={(categoryId) => {
+            //عند طلب نشمي فتح قسم: نلغي أي فلاتر قد تخفي منتجات القسم ثم ننتقل إليه
+            setSearchQuery('');
+            setPriceRange([0, 1000]);
+            setSelectedColor('');
+            setSelectedCategory(categoryId);
+            window.setTimeout(scrollToCatalog, 120);
+          }}
+        />
+        
+        <MobileBottomNav
+          cartCount={cartTotalCount}
+          wishlistCount={wishlist.length}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onGoHome={goHome}
+          onOpenTracking={() => setIsOrderTrackingOpen(true)}
+        />
+
+      </div> {/*إغلاق المتجر هنا */}
+
+      {/*لوحة الإدارة والنوافذ خارج الثيم لتبقى داكنة دائماً */}
+      <AdminAuthModal
+        isOpen={isAdminAuthOpen}
+        onClose={() => setIsAdminAuthOpen(false)}
+        onSuccess={() => {
+          setIsAdminAuthOpen(false);
+          setIsAdminOpen(true);
+        }}
+      />
+
+      <Suspense fallback={<AdminDashboardFallback />}>
+        <AdminDashboard
+          isOpen={isAdminOpen}
+          onClose={() => setIsAdminOpen(false)}
+        />
+      </Suspense>
+
+    </ErrorBoundary>
+  );
+}
