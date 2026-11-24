@@ -36,10 +36,15 @@ type ApiHistoryMessage = {
 type CompactProductPayload = {
   id: string;
   name: string;
+  nameEn?: string;
   price: number;
   category: string;
   stock: number;
   desc: string;
+  colors?: string[];
+  attributes?: string[];
+  dimensions?: string;
+  sku?: string;
 };
 
 interface SupportChatbotProps {
@@ -96,10 +101,11 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
     return map;
   }, [categories]);
 
-  // 📦 ملخص مضغوط للمنتجات: الاسم، السعر، القسم، المتوفر، وصف مختصر — لتقليل التوكنز
+  // 📦 ملخص مضغوط للمنتجات: الاسم، السعر، القسم، المتوفر، الألوان، الخصائص، القياس — لتقليل التوكنز
   const compactProducts = useMemo<CompactProductPayload[]>(() => {
     const active = products.filter((product) => product.isActive !== false);
 
+    // المتوفر أولاً حتى تظهر البدائل، والنافد يبقى في القائمة ليعرف نشمي أنه غير متوفر
     const ranked = [...active].sort((a, b) => availableQty(b) - availableQty(a));
 
     return ranked.slice(0, MAX_CONTEXT_PRODUCTS).map((product) => {
@@ -110,13 +116,32 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
       // المنتجات غير المتتبَّعة تُعيد Infinity، و JSON يحوّلها إلى null — نستخدم رقماً كبيراً بدلاً منها
       const available = availableQty(product);
 
+      const colors = Array.isArray(product.colors)
+        ? product.colors.map((color) => String(color.name || '').trim()).filter(Boolean).slice(0, 6)
+        : [];
+
+      const attributes = Array.isArray(product.attributes)
+        ? product.attributes
+            .map((attribute) => {
+              const options = Array.isArray(attribute.options) ? attribute.options.filter(Boolean).join('/') : '';
+              return options ? `${attribute.name}: ${options}` : String(attribute.name || '');
+            })
+            .filter(Boolean)
+            .slice(0, 6)
+        : [];
+
       return {
         id: product.id,
         name: product.name,
+        nameEn: product.nameEn || '',
         price: cheapestColor > 0 ? cheapestColor : basePrice,
         category: categoryNameMap.get(product.categoryId) || product.categoryLabel || '',
         stock: Number.isFinite(available) ? available : 999,
         desc: (product.description || '').replace(/\s+/g, ' ').slice(0, 55),
+        colors,
+        attributes,
+        dimensions: product.dimensions || '',
+        sku: product.sku || '',
       };
     });
   }, [products, categoryNameMap]);
@@ -141,12 +166,17 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
     }
   }, [isOpen, messages, isSending]);
 
-  // تنفيذ أوامر الإضافة للسلة التي طلبها العميل صراحةً
+  // تنفيذ أوامر الإضافة للسلة والانتقال للأقسام التي طلبها العميل صراحةً
   const applyInstantActions = (actions: ChatAction[]) => {
     actions.forEach((action) => {
       if (action.type === 'add_to_cart') {
         const product = productMap.get(action.productId);
-        if (product) onAddToCart(product, action.quantity);
+        if (product && availableQty(product) > 0) onAddToCart(product, action.quantity);
+      }
+
+      // 💡 الانتقال التلقائي للقسم مع إبقاء نافذة المحادثة مفتوحة
+      if (action.type === 'navigate_category') {
+        onNavigateCategory(action.categoryId);
       }
     });
   };
@@ -274,7 +304,9 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
   const renderProductCards = (productIds: string[]) => {
     const found = productIds
       .map((id) => productMap.get(id))
-      .filter((product): product is Product => Boolean(product))
+      // 🚫 لا بطاقات شراء للمنتجات النافدة أو المخفية
+      .filter((product): product is Product => Boolean(product) && product!.isActive !== false)
+      .filter((product) => availableQty(product) > 0)
       .slice(0, 4);
 
     if (found.length === 0) return null;
@@ -382,10 +414,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                 <button
                   key={`${message.id}-nav-${action.categoryId}`}
                   type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onNavigateCategory(action.categoryId);
-                  }}
+                  onClick={() => onNavigateCategory(action.categoryId)}
                   className="inline-flex items-center gap-1.5 rounded-full border border-[#D4B06A]/45 bg-[#D4B06A]/10 px-3 py-1.5 text-[10px] font-bold text-[#E8CC8A] transition hover:bg-[#D4B06A]/20"
                 >
                   <ArrowLeft className="h-3 w-3" />

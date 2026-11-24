@@ -36,6 +36,7 @@ const MAX_OUTPUT_TOKENS = 1200;
 const CACHE_TTL_SECONDS = 60 * 60 * 6; 
 const MEMORY_CACHE_LIMIT = 120;
 const MAX_ACTIONS = 4;
+const MAX_CATALOG_PRODUCTS = 40; // أقصى عدد منتجات تُرسل للنموذج بعد الفلترة الذكية
 
 // ==========================================
 // 3. الأنواع (Types)
@@ -43,10 +44,15 @@ const MAX_ACTIONS = 4;
 type CompactProduct = {
   id: string;
   name: string;
+  nameEn: string;
   price: number;
   category: string;
   stock: number;
   desc: string;
+  colors: string[];
+  attributes: string[];
+  dimensions: string;
+  sku: string;
 };
 
 type CompactCategory = { 
@@ -88,9 +94,12 @@ const STORE_KNOWLEDGE = `
 3. لا تقل إنك أنشأت طلبًا أو أكدت دفعًا؛ أنت لا تنفذ هذه العمليات.
 4. إذا سألك العميل عن منتج أو سعر أو توفر، ابحث في "قائمة المنتجات" المرفقة مع الرسالة.
 5. إذا وجدت المنتج في القائمة، أخبره بالسعر المتوفر واسمه.
-6. إذا لم تجد المنتج في القائمة، اعتذر منه وقل له أن هذا المنتج قد يكون غير متوفر حالياً، واقترح عليه تصفح المتجر.
-7. عند السؤال عن التوصيل أو الدفع أو تأكيد الطلب، أجب بإيجاز ووجّه العميل صراحةً للضغط على زر «الأسئلة الشائعة وطريقة الطلب».
-8. لا تطلب كلمات مرور أو أرقام بطاقات.
+6. إذا لم تجد المنتج في القائمة، اعتذر منه وقل له أن هذا المنتج غير متوفر حالياً، واقترح عليه بديلاً متوفراً من القائمة.
+7. إذا وجدت المنتج في القائمة لكن حالته «نفدت الكمية»، أخبر العميل بوضوح أنه غير متوفر حالياً، ثم اقترح عليه بديلاً واحداً أو بديلين متوفرين (نفس القسم أو نفس النوع أو سعر قريب)، واعرض البدائل فقط داخل show_products.
+8. لا تضع أبداً أي منتج حالته «نفدت الكمية» داخل show_products أو add_to_cart، ولا تشرح للعميل أنه يمكن شراؤه.
+9. المنتجات في القائمة قد تضم حقول «ألوان» و«خصائص» و«قياس»؛ إذا سأل العميل عن لون أو خامة أو مقاس طابقها مع هذه الحقول مع التسامح بالمرادفات، مثل: خشبي = خشب = wood، كبير = عريض = wide، طاولة شاشة = تلفزيون = tv، كنبة = صالون = جلسة = sofa، أسود = سوداء = black.
+10. عند السؤال عن التوصيل أو الدفع أو تأكيد الطلب، أجب بإيجاز ووجّه العميل صراحةً للضغط على زر «الأسئلة الشائعة وطريقة الطلب».
+11. لا تطلب كلمات مرور أو أرقام بطاقات.
 
 قواعد الأوامر (actions):
 - تُرجع دائماً رداً مهيكلاً بصيغة JSON يحتوي على المفاتيح: answer (نص), showFaqButton (boolean), actions (مصفوفة).
@@ -98,6 +107,8 @@ const STORE_KNOWLEDGE = `
 - استخدم "navigate_category" عندما يطلب العميل الانتقال إلى قسم معين: {"type": "navigate_category", "categoryId": "id"}.
 - استخدم "add_to_cart" فقط إذا طلب العميل صراحةً إضافة منتج إلى السلة: {"type": "add_to_cart", "productId": "id", "quantity": 1}.
 - لا تخترع معرّفات (id) غير موجودة في القوائم المرفقة. إن لم تكن متأكداً اترك actions فارغة [].
+- لا تستخدم show_products أو add_to_cart لمنتج مكتوب أمامه «نفدت الكمية»؛ اذكر بديلاً متوفراً بدلاً منه.
+- عند طلب العميل فتح قسم، استخدم navigate_category دائماً وسيتنقل المتجر إليه تلقائياً.
 `;
 
 // ==========================================
@@ -202,6 +213,162 @@ function cleanCategories(value: unknown): CompactCategory[] {
   return result;
 }
 
+// ==========================================
+// 6.1 تطبيع النص العربي والمرادفات (Arabic Search)
+// ==========================================
+const ARABIC_DIACRITICS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g;
+
+function normalizeArabic(value: string): string {
+  return String(value || '')
+    .toLowerCase()
+    .replace(ARABIC_DIACRITICS, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// مجموعات مرادفات التسوق: ألوان، مقاسات، أنواع قطع، وأسماء دارجة
+const SYNONYM_GROUPS: string[][] = [
+  ['اسود', 'سوداء', 'سوده', 'black'],
+  ['ابيض', 'بيضاء', 'بيضا', 'white'],
+  ['بني', 'بنيه', 'خشبي', 'خشب', 'wood', 'wooden', 'walnut', 'oak', 'زان'],
+  ['بيج', 'كريمي', 'كريم', 'cream', 'beige'],
+  ['رمادي', 'رصاصي', 'gray', 'grey'],
+  ['ذهبي', 'ذهب', 'gold', 'golden', 'نحاسي', 'برونزي'],
+  ['فضي', 'سيلفر', 'silver'],
+  ['ازرق', 'كحلي', 'blue', 'navy'],
+  ['اخضر', 'green'],
+  ['احمر', 'red'],
+  ['كبير', 'كبيره', 'عريض', 'عريضه', 'wide', 'large', 'big', 'xl'],
+  ['صغير', 'صغيره', 'صغيرون', 'small', 'compact', 'mini'],
+  ['وسط', 'متوسط', 'متوسطه', 'medium'],
+  ['طويل', 'طويله', 'long', 'tall'],
+  ['قصير', 'قصيره', 'short'],
+  ['كنبه', 'كنب', 'صالون', 'جلسه', 'جلوس', 'sofa', 'couch'],
+  ['طاوله', 'طاولات', 'table'],
+  ['شاشه', 'تلفزيون', 'tv', 'television'],
+  ['مدفاه', 'مدفأة', 'دفايه', 'fireplace'],
+  ['سفره', 'طعام', 'dining'],
+  ['رف', 'رفوف', 'مكتبه', 'shelf', 'shelving'],
+  ['مكتب', 'desk', 'office'],
+  ['سرير', 'bed'],
+  ['خزانه', 'دولاب', 'wardrobe'],
+  ['مرايا', 'مرايه', 'mirror'],
+  ['كرسي', 'كراسي', 'chair'],
+  ['سجاد', 'سجاده', 'ارضيه', 'carpet', 'rug'],
+];
+
+const STOP_WORDS = new Set([
+  'من', 'في', 'على', 'عن', 'الي', 'الى', 'مع', 'هل', 'بدي', 'بدكم', 'بدك', 'اريد', 'احتاج',
+  'عندكم', 'عندك', 'عندي', 'شو', 'ايش', 'كيف', 'هذا', 'هذه', 'هو', 'هي', 'لو', 'او', 'و',
+  'ثم', 'كمان', 'بس', 'شوي', 'السعر', 'سعر', 'كم', 'بكم', 'ثمن', 'سعرها', 'سعره', 'منتج',
+  'منتجات', 'شي', 'اشي', 'متوفر', 'متوفره', 'لكم', 'لك', 'لي', 'هلا', 'مرحبا', 'السلام',
+  'عليكم', 'وكم', 'عند', 'متوفرين', 'فيها', 'فيه', 'اي', 'أي',
+]);
+
+function expandSearchTokens(message: string): string[] {
+  const normalized = normalizeArabic(message);
+  const baseTokens = normalized.split(' ').filter((token) => token.length >= 2 && !STOP_WORDS.has(token));
+  const tokens = new Set<string>(baseTokens);
+
+  for (const token of baseTokens) {
+    for (const group of SYNONYM_GROUPS) {
+      if (group.includes(token)) {
+        for (const synonym of group) tokens.add(synonym);
+      }
+    }
+  }
+
+  return Array.from(tokens).slice(0, 40);
+}
+
+function productHaystack(product: CompactProduct): string {
+  return normalizeArabic([
+    product.name,
+    product.nameEn,
+    product.category,
+    product.desc,
+    product.colors.join(' '),
+    product.attributes.join(' '),
+    product.dimensions,
+    product.sku,
+  ].join(' '));
+}
+
+/**
+ * فلترة مسبقة للكتالوج: تُبقي المنتجات الأقرب لسؤال العميل (مع المرادفات)،
+ * ثم تُكمل القائمة بمنتجات متوفرة حتى يجد النموذج بدائل جاهزة للنافد.
+ */
+function selectRelevantProducts(products: CompactProduct[], message: string): CompactProduct[] {
+  if (products.length <= MAX_CATALOG_PRODUCTS) return products;
+
+  const tokens = expandSearchTokens(message);
+  if (tokens.length === 0) {
+    return [...products].sort((a, b) => b.stock - a.stock).slice(0, MAX_CATALOG_PRODUCTS);
+  }
+
+  const scored = products.map((product) => {
+    const haystack = productHaystack(product);
+    const nameHaystack = normalizeArabic(`${product.name} ${product.nameEn}`);
+    let score = 0;
+
+    for (const token of tokens) {
+      if (nameHaystack.includes(token)) score += 3;
+      else if (haystack.includes(token)) score += 1;
+    }
+
+    return { product, score };
+  });
+
+  const relevant = scored
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || b.product.stock - a.product.stock)
+    .slice(0, MAX_CATALOG_PRODUCTS)
+    .map((item) => item.product);
+
+  if (relevant.length >= MAX_CATALOG_PRODUCTS) return relevant;
+
+  const chosen = new Set(relevant.map((product) => product.id));
+  const fillers = products
+    .filter((product) => !chosen.has(product.id))
+    .sort((a, b) => b.stock - a.stock)
+    .slice(0, MAX_CATALOG_PRODUCTS - relevant.length);
+
+  return [...relevant, ...fillers];
+}
+
+function cleanTextList(value: unknown, maxItems: number, maxLength: number): string[] {
+  if (!Array.isArray(value)) return [];
+  const result: string[] = [];
+
+  for (const raw of value) {
+    let text = '';
+
+    if (typeof raw === 'string') {
+      text = raw;
+    } else if (raw && typeof raw === 'object') {
+      const item = raw as { name?: unknown; options?: unknown };
+      const name = typeof item.name === 'string' ? item.name : '';
+      const options = Array.isArray(item.options)
+        ? item.options.filter((option): option is string => typeof option === 'string' && option.trim().length > 0)
+        : [];
+      text = options.length > 0 ? `${name}: ${options.join('/')}` : name;
+    }
+
+    const clean = text.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+    if (!clean || result.includes(clean)) continue;
+    result.push(clean);
+    if (result.length >= maxItems) break;
+  }
+
+  return result;
+}
+
 function cleanProducts(value: unknown): CompactProduct[] {
   if (!Array.isArray(value)) return [];
   const result: CompactProduct[] = [];
@@ -219,10 +386,15 @@ function cleanProducts(value: unknown): CompactProduct[] {
     result.push({
       id,
       name: name.slice(0, 90),
+      nameEn: typeof item.nameEn === 'string' ? item.nameEn.replace(/\s+/g, ' ').trim().slice(0, 90) : '',
       price: Math.max(0, Number(item.price) || 0),
       category: typeof item.category === 'string' ? item.category.slice(0, 40) : '',
       stock: Math.max(0, Math.floor(Number(item.stock) || 0)),
-      desc: typeof item.desc === 'string' ? item.desc.replace(/\s+/g, ' ').slice(0, 70) : '',
+      desc: typeof item.desc === 'string' ? item.desc.replace(/\s+/g, ' ').slice(0, 90) : '',
+      colors: cleanTextList(item.colors, 6, 24),
+      attributes: cleanTextList(item.attributes, 6, 40),
+      dimensions: typeof item.dimensions === 'string' ? item.dimensions.replace(/\s+/g, ' ').trim().slice(0, 40) : '',
+      sku: typeof item.sku === 'string' ? item.sku.trim().slice(0, 30) : '',
     });
   }
   return result;
@@ -233,8 +405,19 @@ function buildCatalog(products: CompactProduct[]): string {
   
   return products.map((p) => {
     const stockLabel = p.stock > 0 ? `متوفر:${p.stock}` : 'نفدت الكمية';
-    const desc = p.desc ? ` | ${p.desc}` : '';
-    return `- id=${p.id} | ${p.name} | ${p.price} د.أ | ${p.category || 'غير مصنّف'} | ${stockLabel}${desc}`;
+    const parts = [`- id=${p.id}`, p.name];
+
+    if (p.nameEn) parts.push(p.nameEn);
+    parts.push(`${p.price} د.أ`);
+    parts.push(p.category || 'غير مصنّف');
+    parts.push(stockLabel);
+    if (p.colors.length > 0) parts.push(`ألوان: ${p.colors.join(', ')}`);
+    if (p.attributes.length > 0) parts.push(`خصائص: ${p.attributes.join(', ')}`);
+    if (p.dimensions) parts.push(`قياس: ${p.dimensions}`);
+    if (p.sku) parts.push(`sku: ${p.sku}`);
+    if (p.desc) parts.push(p.desc);
+
+    return parts.join(' | ');
   }).join('\n');
 }
 
@@ -280,9 +463,14 @@ function sanitizeActions(raw: unknown, products: CompactProduct[], categories: C
     // 3. أمر عرض منتجات
     if (type === 'show_products') {
       const ids = Array.isArray(action.productIds) ? action.productIds : [];
+      // لا نعرض بطاقات للمنتجات النافدة أو المحجوبة
       const productIds = ids
         .map((id) => (typeof id === 'string' ? id.trim() : ''))
-        .filter((id): id is string => Boolean(id) && productMap.has(id))
+        .filter((id): id is string => {
+          if (!id) return false;
+          const product = productMap.get(id);
+          return Boolean(product && product.stock > 0);
+        })
         .slice(0, 4);
         
       if (productIds.length === 0) continue;
@@ -379,23 +567,29 @@ function parseModelJson(raw: string): { answer: string; showFaqButton: boolean; 
 
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
-  if (start === -1 || end <= start) return null;
+
+  // تسامح: بعض المزودين يردّون نصاً عادياً بدون JSON
+  if (start === -1 || end <= start) {
+    if (text.length < 3 || text.startsWith('{')) return null;
+    return { answer: text.slice(0, MAX_MESSAGE_LENGTH * 2), showFaqButton: false, actions: [] };
+  }
 
   try {
     const parsed = JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
-    
-    // التحقق الصارم من بنية الرد
+
+    // التحقق من بنية الرد (نسمح بغياب actions ونعتبرها فارغة)
     if (typeof parsed.answer !== 'string' || !parsed.answer.trim()) return null;
     if (parsed.showFaqButton !== undefined && typeof parsed.showFaqButton !== 'boolean') return null;
-    if (!Array.isArray(parsed.actions)) return null;
 
     return {
       answer: parsed.answer.trim(),
       showFaqButton: Boolean(parsed.showFaqButton),
-      actions: parsed.actions,
+      actions: Array.isArray(parsed.actions) ? parsed.actions : [],
     };
   } catch {
-    return null;
+    // تسامح أخير: لا نُفشل الطلب إذا كان النص مقروءاً وليس JSON مبتوراً
+    if (text.startsWith('{') || text.length < 3) return null;
+    return { answer: text.slice(0, MAX_MESSAGE_LENGTH * 2), showFaqButton: false, actions: [] };
   }
 }
 
@@ -661,7 +855,8 @@ export default {
       const history = cleanHistory(body.history);
       const products = cleanProducts(body.products);
       const categories = cleanCategories(body.categories);
-      const catalog = buildCatalog(products);
+      const catalogProducts = selectRelevantProducts(products, message);
+      const catalog = buildCatalog(catalogProducts);
       const categoryList = buildCategoryList(categories);
 
       // 5. الكاش (فقط للرسالة الأولى بدون تاريخ محادثة)

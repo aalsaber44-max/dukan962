@@ -909,8 +909,12 @@ export default function App() {
             setSelectedProductModal(product);
           }}
           onNavigateCategory={(categoryId) => {
+            // 💡 عند طلب نشمي فتح قسم: نلغي أي فلاتر قد تخفي منتجات القسم ثم ننتقل إليه
+            setSearchQuery('');
+            setPriceRange([0, 1000]);
+            setSelectedColor('');
             setSelectedCategory(categoryId);
-            scrollToTop();
+            window.setTimeout(scrollToCatalog, 120);
           }}
         />
         
