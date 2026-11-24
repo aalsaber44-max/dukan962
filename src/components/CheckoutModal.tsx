@@ -492,7 +492,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md overflow-y-auto animate-fade">
-      <div className="relative w-full max-w-2xl bg-[#141210] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,176,106,0.15)] border border-white/10 flex flex-col my-4 sm:my-6 max-h-[94vh] sm:max-h-[90vh]">
+      <div className="relative w-full max-w-2xl bg-[#141210] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,175,55,0.15)] border border-white/10 flex flex-col my-4 sm:my-6 max-h-[94vh] sm:max-h-[90vh]">
 
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-[#1C1815] rounded-t-3xl shrink-0">
@@ -525,7 +525,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
               
               <span className="text-xs font-bold text-[#A39A8B] uppercase tracking-wider mb-1 block">رقم تتبع الطلب</span>
-              <h4 className="text-3xl sm:text-4xl font-black text-[#E8CC8A] font-mono mb-4 drop-shadow-md">{orderNumber}</h4>
+              <h4 className="text-3xl sm:text-4xl font-black text-[#E8CC75] font-mono mb-4 drop-shadow-md">{orderNumber}</h4>
 
               <div className="inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-6 bg-[#1C1815] ring-1 ring-white/10 rounded-2xl px-6 py-4 mb-6 text-sm shadow-lg">
                 <span className="text-[#A39A8B] flex items-center gap-2">
@@ -533,7 +533,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </span>
                 <span aria-hidden="true" className="hidden sm:block h-4 w-px bg-white/15" />
                 <span className="text-[#A39A8B] flex items-center gap-2">
-                  المبلغ النهائي: <strong className="text-[#E8CC8A] font-mono text-lg">{confirmedTotal.toFixed(2)} د.أ</strong>
+                  المبلغ النهائي: <strong className="text-[#E8CC75] font-mono text-lg">{confirmedTotal.toFixed(2)} د.أ</strong>
                 </span>
               </div>
 
@@ -573,18 +573,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-[#F3EEE4] mb-3">اختر طريقة الدفع <span className="text-rose-400">*</span></label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button type="button" onClick={() => setPaymentMethod('cod')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cod' ? 'border-[#D4B06A] bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.15)] ring-1 ring-[#D4B06A]' : 'border-white/10 bg-[#1C1815] hover:border-[#D4B06A]/50 hover:bg-white/5'}`}>
-                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cod' ? 'bg-[#D4B06A] text-[#0B0A09]' : 'bg-white/5 text-[#A39A8B]'}`}>
+                  <button type="button" onClick={() => setPaymentMethod('cod')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cod' ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.15)] ring-1 ring-[#D4AF37]' : 'border-white/10 bg-[#1C1815] hover:border-[#D4AF37]/50 hover:bg-white/5'}`}>
+                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cod' ? 'bg-[#D4AF37] text-[#09090B]' : 'bg-white/5 text-[#A39A8B]'}`}>
                       <Truck className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className={`text-sm font-bold ${paymentMethod === 'cod' ? 'text-[#E8CC8A]' : 'text-[#F3EEE4]'}`}>الدفع عند الاستلام</p>
+                      <p className={`text-sm font-bold ${paymentMethod === 'cod' ? 'text-[#E8CC75]' : 'text-[#F3EEE4]'}`}>الدفع عند الاستلام</p>
                       <p className="text-[11px] text-[#A39A8B] mt-0.5">كاش بعد المعاينة</p>
                     </div>
                   </button>
                   
                   <button type="button" onClick={() => setPaymentMethod('cliq')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cliq' ? 'border-[#7FD1A0] bg-[#7FD1A0]/10 shadow-[0_0_15px_rgba(127,209,160,0.15)] ring-1 ring-[#7FD1A0]' : 'border-white/10 bg-[#1C1815] hover:border-[#7FD1A0]/50 hover:bg-white/5'}`}>
-                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cliq' ? 'bg-[#7FD1A0] text-[#0B0A09]' : 'bg-white/5 text-[#A39A8B]'}`}>
+                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cliq' ? 'bg-[#7FD1A0] text-[#09090B]' : 'bg-white/5 text-[#A39A8B]'}`}>
                       <Smartphone className="w-5 h-5" />
                     </div>
                     <div>
@@ -599,7 +599,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Personal Info */}
               <div className="space-y-4 pt-2">
-                <h4 className="text-sm font-bold text-[#E8CC8A] border-b border-white/10 pb-2">بيانات المستلم</h4>
+                <h4 className="text-sm font-bold text-[#E8CC75] border-b border-white/10 pb-2">بيانات المستلم</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">الاسم الكامل (الرباعي) <span className="text-rose-400">*</span></label>
@@ -609,7 +609,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       value={name}
                       onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
                       placeholder="مثال: محمد أحمد علي محمود"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${nameError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${nameError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]'}`}
                     />
                     {nameError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{nameError}</p>}
                   </div>
@@ -621,7 +621,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       value={phone1}
                       onChange={(e) => handlePhone1Change(e.target.value)}
                       placeholder="07XXXXXXXX"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone1Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone1Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]'}`}
                     />
                     {phone1Error && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{phone1Error}</p>}
                   </div>
@@ -633,7 +633,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       value={phone2}
                       onChange={(e) => handlePhone2Change(e.target.value)}
                       placeholder="رقم بديل..."
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone2Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone2Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]'}`}
                     />
                     {phone2Error && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{phone2Error}</p>}
                   </div>
@@ -642,11 +642,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Address */}
               <div className="space-y-4 pt-2">
-                <h4 className="text-sm font-bold text-[#E8CC8A] border-b border-white/10 pb-2">عنوان التوصيل بالتفصيل</h4>
+                <h4 className="text-sm font-bold text-[#E8CC75] border-b border-white/10 pb-2">عنوان التوصيل بالتفصيل</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">المحافظة <span className="text-rose-400">*</span></label>
-                    <select value={governorate} onChange={(e) => { setGovernorate(e.target.value); setAutoDetectedGov(null); }} className="w-full text-sm py-3 px-3 bg-[#1C1815] border border-white/10 rounded-xl text-[#F3EEE4] focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A] outline-none cursor-pointer appearance-none">
+                    <select value={governorate} onChange={(e) => { setGovernorate(e.target.value); setAutoDetectedGov(null); }} className="w-full text-sm py-3 px-3 bg-[#1C1815] border border-white/10 rounded-xl text-[#F3EEE4] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none cursor-pointer appearance-none">
                       {jordanGovernorates.map((gov) => <option key={gov} value={gov}>{gov}</option>)}
                     </select>
                   </div>
@@ -658,7 +658,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       value={region}
                       onChange={(e) => handleRegionChange(e.target.value)}
                       placeholder="مثال: جبل عمان"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${regionError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${regionError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]'}`}
                     />
                     {regionError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{regionError}</p>}
                     {!regionError && autoDetectedGov && <span className="text-[9px] text-[#7FD1A0] mt-1 block">تم تحديد المحافظة تلقائياً ✓</span>}
@@ -671,7 +671,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       value={street}
                       onChange={(e) => { setStreet(e.target.value); if (streetError && e.target.value.trim()) setStreetError(null); }}
                       placeholder="مثال: شارع المدينة المنورة"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${streetError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${streetError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]'}`}
                     />
                     {streetError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{streetError}</p>}
                   </div>
@@ -683,7 +683,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       value={building}
                       onChange={(e) => { setBuilding(e.target.value); if (buildingError && e.target.value.trim()) setBuildingError(null); }}
                       placeholder="مثال: عمارة رقم 14، الطابق 2"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${buildingError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${buildingError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]'}`}
                     />
                     {buildingError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{buildingError}</p>}
                   </div>
@@ -693,7 +693,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {/* Notes */}
               <div>
                 <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">ملاحظات إضافية للتوصيل (اختياري)</label>
-                <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-sm py-3 px-4 bg-[#1C1815] border border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A] rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none resize-none" />
+                <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-sm py-3 px-4 bg-[#1C1815] border border-white/10 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none resize-none" />
               </div>
 
               {/* Summary */}
@@ -708,11 +708,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div className="pt-3 border-t border-white/10 flex justify-between font-black text-[#F3EEE4] items-end">
                   <span className="text-base">المبلغ الإجمالي:</span>
-                  <span className="font-mono text-2xl text-[#E8CC8A] leading-none">{total.toFixed(2)} <span className="text-sm font-bold text-[#A39A8B]">د.أ</span></span>
+                  <span className="font-mono text-2xl text-[#E8CC75] leading-none">{total.toFixed(2)} <span className="text-sm font-bold text-[#A39A8B]">د.أ</span></span>
                 </div>
               </div>
 
-              <button type="submit" disabled={isSubmitting} className="w-full py-4 px-6 text-base font-black text-[#0B0A09] bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] hover:from-[#E8CC8A] hover:to-[#E8CC8A] rounded-xl shadow-[0_8px_20px_-8px_rgba(212,176,106,0.6)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-50">
+              <button type="submit" disabled={isSubmitting} className="w-full py-4 px-6 text-base font-black text-[#09090B] bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] hover:from-[#E8CC75] hover:to-[#E8CC75] rounded-xl shadow-[0_8px_20px_-8px_rgba(212,175,55,0.6)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-50">
                 <span>{isSubmitting ? 'جارٍ التحقق وحفظ الطلب...' : 'تأكيد طلب الشراء الآن 🛒'}</span>
               </button>
 

@@ -48,7 +48,7 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
           </h2>
           <button
             onClick={() => onSelectCategory('all')}
-            className="group/all inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#A39A8B] hover:text-[#E8CC8A] transition-colors cursor-pointer shrink-0"
+            className="group/all inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#A39A8B] hover:text-[#E8CC75] transition-colors cursor-pointer shrink-0"
           >
             <span>عرض كل المنتجات</span>
             <ArrowUpLeft className="w-4 h-4 transition-transform duration-300 group-hover/all:-translate-x-0.5 group-hover/all:-translate-y-0.5" />
@@ -72,7 +72,7 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
                   total
                 )} ${
                   isSelected
-                    ? 'ring-2 ring-[#D4B06A] shadow-lift'
+                    ? 'ring-2 ring-[#D4AF37] shadow-lift'
                     : 'ring-1 ring-white/10 shadow-soft hover:-translate-y-1 hover:shadow-lift'
                 }`}
               >
@@ -94,7 +94,7 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
                 />
 
                 {isSelected && (
-                  <span className="absolute z-10 top-3 right-3 sm:top-4 sm:right-4 inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] !text-[#0B0A09] text-[11px] font-bold shadow-gold">
+                  <span className="absolute z-10 top-3 right-3 sm:top-4 sm:right-4 inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] !text-[#09090B] text-[11px] font-bold shadow-gold">
                     <Check className="w-3.5 h-3.5" strokeWidth={3} />
                     القسم الحالي
                   </span>
@@ -109,7 +109,7 @@ export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
                   >
                     {cat.name}
                   </h3>
-                  <span className="grid place-items-center w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full bg-white/10 ring-1 ring-white/20 !text-white transition-all duration-500 group-hover:bg-[#D4B06A] group-hover:!text-[#0B0A09] group-hover:ring-[#D4B06A] group-hover:-rotate-12">
+                  <span className="grid place-items-center w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full bg-white/10 ring-1 ring-white/20 !text-white transition-all duration-500 group-hover:bg-[#D4AF37] group-hover:!text-[#09090B] group-hover:ring-[#D4AF37] group-hover:-rotate-12">
                     <ArrowUpLeft className="w-4 h-4" />
                   </span>
                 </div>

@@ -66,7 +66,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold font-serif text-[#F3EEE4] flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-[#D4B06A]" />
+            <MessageSquare className="w-5 h-5 text-[#D4AF37]" />
             تقييمات وآراء العملاء
           </h3>
           <div className="flex items-center gap-2 mt-2">
@@ -74,7 +74,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className={`w-4 h-4 ${star <= Number(averageRating) ? 'text-[#D4B06A] fill-[#D4B06A]' : 'text-white/20'}`}
+                  className={`w-4 h-4 ${star <= Number(averageRating) ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-white/20'}`}
                 />
               ))}
             </div>
@@ -86,7 +86,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="py-2.5 px-5 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl transition-all shadow-gold active:scale-95"
+            className="py-2.5 px-5 text-xs font-bold text-[#09090B] bg-[#D4AF37] hover:bg-[#E8CC75] rounded-xl transition-all shadow-gold active:scale-95"
           >
             أضف تقييمك
           </button>
@@ -112,7 +112,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
                 >
                   <Star
                     className={`w-7 h-7 ${
-                      star <= (hoverRating || rating) ? 'text-[#D4B06A] fill-[#D4B06A]' : 'text-white/20'
+                      star <= (hoverRating || rating) ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-white/20'
                     }`}
                   />
                 </button>
@@ -129,7 +129,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="مثال: أحمد محمد"
-                className="w-full text-sm py-2.5 px-4 bg-[#141210] border border-white/10 rounded-xl focus:border-[#D4B06A] text-[#F3EEE4] outline-none"
+                className="w-full text-sm py-2.5 px-4 bg-[#141210] border border-white/10 rounded-xl focus:border-[#D4AF37] text-[#F3EEE4] outline-none"
               />
             </div>
           </div>
@@ -142,7 +142,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="ما الذي أعجبك في المنتج؟"
-              className="w-full text-sm py-3 px-4 bg-[#141210] border border-white/10 rounded-xl focus:border-[#D4B06A] text-[#F3EEE4] outline-none resize-none"
+              className="w-full text-sm py-3 px-4 bg-[#141210] border border-white/10 rounded-xl focus:border-[#D4AF37] text-[#F3EEE4] outline-none resize-none"
             />
           </div>
 
@@ -150,7 +150,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="py-2.5 px-6 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl transition-all flex items-center gap-2 disabled:opacity-50"
+              className="py-2.5 px-6 text-xs font-bold text-[#09090B] bg-[#D4AF37] hover:bg-[#E8CC75] rounded-xl transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? 'جارٍ الإرسال...' : <><Send className="w-4 h-4" /> إرسال التقييم</>}
             </button>
@@ -176,7 +176,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
             <div key={review.id} className="bg-[#141210] p-4 sm:p-5 rounded-2xl border border-white/10">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#D4B06A]/10 text-[#D4B06A] flex items-center justify-center font-bold text-sm">
+                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center font-bold text-sm">
                     {review.name.charAt(0)}
                   </div>
                   <div>
@@ -185,7 +185,7 @@ export const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => 
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`w-3 h-3 ${star <= review.rating ? 'text-[#D4B06A] fill-[#D4B06A]' : 'text-white/20'}`}
+                          className={`w-3 h-3 ${star <= review.rating ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-white/20'}`}
                         />
                       ))}
                     </div>

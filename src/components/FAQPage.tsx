@@ -11,12 +11,12 @@ export const FAQPage: React.FC<FAQPageProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0B0A09] overflow-y-auto animate-fade">
+    <div className="fixed inset-0 z-50 bg-[#09090B] overflow-y-auto animate-fade">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#1C1815]/90 backdrop-blur-md border-b border-white/10 px-4 py-4 sm:py-5">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#D4B06A]/10 text-[#D4B06A] flex items-center justify-center ring-1 ring-[#D4B06A]/30">
+            <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center ring-1 ring-[#D4AF37]/30">
               <HelpCircle className="w-5 h-5" />
             </div>
             <h1 className="text-lg sm:text-xl font-bold text-[#F3EEE4] font-serif">

@@ -33,7 +33,7 @@ export const FloatingActions: React.FC<FloatingActionsProps> = ({ onOpenTracking
         aria-label="العودة للأعلى"
         tabIndex={showTop ? 0 : -1}
         title="العودة للأعلى"
-        className={`grid place-items-center w-11 h-11 rounded-full bg-[#141210]/85 backdrop-blur-xl ring-1 ring-[#D4B06A]/40 text-[#E8CC8A] shadow-soft transition-all duration-300 hover:bg-[#D4B06A] hover:text-[#0B0A09] active:scale-90 cursor-pointer ${
+        className={`grid place-items-center w-11 h-11 rounded-full bg-[#141210]/85 backdrop-blur-xl ring-1 ring-[#D4AF37]/40 text-[#E8CC75] shadow-soft transition-all duration-300 hover:bg-[#D4AF37] hover:text-[#09090B] active:scale-90 cursor-pointer ${
           showTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
         }`}
       >
@@ -46,7 +46,7 @@ export const FloatingActions: React.FC<FloatingActionsProps> = ({ onOpenTracking
           onClick={onOpenTracking}
           aria-label="تتبع الطلب"
           title="تتبع حالة طلبك"
-          className="grid place-items-center w-11 h-11 rounded-full bg-[#141210]/85 backdrop-blur-xl ring-1 ring-[#D4B06A]/40 text-[#E8CC8A] shadow-soft transition-all duration-300 hover:bg-[#D4B06A] hover:text-[#0B0A09] active:scale-90 cursor-pointer"
+          className="grid place-items-center w-11 h-11 rounded-full bg-[#141210]/85 backdrop-blur-xl ring-1 ring-[#D4AF37]/40 text-[#E8CC75] shadow-soft transition-all duration-300 hover:bg-[#D4AF37] hover:text-[#09090B] active:scale-90 cursor-pointer"
         >
           <Truck className="w-5 h-5" />
         </button>
@@ -59,7 +59,7 @@ export const FloatingActions: React.FC<FloatingActionsProps> = ({ onOpenTracking
         rel="noopener noreferrer"
         aria-label="اطلب عطرك المخصص"
         title="عطور حسب الطلب"
-        className="grid place-items-center w-12 h-12 rounded-full bg-gradient-to-b from-[#D4B06A] to-[#8A6D2F] text-[#0B0A09] shadow-[0_12px_30px_-8px_rgba(212,176,106,0.65)] transition-all duration-300 hover:scale-110 hover:shadow-[0_16px_36px_-8px_rgba(212,176,106,0.85)] active:scale-95"
+        className="grid place-items-center w-12 h-12 rounded-full bg-gradient-to-b from-[#D4AF37] to-[#8A6D2F] text-[#09090B] shadow-[0_12px_30px_-8px_rgba(212,175,55,0.65)] transition-all duration-300 hover:scale-110 hover:shadow-[0_16px_36px_-8px_rgba(212,175,55,0.85)] active:scale-95"
       >
         <Sparkles className="w-5 h-5" />
       </a>

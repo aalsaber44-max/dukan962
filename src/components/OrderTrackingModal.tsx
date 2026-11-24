@@ -72,7 +72,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, 
         {/* Header */}
         <div className="p-5 border-b border-white/10 flex items-center justify-between bg-[#1C1815]">
           <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-[#D4B06A]" />
+            <Truck className="w-5 h-5 text-[#D4AF37]" />
             <h2 className="text-base font-bold text-[#F3EEE4]">تتبع حالة الطلب</h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-[#A39A8B] hover:text-white transition-colors cursor-pointer">
@@ -90,7 +90,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, 
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
                 placeholder="DUKAN-XXXXX"
-                className="w-full text-sm py-2.5 px-3 bg-[#1C1815] border border-white/10 rounded-xl focus:border-[#D4B06A] text-[#F3EEE4] font-mono placeholder-[#8A8173] uppercase"
+                className="w-full text-sm py-2.5 px-3 bg-[#1C1815] border border-white/10 rounded-xl focus:border-[#D4AF37] text-[#F3EEE4] font-mono placeholder-[#8A8173] uppercase"
               />
             </div>
             <div>
@@ -101,13 +101,13 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, 
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="07XXXXXXXX"
                 dir="ltr"
-                className="w-full text-sm py-2.5 px-3 bg-[#1C1815] border border-white/10 rounded-xl focus:border-[#D4B06A] text-[#F3EEE4] font-mono text-right placeholder-[#8A8173]"
+                className="w-full text-sm py-2.5 px-3 bg-[#1C1815] border border-white/10 rounded-xl focus:border-[#D4AF37] text-[#F3EEE4] font-mono text-right placeholder-[#8A8173]"
               />
             </div>
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 bg-[#D4AF37] hover:bg-[#E8CC75] text-[#09090B] font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? 'جارٍ البحث...' : <><Search className="w-4 h-4" /> بحث</>}
             </button>
@@ -127,7 +127,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, 
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                 <div>
                   <span className="text-[10px] text-[#A39A8B] block">رقم الطلب</span>
-                  <strong className="text-sm font-mono text-[#E8CC8A]">{order.id}</strong>
+                  <strong className="text-sm font-mono text-[#E8CC75]">{order.id}</strong>
                 </div>
                 <div className="text-left">
                   <span className="text-[10px] text-[#A39A8B] block">الإجمالي</span>
@@ -150,15 +150,15 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ isOpen, 
 
                     return (
                       <div key={status.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 bg-[#141210] shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow transition-all duration-500 ${isCompleted ? 'border-[#D4B06A]' : 'border-white/10 opacity-50'}`}>
-                          <Icon className={`w-4 h-4 ${isCompleted ? 'text-[#D4B06A]' : 'text-[#A39A8B]'}`} />
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 bg-[#141210] shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow transition-all duration-500 ${isCompleted ? 'border-[#D4AF37]' : 'border-white/10 opacity-50'}`}>
+                          <Icon className={`w-4 h-4 ${isCompleted ? 'text-[#D4AF37]' : 'text-[#A39A8B]'}`} />
                         </div>
-                        <div className={`w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded-xl border ${isCurrent ? 'bg-[#D4B06A]/10 border-[#D4B06A]/30' : 'bg-transparent border-transparent opacity-60'}`}>
+                        <div className={`w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded-xl border ${isCurrent ? 'bg-[#D4AF37]/10 border-[#D4AF37]/30' : 'bg-transparent border-transparent opacity-60'}`}>
                           <div className="flex items-center justify-between">
                             <h4 className={`text-xs font-bold ${isCompleted ? 'text-[#F3EEE4]' : 'text-[#A39A8B]'}`}>{status.label}</h4>
                             {isCompleted && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                           </div>
-                          {isCurrent && <p className="text-[10px] text-[#D4B06A] mt-1">حالتك الحالية</p>}
+                          {isCurrent && <p className="text-[10px] text-[#D4AF37] mt-1">حالتك الحالية</p>}
                         </div>
                       </div>
                     );

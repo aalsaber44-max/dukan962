@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({
     : "أقسام المتجر";
 
   return (
-    <footer className="relative bg-[#080706] text-[#F3EEE4] pt-16 pb-8 mt-10">
+    <footer className="relative bg-[#09090B] text-[#F3EEE4] pt-16 pb-8 mt-10">
       <div aria-hidden="true" className="absolute top-0 inset-x-0 gold-rule" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
@@ -59,10 +59,10 @@ export const Footer: React.FC<FooterProps> = ({
                       onSelectCategory(cat.id);
                       document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className={`text-xs transition-colors ${
+                    className={`text-xs rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-4 focus-visible:ring-offset-[#09090B] ${
                       currentCategoryData?.id === cat.id 
-                        ? 'text-[#E8CC8A] font-bold' 
-                        : 'text-[#A39A8B] hover:text-[#E8CC8A]'
+                        ? 'text-[#E8CC75] font-bold'
+                        : 'text-[#A39A8B] hover:text-[#E8CC75]'
                     }`}
                   >
                     {cat.name}
@@ -77,7 +77,7 @@ export const Footer: React.FC<FooterProps> = ({
             <h4 className="text-sm font-bold text-white mb-4">التواصل والطلب المباشر</h4>
             <div className="space-y-3">
               <p className="text-xs text-[#A39A8B] flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#D4B06A]" />
+                <MapPin className="w-4 h-4 text-[#D4AF37]" />
                 <span>عمان - المملكة الأردنية الهاشمية</span>
               </p>
               
@@ -86,7 +86,7 @@ export const Footer: React.FC<FooterProps> = ({
                   href={`https://wa.me/${STORE_PHONE_INTL}`} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="inline-flex items-center gap-2 bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] px-5 py-2.5 rounded-full text-xs font-bold shadow-gold transition-all hover:-translate-y-0.5 active:scale-95 w-fit"
+                  className="inline-flex items-center gap-2 bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] text-[#09090B] px-5 py-2.5 rounded-full text-xs font-bold shadow-gold transition-all hover:-translate-y-0.5 active:scale-95 w-fit"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>تواصل عبر واتساب: {STORE_WHATSAPP_HANDLE}</span>
@@ -95,7 +95,7 @@ export const Footer: React.FC<FooterProps> = ({
                 {/* 💡 زر تتبع الطلب الجديد */}
                 <button
                   onClick={onOpenTracking}
-                  className="inline-flex items-center gap-2 bg-[#1C1815] hover:bg-[#26211D] border border-[#D4B06A]/30 text-[#E8CC8A] px-5 py-2.5 rounded-full text-xs font-bold transition-all w-fit active:scale-95"
+                  className="inline-flex items-center gap-2 bg-[#1C1815] hover:bg-[#26211D] border border-[#D4AF37]/30 text-[#E8CC75] px-5 py-2.5 rounded-full text-xs font-bold transition-all w-fit active:scale-95"
                 >
                   <Truck className="w-4 h-4" />
                   <span>تتبع حالة طلبك</span>
@@ -117,7 +117,7 @@ export const Footer: React.FC<FooterProps> = ({
             © {new Date().getFullYear()} دكان 962 (Dukan 962). جميع الحقوق محفوظة.
           </p>
           <div className="flex items-center gap-4 text-[11px] text-[#8A8173]">
-            <button onClick={onOpenAdmin} className="hover:text-white transition-colors">لوحة التحكم</button>
+            <button onClick={onOpenAdmin} className="rounded-sm hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]">لوحة التحكم</button>
             <span>·</span>
             <span>شحن لجميع المناطق</span>
             <span>·</span>

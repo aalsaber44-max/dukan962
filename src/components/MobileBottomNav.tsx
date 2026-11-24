@@ -25,7 +25,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {/* الرئيسية */}
         <button
           onClick={onGoHome}
-          className="flex flex-col items-center justify-center w-full h-full gap-1 text-[#A39A8B] hover:text-[#E8CC8A] active:scale-95 transition-all"
+          className="flex flex-col items-center justify-center w-full h-full gap-1 text-[#A39A8B] hover:text-[#E8CC75] active:scale-95 transition-all"
         >
           <Home className="w-5 h-5" />
           <span className="text-[10px] font-bold">الرئيسية</span>
@@ -34,7 +34,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {/* تتبع الطلب بدلاً من الأقسام */}
         <button
           onClick={onOpenTracking}
-          className="flex flex-col items-center justify-center w-full h-full gap-1 text-[#A39A8B] hover:text-[#E8CC8A] active:scale-95 transition-all"
+          className="flex flex-col items-center justify-center w-full h-full gap-1 text-[#A39A8B] hover:text-[#E8CC75] active:scale-95 transition-all"
         >
           <Truck className="w-5 h-5" />
           <span className="text-[10px] font-bold">تتبع طلبي</span>
@@ -57,11 +57,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {/* السلة */}
         <button
           onClick={onOpenCart}
-          className="relative flex flex-col items-center justify-center w-full h-full gap-1 text-[#0B0A09] bg-[#D4B06A] rounded-xl mx-1 my-2 active:scale-95 transition-all shadow-gold"
+          className="relative flex flex-col items-center justify-center w-full h-full gap-1 text-[#09090B] bg-[#D4AF37] rounded-xl mx-1 my-2 active:scale-95 transition-all shadow-gold"
         >
           <ShoppingBag className="w-5 h-5" />
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#0B0A09] text-[#E8CC8A] text-[10px] font-extrabold rounded-full grid place-items-center font-mono">
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#09090B] text-[#E8CC75] text-[10px] font-extrabold rounded-full grid place-items-center font-mono">
               {cartCount}
             </span>
           )}

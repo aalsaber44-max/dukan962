@@ -35,8 +35,8 @@ const AdminDashboard = lazy(() =>
 
 const AdminDashboardFallback = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
-    <div className="flex items-center gap-3 text-sm font-bold text-[#E8CC8A]">
-      <span className="w-5 h-5 rounded-full border-2 border-[#D4B06A]/30 border-t-[#E8CC8A] animate-spin" />
+    <div className="flex items-center gap-3 text-sm font-bold text-[#E8CC75]">
+      <span className="w-5 h-5 rounded-full border-2 border-[#D4AF37]/30 border-t-[#E8CC75] animate-spin" />
       جارٍ تحميل لوحة التحكم...
     </div>
   </div>
@@ -547,9 +547,9 @@ export default function App() {
         
         <Toast toast={toast} onDismiss={dismissToast} />
 
-        <aside aria-label="شريط العروض" className="relative bg-[#080706] text-[#A39A8B] text-[11px] sm:text-xs py-2.5 px-4 text-center">
+        <aside aria-label="شريط العروض" className="relative bg-[#09090B] text-[#A39A8B] text-[11px] sm:text-xs py-2.5 px-4 text-center">
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
-            <span className="text-[#E8CC8A] font-semibold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
+            <span className="text-[#E8CC75] font-semibold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
             <span aria-hidden="true" className="hidden sm:block h-3 w-px bg-white/15" />
             <span className="hidden sm:inline">التوصيل لجميع محافظات المملكة</span>
             <span aria-hidden="true" className="hidden md:block h-3 w-px bg-white/15" />
@@ -680,16 +680,16 @@ export default function App() {
           )}
 
           {(currentCategoryData.name.includes('عطور') || selectedCategory === 'perfumes') && (
-            <div className="mb-8 relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.15),transparent_50%)] pointer-events-none" />
+            <div className="mb-8 relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4AF37]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,175,55,0.15),transparent_50%)] pointer-events-none" />
               
               <div className="relative z-10 text-center sm:text-right flex-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4B06A]/10 text-[#E8CC8A] text-[11px] font-bold mb-3 ring-1 ring-[#D4B06A]/30">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 text-[#E8CC75] text-[11px] font-bold mb-3 ring-1 ring-[#D4AF37]/30">
                   <Sparkles className="w-3.5 h-3.5" />
                   خدمة حصرية
                 </div>
                 <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
-                  لم تجد عطرك المفضل؟ نوفر لك <span className="text-[#D4B06A]">عطور حسب الطلب</span>
+                  لم تجد عطرك المفضل؟ نوفر لك <span className="text-[#D4AF37]">عطور حسب الطلب</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-[#A39A8B] leading-relaxed max-w-xl">
                   أرسل لنا اسم البراند ونوع العطر والحجم المطلوب، وسنقوم بتجهيز التركيبة الخاصة بك ومراجعتها.
@@ -704,7 +704,7 @@ export default function App() {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4AF37] hover:bg-[#E8CC75] text-[#09090B] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                 >
                   <MessageCircle className="w-5 h-5" />
                   اطلب عطرك المخصص الآن
@@ -742,8 +742,8 @@ export default function App() {
                   aria-pressed={sortBy === value}
                   className={`py-1.5 px-3.5 text-xs font-semibold rounded-full transition-all duration-300 cursor-pointer whitespace-nowrap active:scale-95 ${
                     sortBy === value
-                      ? 'bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] shadow-gold'
-                      : 'bg-white/[0.04] text-[#A39A8B] ring-1 ring-white/10 hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40'
+                      ? 'bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] text-[#09090B] shadow-gold'
+                      : 'bg-white/[0.04] text-[#A39A8B] ring-1 ring-white/10 hover:text-[#F3EEE4] hover:ring-[#D4AF37]/40'
                   }`}
                 >
                   {label}
@@ -792,8 +792,8 @@ export default function App() {
 
         {/* 💡 قسم الدعوة لزيارة الأسئلة الشائعة */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full border-t border-white/10">
-          <div className="relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.1),transparent_50%)] pointer-events-none" />
+          <div className="relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4AF37]/30 shadow-lift p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,175,55,0.1),transparent_50%)] pointer-events-none" />
             
             <div className="relative z-10 text-center sm:text-right flex-1">
               <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
@@ -807,7 +807,7 @@ export default function App() {
             <div className="relative z-10 shrink-0">
               <button
                 onClick={() => setIsFAQPageOpen(true)}
-                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4AF37] hover:bg-[#E8CC75] text-[#09090B] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
               >
                 <HelpCircle className="w-5 h-5" />
                 الأسئلة الشائعة وطريقة الطلب

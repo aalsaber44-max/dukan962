@@ -40,8 +40,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
     <section className="relative">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-8 sm:pb-14">
         {/* إطار البنر */}
-        <div className="relative rounded-[24px] sm:rounded-[34px] p-px bg-gradient-to-b from-[#D4B06A]/50 via-white/10 to-white/5 shadow-lift">
-          <div className="relative isolate overflow-hidden rounded-[23px] sm:rounded-[33px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#0B0A09]">
+        <div className="relative rounded-[24px] sm:rounded-[34px] p-px bg-gradient-to-b from-[#D4AF37]/50 via-white/10 to-white/5 shadow-lift">
+          <div className="relative isolate overflow-hidden rounded-[23px] sm:rounded-[33px] w-full aspect-[4/3] sm:aspect-[16/9] bg-[#09090B]">
             <img
               src={bannerImage}
               alt=""
@@ -72,10 +72,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
               >
                 <motion.div variants={item} className="flex items-center gap-2.5 mb-3 sm:mb-5">
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-[#E8CC8A] opacity-70 animate-ping" />
-                    <span className="relative inline-flex rounded-full h-full w-full bg-[#E8CC8A]" />
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-[#E8CC75] opacity-70 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-full w-full bg-[#E8CC75]" />
                   </span>
-                  <span className="text-xs sm:text-sm font-semibold text-[#E8CC8A] drop-shadow-md">{badge}</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#E8CC75] drop-shadow-md">{badge}</span>
                 </motion.div>
 
                 <motion.h1
@@ -85,7 +85,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                   {displayData.title}
                 </motion.h1>
 
-                <motion.div variants={item} aria-hidden="true" className="w-16 sm:w-24 h-px mb-3 sm:mb-5 bg-gradient-to-l from-[#D4B06A] to-transparent" />
+                <motion.div variants={item} aria-hidden="true" className="w-16 sm:w-24 h-px mb-3 sm:mb-5 bg-gradient-to-l from-[#D4AF37] to-transparent" />
 
                 <motion.p
                   variants={item}
@@ -98,7 +98,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                   {/* 💡 زر ذهبي ثابت ونص أسود ثابت في الوضعين */}
                   <button
                     onClick={onExploreClick}
-                    className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full !bg-[#D4B06A] hover:!bg-[#E8CC8A] !text-[#0B0A09] text-sm sm:text-base font-bold shadow-gold transition-all duration-300 hover:shadow-[0_16px_40px_-10px_rgba(232,204,138,0.8)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                    className="group/btn relative overflow-hidden inline-flex items-center gap-2 h-11 sm:h-14 px-6 sm:px-8 rounded-full !bg-[#D4AF37] hover:!bg-[#E8CC75] !text-[#09090B] text-sm sm:text-base font-bold shadow-gold transition-all duration-300 hover:shadow-[0_16px_40px_-10px_rgba(232,204,117,0.8)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
                   >
                     <span
                       aria-hidden="true"
@@ -109,7 +109,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                   </button>
 
                   <span className="hidden sm:inline-flex items-center gap-2 h-14 px-5 rounded-full text-sm font-semibold !text-white !bg-black/50 ring-1 ring-white/20 backdrop-blur-md drop-shadow-md">
-                    <ShieldCheck className="w-5 h-5 text-[#E8CC8A]" />
+                    <ShieldCheck className="w-5 h-5 text-[#E8CC75]" />
                     يوجد معاينة عند وصول الطلب
                   </span>
                 </motion.div>
@@ -119,7 +119,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
         </div>
 
         {/* شريط المميزات */}
-        <div className="mt-4 sm:mt-8 grid grid-cols-2 lg:grid-cols-4 bg-white/[0.03] backdrop-blur-xl rounded-2xl sm:rounded-3xl ring-1 ring-white/10 shadow-soft overflow-hidden">
+        <div className="luxury-panel mt-4 sm:mt-8 grid grid-cols-2 lg:grid-cols-4 bg-white/[0.03] backdrop-blur-xl rounded-2xl sm:rounded-3xl ring-1 ring-white/10 shadow-soft overflow-hidden">
           {perks.map(({ Icon, title, sub }, i) => (
             <div
               key={title}
@@ -127,7 +127,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick, categoryData }) => {
                 i % 2 === 0 ? 'border-l' : ''
               } ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i !== 3 ? 'lg:border-l' : 'lg:border-l-0'} border-white/10`}
             >
-              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#D4B06A]/25 to-[#D4B06A]/5 ring-1 ring-[#D4B06A]/30 text-[#E8CC8A] grid place-items-center shrink-0 transition-transform duration-500 group-hover/perk:scale-110 group-hover/perk:-rotate-6">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#D4AF37]/25 to-[#D4AF37]/5 ring-1 ring-[#D4AF37]/30 text-[#E8CC75] grid place-items-center shrink-0 transition-transform duration-500 group-hover/perk:scale-110 group-hover/perk:-rotate-6">
                 <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div className="min-w-0">

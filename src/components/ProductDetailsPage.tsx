@@ -155,7 +155,10 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-5xl bg-[#141210] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,176,106,0.15)] border border-white/10 overflow-hidden my-6 max-h-[92vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-detail-title"
+        className="luxury-panel relative w-full max-w-5xl bg-[#141210] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,175,55,0.15)] border border-white/10 overflow-hidden my-6 max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
@@ -208,8 +211,8 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                 {/* 💡 الشارات الجديدة أعلى يمين الصورة */}
                 <div className="absolute top-4 right-4 flex flex-col gap-2 items-end z-10">
                   {product.isBestSeller && (
-                    <span className="flex items-center gap-1.5 bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-gold">
-                      <Star className="w-3.5 h-3.5 fill-[#0B0A09]" />
+                    <span className="flex items-center gap-1.5 bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] text-[#09090B] text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-gold">
+                      <Star className="w-3.5 h-3.5 fill-[#09090B]" />
                       الأكثر مبيعاً
                     </span>
                   )}
@@ -219,7 +222,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                     </span>
                   )}
                   {isNew && !hasDiscount && !product.isBestSeller && (
-                    <span className="flex items-center gap-1.5 bg-[#7FD1A0] text-[#0B0A09] text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-lg">
+                    <span className="flex items-center gap-1.5 bg-[#7FD1A0] text-[#09090B] text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-lg">
                       <Sparkles className="w-3.5 h-3.5" />
                       جديد
                     </span>
@@ -230,7 +233,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                   type="button"
                   onClick={() => setLightboxOpen(true)}
                   aria-label="تكبير الصورة"
-                  className="absolute bottom-3 left-3 z-10 grid place-items-center w-9 h-9 rounded-full bg-[#141210]/85 hover:bg-[#D4B06A] text-[#F3EEE4] hover:text-[#0B0A09] ring-1 ring-white/15 transition-all cursor-pointer active:scale-90"
+                  className="absolute bottom-3 left-3 z-10 grid place-items-center w-9 h-9 rounded-full bg-[#141210]/85 hover:bg-[#D4AF37] text-[#F3EEE4] hover:text-[#09090B] ring-1 ring-white/15 transition-all cursor-pointer active:scale-90"
                 >
                   <ZoomIn className="w-4 h-4" />
                 </button>
@@ -281,7 +284,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
               {availableThumbnails.length > 1 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-[11px] font-bold text-[#D4B06A] flex items-center gap-1.5">
+                    <p className="text-[11px] font-bold text-[#D4AF37] flex items-center gap-1.5">
                       <span>📷 صور وزوايا المنتج:</span>
                     </p>
                     <span className="text-[10px] bg-[#1C1815] text-[#F3EEE4] px-2 py-0.5 rounded-md font-mono font-bold">
@@ -295,7 +298,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                         onClick={() => handleSwitchImage(thumbUrl)}
                         className={`relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
                           activeImage === thumbUrl
-                            ? 'border-[#D4B06A] scale-[1.02] ring-2 ring-[#D4B06A]/30 bg-[#141210]'
+                            ? 'border-[#D4AF37] scale-[1.02] ring-2 ring-[#D4AF37]/30 bg-[#141210]'
                             : 'border-transparent opacity-60 hover:opacity-100 hover:border-white/20 bg-[#141210]'
                         }`}
                       >
@@ -318,7 +321,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                       href={videoSource.src}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] ring-1 ring-[#D4B06A]/40 text-[#E8CC8A] text-xs font-bold transition-all hover:bg-[#D4B06A] hover:text-[#0B0A09]"
+                      className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] ring-1 ring-[#D4AF37]/40 text-[#E8CC75] text-xs font-bold transition-all hover:bg-[#D4AF37] hover:text-[#09090B]"
                     >
                       <Play className="w-4 h-4" />
                       <span>شاهد فيديو المنتج</span>
@@ -328,7 +331,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowVideo(true)}
-                      className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] ring-1 ring-[#D4B06A]/40 text-[#E8CC8A] text-xs font-bold transition-all hover:bg-[#D4B06A] hover:text-[#0B0A09] cursor-pointer active:scale-[0.98]"
+                      className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] ring-1 ring-[#D4AF37]/40 text-[#E8CC75] text-xs font-bold transition-all hover:bg-[#D4AF37] hover:text-[#09090B] cursor-pointer active:scale-[0.98]"
                     >
                       <Play className="w-4 h-4" />
                       <span>شاهد فيديو المنتج</span>
@@ -376,11 +379,11 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
 
               <div className="grid grid-cols-2 gap-2 text-xs text-[#B9B0A0]">
                 <div className="flex items-center gap-2 bg-[#1C1815] p-2 rounded-lg border border-white/10">
-                  <Truck className="w-3.5 h-3.5 text-[#D4B06A] shrink-0" />
+                  <Truck className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
                   <span>توصيل لكافة المحافظات</span>
                 </div>
                 <div className="flex items-center gap-2 bg-[#1C1815] p-2 rounded-lg border border-white/10">
-                  <Shield className="w-3.5 h-3.5 text-[#D4B06A] shrink-0" />
+                  <Shield className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
                   <span>{product.warranty || 'ضمان سنتين'}</span>
                 </div>
               </div>
@@ -391,7 +394,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
           <div className="lg:col-span-6 p-6 sm:p-8 flex flex-col justify-between bg-[#141210]">
             <div>
               <div className="flex items-center gap-2 text-xs text-[#8A8173] mb-2 font-medium">
-                <span className="text-[#D4B06A] font-bold">{product.categoryLabel || 'منتج'}</span>
+                <span className="text-[#D4AF37] font-bold">{product.categoryLabel || 'منتج'}</span>
                 <span aria-hidden="true">·</span>
                 <span>القطعة رقم #{product.itemNumber || '-'}</span>
                 {product.woodType && (
@@ -402,7 +405,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-black text-[#F3EEE4] leading-tight mb-3 font-serif">
+              <h1 id="product-detail-title" className="text-2xl sm:text-3xl font-black text-[#F3EEE4] leading-tight mb-3 font-serif">
                 {product.name}
               </h1>
 
@@ -410,7 +413,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
               <div className="flex flex-wrap items-end gap-3 my-4 pb-4 border-b border-white/10">
                 <div className="flex flex-col">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-4xl sm:text-5xl font-black text-[#E8CC8A] tabular-nums font-mono leading-none tracking-tight">
+                    <span className="text-4xl sm:text-5xl font-black text-[#E8CC75] tabular-nums font-mono leading-none tracking-tight">
                       {currentPrice.toFixed(2)}
                     </span>
                     <span className="text-sm font-bold text-[#A39A8B]">د.أ</span>
@@ -456,7 +459,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                   <div className="flex items-center justify-between mb-2.5">
                     <label className="text-xs font-bold text-[#F3EEE4]">
                       اختر اللون:{' '}
-                      <span className="text-[#D4B06A] font-semibold">{selectedColor.name}</span>
+                      <span className="text-[#D4AF37] font-semibold">{selectedColor.name}</span>
                     </label>
                   </div>
 
@@ -467,10 +470,11 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                         <button
                           key={color.name}
                           onClick={() => handleSelectColor(color)}
+                          aria-pressed={isSelected}
                           className={`flex items-center gap-2 py-2 px-3.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-[#D4B06A] bg-[#1C1815] text-[#F3EEE4] ring-2 ring-[#D4B06A]/50 shadow-[0_0_15px_rgba(212,176,106,0.15)]'
-                              : 'border-white/10 bg-[#141210] text-[#B9B0A0] hover:border-[#D4B06A]/50 hover:bg-[#1C1815]'
+                              ? 'border-[#D4AF37] bg-[#1C1815] text-[#F3EEE4] ring-2 ring-[#D4AF37]/50 shadow-[0_0_15px_rgba(212,175,55,0.15)]'
+                              : 'border-white/10 bg-[#141210] text-[#B9B0A0] hover:border-[#D4AF37]/50 hover:bg-[#1C1815]'
                           }`}
                         >
                           <span
@@ -479,7 +483,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                           />
                           <span>{color.name}</span>
                           {Number(color.price) !== Number(product.basePrice) && (
-                            <span className={`text-[10px] font-mono font-bold ${isSelected ? 'text-[#0B0A09] bg-[#D4B06A] px-1.5 rounded' : 'text-[#D4B06A]'}`}>
+                            <span className={`text-[10px] font-mono font-bold ${isSelected ? 'text-[#09090B] bg-[#D4AF37] px-1.5 rounded' : 'text-[#D4AF37]'}`}>
                               {Number(color.price).toFixed(0)} د.أ
                             </span>
                           )}
@@ -510,7 +514,8 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                 <div className="flex items-center border border-white/20 rounded-xl overflow-hidden bg-[#1C1815] shadow-inner">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-4 py-2 text-lg hover:bg-[#26211D] hover:text-[#D4B06A] transition-colors cursor-pointer text-[#F3EEE4]"
+                    aria-label="تقليل الكمية"
+                    className="px-4 py-2 text-lg hover:bg-[#26211D] hover:text-[#D4AF37] transition-colors cursor-pointer text-[#F3EEE4]"
                   >
                     -
                   </button>
@@ -520,13 +525,14 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                   <button
                     onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
                     disabled={isOut || quantity >= maxQty}
-                    className="px-4 py-2 text-lg hover:bg-[#26211D] hover:text-[#D4B06A] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[#F3EEE4]"
+                    aria-label="زيادة الكمية"
+                    className="px-4 py-2 text-lg hover:bg-[#26211D] hover:text-[#D4AF37] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[#F3EEE4]"
                   >
                     +
                   </button>
                 </div>
                 <span className="text-xs text-[#A39A8B]">
-                  الإجمالي: <strong className="text-[#E8CC8A] font-mono text-sm">{(currentPrice * quantity).toFixed(2)} د.أ</strong>
+                  الإجمالي: <strong className="text-[#E8CC75] font-mono text-sm">{(currentPrice * quantity).toFixed(2)} د.أ</strong>
                 </span>
               </div>
             </div>
@@ -536,7 +542,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
               <button
                 onClick={handleAdd}
                 disabled={isOut}
-                className="disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#D4B06A] w-full py-4 px-6 text-base font-extrabold text-[#0B0A09] bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] hover:from-[#E8CC8A] hover:to-[#E8CC8A] rounded-xl shadow-[0_8px_20px_-8px_rgba(212,176,106,0.6)] hover:shadow-[0_12px_25px_-8px_rgba(212,176,106,0.8)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                className="disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#D4AF37] w-full py-4 px-6 text-base font-extrabold text-[#09090B] bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] hover:from-[#E8CC75] hover:to-[#E8CC75] rounded-xl shadow-[0_8px_20px_-8px_rgba(212,175,55,0.6)] hover:shadow-[0_12px_25px_-8px_rgba(212,175,55,0.8)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
               >
                 {addedNotice ? (
                   <>
@@ -572,7 +578,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
         {relatedProducts.length > 0 && onSelectProduct && (
           <div className="border-t border-white/10 bg-[#0F0D0B] p-6 sm:p-8">
             <h3 className="text-lg sm:text-xl font-bold font-serif text-[#F3EEE4] mb-5 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#D4B06A]" />
+              <Sparkles className="w-5 h-5 text-[#D4AF37]" />
               منتجات مشابهة قد تعجبك
             </h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -582,7 +588,7 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                   <button
                     key={p.id}
                     onClick={() => onSelectProduct(p)}
-                    className="group text-right rounded-2xl bg-[#141210] ring-1 ring-white/10 hover:ring-[#D4B06A]/50 transition-all overflow-hidden cursor-pointer active:scale-[0.98]"
+                    className="group text-right rounded-2xl bg-[#141210] ring-1 ring-white/10 hover:ring-[#D4AF37]/50 transition-all overflow-hidden cursor-pointer active:scale-[0.98]"
                   >
                     <div className="aspect-square bg-gradient-to-b from-[#EFE9DE] to-[#DCD4C5] relative">
                       <img
@@ -595,8 +601,8 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({
                       />
                     </div>
                     <div className="p-3">
-                      <p className="text-xs font-bold text-[#F3EEE4] line-clamp-1 font-serif group-hover:text-[#E8CC8A] transition-colors">{p.name}</p>
-                      <p className="text-sm font-extrabold text-[#E8CC8A] font-mono mt-1">
+                      <p className="text-xs font-bold text-[#F3EEE4] line-clamp-1 font-serif group-hover:text-[#E8CC75] transition-colors">{p.name}</p>
+                      <p className="text-sm font-extrabold text-[#E8CC75] font-mono mt-1">
                         {Number(p.basePrice || 0).toFixed(2)} <span className="text-[10px] font-bold text-[#A39A8B]">د.أ</span>
                       </p>
                     </div>

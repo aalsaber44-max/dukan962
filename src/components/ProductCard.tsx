@@ -65,7 +65,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={spotlightMove}
-      className="spotlight group flex flex-col bg-[#141210] rounded-[20px] sm:rounded-[24px] ring-1 ring-white/10 shadow-soft transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-lift hover:ring-[#D4B06A]/30 cursor-pointer overflow-hidden"
+      className="luxury-card spotlight group flex flex-col bg-[#141210] rounded-[20px] sm:rounded-[24px] ring-1 ring-white/10 shadow-soft transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-lift hover:ring-[#D4AF37]/30 cursor-pointer overflow-hidden"
     >
       {/* مسند العرض: خلفية عاجية دافئة تُظهر المنتج بوضوح */}
       <div className="relative m-1.5 sm:m-2 aspect-[4/3] overflow-hidden rounded-[15px] sm:rounded-[18px] bg-gradient-to-b from-[#EFE9DE] to-[#DCD4C5] shadow-[inset_0_0_40px_rgba(90,70,30,0.12)]">
@@ -79,8 +79,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
         />
 
         {isOut && (
-          <div className="absolute inset-0 z-[5] grid place-items-center bg-[#0B0A09]/60 backdrop-blur-[2px]">
-            <span className="px-4 py-1.5 rounded-full bg-[#0B0A09] text-rose-300 text-xs font-bold ring-1 ring-rose-400/40">
+          <div className="absolute inset-0 z-[5] grid place-items-center bg-[#09090B]/60 backdrop-blur-[2px]">
+            <span className="px-4 py-1.5 rounded-full bg-[#09090B] text-rose-300 text-xs font-bold ring-1 ring-rose-400/40">
               نفدت الكمية
             </span>
           </div>
@@ -89,8 +89,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
         {/* 💡 شارات أعلى اليمين (الأكثر مبيعاً / جديد / خصم) */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end z-10">
           {product.isBestSeller && (
-            <span className="flex items-center gap-1 bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-gold">
-              <Star className="w-3 h-3 fill-[#0B0A09]" />
+            <span className="flex items-center gap-1 bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] text-[#09090B] text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-gold">
+              <Star className="w-3 h-3 fill-[#09090B]" />
               الأكثر مبيعاً
             </span>
           )}
@@ -102,7 +102,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
           )}
 
           {isNew && !hasDiscount && !product.isBestSeller && (
-            <span className="flex items-center gap-1 bg-[#7FD1A0] text-[#0B0A09] text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-lg">
+            <span className="flex items-center gap-1 bg-[#7FD1A0] text-[#09090B] text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-lg">
               <Sparkles className="w-3 h-3" />
               جديد
             </span>
@@ -115,8 +115,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
           aria-label={isWishlisted ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}
           className={`absolute top-3 left-3 grid place-items-center w-9 h-9 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer hover:scale-110 active:scale-90 z-10 ${
             isWishlisted
-              ? 'bg-[#0B0A09] text-rose-400 ring-1 ring-rose-400/40'
-              : 'bg-[#0B0A09]/50 text-[#F3EEE4] ring-1 ring-white/20 hover:bg-[#0B0A09] hover:text-rose-400'
+              ? 'bg-[#09090B] text-rose-400 ring-1 ring-rose-400/40'
+              : 'bg-[#09090B]/50 text-[#F3EEE4] ring-1 ring-white/20 hover:bg-[#09090B] hover:text-rose-400'
           }`}
         >
           <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-400' : ''}`} />
@@ -124,8 +124,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
 
         {/* زر عرض التفاصيل السريع */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 z-10">
-          <span className="inline-flex items-center gap-1.5 h-8 px-4 bg-[#0B0A09]/85 backdrop-blur-md rounded-full text-xs font-semibold text-[#F3EEE4] ring-1 ring-white/15 shadow-xl">
-            <Eye className="w-3.5 h-3.5 text-[#E8CC8A]" />
+          <span className="inline-flex items-center gap-1.5 h-8 px-4 bg-[#09090B]/85 backdrop-blur-md rounded-full text-xs font-semibold text-[#F3EEE4] ring-1 ring-white/15 shadow-xl">
+            <Eye className="w-3.5 h-3.5 text-[#E8CC75]" />
             <span>عرض سريع</span>
           </span>
         </div>
@@ -135,10 +135,10 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
         <div>
           <div className="flex items-center justify-between text-[11px] text-[#A39A8B] mb-1.5 font-medium">
             <span>{product.categoryLabel || 'منتج'}</span>
-            {woodTypeText && <span className="text-[#D4B06A]/80">{woodTypeText}</span>}
+            {woodTypeText && <span className="text-[#D4AF37]/80">{woodTypeText}</span>}
           </div>
 
-          <h3 className="text-base sm:text-lg font-bold text-[#F3EEE4] group-hover:text-[#E8CC8A] transition-colors duration-300 leading-snug mb-1.5 line-clamp-1 font-serif">
+          <h3 className="text-base sm:text-lg font-bold text-[#F3EEE4] group-hover:text-[#E8CC75] transition-colors duration-300 leading-snug mb-1.5 line-clamp-1 font-serif">
             {product.name}
           </h3>
 
@@ -186,7 +186,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
           {/* 💡 تحسين شكل السعر */}
           <div className="flex flex-col">
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-extrabold text-[#E8CC8A] tabular-nums font-mono leading-none">
+              <span className="text-xl font-extrabold text-[#E8CC75] tabular-nums font-mono leading-none">
                 {Number(product.basePrice || 0).toFixed(2)}
               </span>
               <span className="text-[10px] font-bold text-[#A39A8B]">د.أ</span>
@@ -206,8 +206,8 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
               isOut
                 ? 'bg-white/[0.04] text-[#8A8173] ring-1 ring-white/10 cursor-not-allowed'
                 : addedAnim
-                ? 'bg-[#7FD1A0] text-[#0B0A09] ring-1 ring-[#7FD1A0] shadow-[0_0_15px_rgba(127,209,160,0.4)]'
-                : 'bg-white/[0.04] text-[#E8CC8A] ring-1 ring-[#D4B06A]/40 hover:bg-gradient-to-b hover:from-[#E8CC8A] hover:to-[#D4B06A] hover:text-[#0B0A09] hover:ring-[#D4B06A] hover:shadow-gold'
+                ? 'bg-[#7FD1A0] text-[#09090B] ring-1 ring-[#7FD1A0] shadow-[0_0_15px_rgba(127,209,160,0.4)]'
+                : 'bg-white/[0.04] text-[#E8CC75] ring-1 ring-[#D4AF37]/40 hover:bg-gradient-to-b hover:from-[#E8CC75] hover:to-[#D4AF37] hover:text-[#09090B] hover:ring-[#D4AF37] hover:shadow-gold'
             }`}
           >
             {isOut ? (

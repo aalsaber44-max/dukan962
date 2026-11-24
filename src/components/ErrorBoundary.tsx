@@ -34,7 +34,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             <button
               onClick={() => window.location.reload()}
               // 💡 تم إصلاح لون الـ hover هنا ليصبح ذهبي فاتح
-              className="w-full py-3 px-4 bg-[#D4B06A] text-[#0B0A09] rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8CC8A] transition-all cursor-pointer"
+              className="w-full py-3 px-4 bg-[#D4AF37] text-[#09090B] rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#E8CC75] transition-all cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               تحديث الصفحة

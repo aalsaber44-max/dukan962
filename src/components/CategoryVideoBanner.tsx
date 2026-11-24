@@ -113,7 +113,7 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
   };
 
   return (
-    <div className="relative mb-6 sm:mb-8 rounded-[22px] sm:rounded-[28px] overflow-hidden ring-1 ring-white/10 shadow-lift bg-[#0B0A09]">
+    <div className="relative mb-6 sm:mb-8 rounded-[22px] sm:rounded-[28px] overflow-hidden ring-1 ring-white/10 shadow-lift bg-[#09090B]">
       <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] flex items-center justify-center overflow-hidden">
         <video
           ref={bgVideoRef}
@@ -179,7 +179,7 @@ export const CategoryVideoBanner: React.FC<CategoryVideoBannerProps> = ({
         <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
         <div className="absolute bottom-0 inset-x-0 p-3 sm:p-5 flex items-center justify-between gap-3 z-20">
-          <span className="text-[10px] sm:text-xs font-bold text-[#E8CC8A] !bg-black/60 backdrop-blur-md ring-1 ring-[#D4B06A]/30 px-3 py-1.5 rounded-full pointer-events-none">
+          <span className="text-[10px] sm:text-xs font-bold text-[#E8CC75] !bg-black/60 backdrop-blur-md ring-1 ring-[#D4AF37]/30 px-3 py-1.5 rounded-full pointer-events-none">
             🎬 فيديو {title}
           </span>
 

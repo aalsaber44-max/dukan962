@@ -27,7 +27,7 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
       />
 
       <div className="fixed inset-y-0 left-0 max-w-full flex pl-0 sm:pl-10">
-        <div className="w-screen max-w-md bg-[#0F0D0B] shadow-[0_0_80px_-20px_rgba(212,176,106,0.25)] flex flex-col justify-between border-r border-[#D4B06A]/15 animate-drawer">
+        <div className="w-screen max-w-md bg-[#0F0D0B] shadow-[0_0_80px_-20px_rgba(212,175,55,0.25)] flex flex-col justify-between border-r border-[#D4AF37]/15 animate-drawer">
           
           {/* Header */}
           <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#1C1815]">
@@ -61,7 +61,7 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                 </p>
                 <button
                   onClick={onClose}
-                  className="py-2.5 px-6 text-xs font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-xl transition-all cursor-pointer"
+                  className="py-2.5 px-6 text-xs font-bold text-[#09090B] bg-[#D4AF37] hover:bg-[#E8CC75] rounded-xl transition-all cursor-pointer"
                 >
                   {/* 💡 تم تعديل النص هنا */}
                   تصفح المنتجات
@@ -89,7 +89,7 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                           onAddToCart(item);
                           onRemoveFromWishlist(item);
                         }}
-                        className="py-1 px-3 text-[11px] font-bold text-[#0B0A09] bg-[#D4B06A] hover:bg-[#E8CC8A] rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                        className="py-1 px-3 text-[11px] font-bold text-[#09090B] bg-[#D4AF37] hover:bg-[#E8CC75] rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                       >
                         <ShoppingBag className="w-3 h-3" />
                         <span>نقل إلى السلة</span>

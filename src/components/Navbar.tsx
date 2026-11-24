@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const activeId = currentCategoryData?.id ?? 'all';
 
   const iconBtn =
-    'relative grid place-items-center w-10 h-10 rounded-full bg-white/[0.04] backdrop-blur-md ring-1 ring-white/10 text-[#CFC7B8] transition-all duration-300 hover:bg-white/10 hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40 active:scale-90 cursor-pointer';
+    'relative grid place-items-center w-10 h-10 rounded-full bg-white/[0.04] backdrop-blur-md ring-1 ring-white/10 text-[#CFC7B8] transition-all duration-300 hover:bg-white/10 hover:text-[#F3EEE4] hover:ring-[#D4AF37]/40 active:scale-90 cursor-pointer';
 
   const handleSuggestionClick = (product: Product) => {
     if (onSelectProduct) {
@@ -110,8 +110,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header
       className={`sticky top-0 z-40 transition-all duration-500 ${
         scrolled
-          ? 'bg-[#0B0A09]/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.06),0_20px_40px_-24px_rgba(0,0,0,0.9)]'
-          : 'bg-[#0B0A09]/0'
+          ? 'bg-[#09090B]/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.06),0_20px_40px_-24px_rgba(0,0,0,0.9)]'
+          : 'bg-[#09090B]/0'
       }`}
     >
       <div
@@ -145,14 +145,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => onSelectCategory(item.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`relative px-4 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap cursor-pointer transition-colors duration-300 ${
-                  isActive ? 'text-[#0B0A09]' : 'text-[#A39A8B] hover:text-[#F3EEE4]'
+                  isActive ? 'text-[#09090B]' : 'text-[#A39A8B] hover:text-[#F3EEE4]'
                 }`}
               >
                 {isActive && (
                   <motion.span
                     layoutId="nav-active-pill"
                     transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    className="absolute inset-0 rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] shadow-[0_6px_18px_-6px_rgba(212,176,106,0.6)]"
+                    className="absolute inset-0 rounded-full bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] shadow-[0_6px_18px_-6px_rgba(212,175,55,0.6)]"
                   />
                 )}
                 <span className="relative">{item.name}</span>
@@ -165,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* 💡 حقل البحث الذكي للكمبيوتر */}
           <div className="relative hidden md:block group/search" ref={searchContainerRef}>
-            <Search className="w-4 h-4 text-[#8A8173] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within/search:text-[#D4B06A]" />
+            <Search className="w-4 h-4 text-[#8A8173] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within/search:text-[#D4AF37]" />
             <input
               type="text"
               value={searchQuery}
@@ -176,7 +176,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onFocus={() => setShowSuggestions(true)}
               placeholder="ابحث عن منتج أو رقمه"
               aria-label="بحث"
-              className="text-[13px] w-40 focus:w-64 lg:w-48 lg:focus:w-72 h-10 pr-10 pl-9 bg-white/[0.04] backdrop-blur-md ring-1 ring-white/10 rounded-full text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:bg-white/[0.07] focus:ring-2 focus:ring-[#D4B06A]/60 transition-all duration-500"
+              className="text-[13px] w-40 focus:w-64 lg:w-48 lg:focus:w-72 h-10 pr-10 pl-9 bg-white/[0.04] backdrop-blur-md ring-1 ring-white/10 rounded-full text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:bg-white/[0.07] focus:ring-2 focus:ring-[#D4AF37]/60 transition-all duration-500"
             />
             {searchQuery && (
               <button
@@ -210,10 +210,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                             className="w-10 h-10 rounded-lg object-contain bg-gradient-to-b from-[#EFE9DE] to-[#DCD4C5] p-1 shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-[#F3EEE4] truncate group-hover:text-[#E8CC8A] transition-colors">
+                            <p className="text-xs font-bold text-[#F3EEE4] truncate group-hover:text-[#E8CC75] transition-colors">
                               {p.name}
                             </p>
-                            <p className="text-[10px] text-[#D4B06A] font-mono mt-0.5">
+                            <p className="text-[10px] text-[#D4AF37] font-mono mt-0.5">
                               {Number(p.basePrice).toFixed(2)} د.أ
                             </p>
                           </div>
@@ -225,7 +225,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setShowSuggestions(false);
                         document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
                       }}
-                      className="w-full py-2.5 text-center text-[11px] font-bold text-[#E8CC8A] bg-[#1C1815] hover:bg-[#26211D] border-t border-white/5 transition-colors cursor-pointer"
+                      className="w-full py-2.5 text-center text-[11px] font-bold text-[#E8CC75] bg-[#1C1815] hover:bg-[#26211D] border-t border-white/5 transition-colors cursor-pointer"
                     >
                       عرض جميع النتائج
                     </button>
@@ -261,7 +261,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {wishlistCount > 0 && (
               <CountBadge
                 count={wishlistCount}
-                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center font-mono ring-2 ring-[#0B0A09]"
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full grid place-items-center font-mono ring-2 ring-[#09090B]"
               />
             )}
           </button>
@@ -269,14 +269,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenCart}
             aria-label="السلة"
-            className="group/cart relative flex items-center gap-2 h-10 pl-3.5 pr-3 sm:pl-4 text-[13px] font-bold text-[#0B0A09] bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] rounded-full shadow-gold transition-all duration-300 hover:shadow-[0_14px_34px_-10px_rgba(232,204,138,0.75)] hover:-translate-y-px active:translate-y-0 active:scale-95 cursor-pointer shrink-0"
+            className="group/cart relative flex items-center gap-2 h-10 pl-3.5 pr-3 sm:pl-4 text-[13px] font-bold text-[#09090B] bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] rounded-full shadow-gold transition-all duration-300 hover:shadow-[0_14px_34px_-10px_rgba(232,204,117,0.75)] hover:-translate-y-px active:translate-y-0 active:scale-95 cursor-pointer shrink-0"
           >
             <ShoppingBag className="w-4 h-4 transition-transform duration-300 group-hover/cart:-rotate-12" />
             <span className="hidden sm:inline">السلة</span>
             {cartCount > 0 && (
               <CountBadge
                 count={cartCount}
-                className="min-w-[20px] h-5 px-1.5 bg-[#0B0A09] text-[#E8CC8A] text-[11px] font-extrabold rounded-full grid place-items-center font-mono"
+                className="min-w-[20px] h-5 px-1.5 bg-[#09090B] text-[#E8CC75] text-[11px] font-extrabold rounded-full grid place-items-center font-mono"
               />
             )}
           </button>
@@ -304,7 +304,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               placeholder="ابحث عن منتج أو رقمه"
               aria-label="بحث"
               tabIndex={mobileSearchOpen ? 0 : -1}
-              className="w-full h-11 pr-11 pl-4 text-sm bg-white/[0.06] ring-1 ring-white/10 rounded-2xl text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:ring-2 focus:ring-[#D4B06A]/60"
+              className="w-full h-11 pr-11 pl-4 text-sm bg-white/[0.06] ring-1 ring-white/10 rounded-2xl text-[#F3EEE4] placeholder-[#8A8173] focus:outline-hidden focus:ring-2 focus:ring-[#D4AF37]/60"
             />
             {/* 💡 القائمة المنسدلة للموبايل */}
             {showSuggestions && searchQuery.trim().length > 0 && (
@@ -322,7 +322,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <img src={p.colors?.[0]?.image || p.images?.[0] || ''} alt={p.name} className="w-10 h-10 rounded-lg object-contain bg-[#EFE9DE] p-1" />
                         <div className="flex-1">
                           <p className="text-xs font-bold text-[#F3EEE4] truncate">{p.name}</p>
-                          <p className="text-[10px] text-[#D4B06A] font-mono">{Number(p.basePrice).toFixed(2)} د.أ</p>
+                          <p className="text-[10px] text-[#D4AF37] font-mono">{Number(p.basePrice).toFixed(2)} د.أ</p>
                         </div>
                       </button>
                     ))}
@@ -346,7 +346,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-current={isActive ? 'page' : undefined}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 active:scale-95 ${
                   isActive
-                    ? 'bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] shadow-gold'
+                    ? 'bg-gradient-to-b from-[#E8CC75] to-[#D4AF37] text-[#09090B] shadow-gold'
                     : 'bg-white/[0.05] text-[#A39A8B] ring-1 ring-white/10'
                 }`}
               >

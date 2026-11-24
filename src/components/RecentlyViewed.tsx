@@ -30,7 +30,7 @@ export const RecentlyViewed: React.FC<RecentlyViewedProps> = ({ products, cart, 
     <div className="mb-10">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-[#D4B06A]" />
+          <Clock className="w-5 h-5 text-[#D4AF37]" />
           <h2 className="text-lg font-bold text-[#F3EEE4] font-serif">شوهدت مؤخراً</h2>
         </div>
       </div>
@@ -53,7 +53,7 @@ export const RecentlyViewed: React.FC<RecentlyViewedProps> = ({ products, cart, 
                 <ArrowLeft className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300" />
               </div>
             </div>
-            <h4 className="text-[11px] font-bold text-[#F3EEE4] line-clamp-1 group-hover:text-[#D4B06A] transition-colors">
+            <h4 className="text-[11px] font-bold text-[#F3EEE4] line-clamp-1 group-hover:text-[#D4AF37] transition-colors">
               {product.name}
             </h4>
             <p className="text-[11px] font-black text-[#A39A8B] font-mono mt-0.5">

@@ -122,7 +122,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({ images, index, alt
               key={`${src}-${i}`}
               onClick={() => { setZoomed(false); onIndexChange(i); }}
               className={`w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-xl overflow-hidden bg-[#EFE9DE] transition-all cursor-pointer ${
-                i === index ? 'ring-2 ring-[#D4B06A] scale-105' : 'opacity-60 hover:opacity-100'
+                i === index ? 'ring-2 ring-[#D4AF37] scale-105' : 'opacity-60 hover:opacity-100'
               }`}
               aria-label={`الصورة ${i + 1}`}
             >

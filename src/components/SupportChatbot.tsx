@@ -284,7 +284,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
         {found.map((product) => (
           <div
             key={product.id}
-            className="overflow-hidden rounded-xl border border-[#D4B06A]/25 bg-[#191511]"
+            className="overflow-hidden rounded-xl border border-[#D4AF37]/25 bg-[#191511]"
           >
             <button
               type="button"
@@ -307,7 +307,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
               </div>
               <div className="px-2 pt-2">
                 <p className="line-clamp-2 text-[11px] font-bold leading-5 text-[#F3EEE4]">{product.name}</p>
-                <p className="mt-1 text-[11px] font-black text-[#E8CC8A]">
+                <p className="mt-1 text-[11px] font-black text-[#E8CC75]">
                   {Number(product.basePrice || 0).toFixed(2)} د.أ
                 </p>
               </div>
@@ -317,7 +317,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
               <button
                 type="button"
                 onClick={() => onAddToCart(product, 1)}
-                className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#D4B06A] px-2 py-1.5 text-[10px] font-extrabold text-[#17120A] transition hover:bg-[#E8CC8A]"
+                className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#D4AF37] px-2 py-1.5 text-[10px] font-extrabold text-[#17120A] transition hover:bg-[#E8CC75]"
               >
                 <Plus className="h-3 w-3" />
                 للسلة
@@ -326,7 +326,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                 type="button"
                 onClick={() => onOpenProduct(product)}
                 aria-label={`عرض تفاصيل ${product.name}`}
-                className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 text-[#C8BFAF] transition hover:border-[#D4B06A]/40 hover:text-[#E8CC8A]"
+                className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 text-[#C8BFAF] transition hover:border-[#D4AF37]/40 hover:text-[#E8CC75]"
               >
                 <Eye className="h-3.5 w-3.5" />
               </button>
@@ -386,7 +386,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                     setIsOpen(false);
                     onNavigateCategory(action.categoryId);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#D4B06A]/45 bg-[#D4B06A]/10 px-3 py-1.5 text-[10px] font-bold text-[#E8CC8A] transition hover:bg-[#D4B06A]/20"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/45 bg-[#D4AF37]/10 px-3 py-1.5 text-[10px] font-bold text-[#E8CC75] transition hover:bg-[#D4AF37]/20"
                 >
                   <ArrowLeft className="h-3 w-3" />
                   انتقل إلى {name}
@@ -409,7 +409,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
     // 💡 الحاوية الرئيسية تتحرك باستخدام transform بناءً على حالة السحب
     <div
       dir="rtl"
-      className="fixed top-20 sm:top-24 left-4 sm:left-6 z-[80] font-sans flex flex-col gap-4 items-start"
+      className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] right-4 sm:bottom-auto sm:top-24 sm:left-6 sm:right-auto z-[80] font-sans flex flex-col gap-4 items-start"
       style={{
         transform: `translate(${position.x}px, ${position.y}px)`,
         transition: isDragging ? 'none' : 'transform 0.1s ease-out'
@@ -420,13 +420,13 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
       {isOpen && (
         <section
           aria-label="مساعد نشمي - دكان 962"
-          className="flex h-[calc(100dvh-160px)] sm:h-[min(560px,calc(100dvh-200px))] w-[calc(100vw-2rem)] sm:w-[390px] flex-col overflow-hidden rounded-[26px] border border-[#D4B06A]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-top-3 duration-200"
+          className="flex h-[calc(100dvh-160px)] sm:h-[min(560px,calc(100dvh-200px))] w-[calc(100vw-2rem)] sm:w-[390px] flex-col overflow-hidden rounded-[26px] border border-[#D4AF37]/35 bg-[#100E0C] shadow-[0_24px_80px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-top-3 duration-200"
         >
-          <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4B06A]/20 bg-[#191511] px-4 py-4">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#D4B06A] to-transparent" />
+          <header className="relative flex shrink-0 items-center justify-between border-b border-[#D4AF37]/20 bg-[#191511] px-4 py-4">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-[#D4AF37] to-transparent" />
 
             <div className="flex items-center gap-3">
-              <div className="relative grid h-10 w-10 sm:h-12 sm:w-12 place-items-center overflow-hidden rounded-full border border-[#D4B06A]/35 bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.2)]">
+              <div className="relative grid h-10 w-10 sm:h-12 sm:w-12 place-items-center overflow-hidden rounded-full border border-[#D4AF37]/35 bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
                 {!hasVideoError ? (
                   <video
                     src="/nashmi.mp4"
@@ -438,7 +438,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-[#E8CC8A]" />
+                  <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-[#E8CC75]" />
                 )}
               </div>
 
@@ -461,7 +461,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                   }
                 }}
                 title="إعادة سماع الترحيب"
-                className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-[#D4B06A] transition hover:bg-[#D4B06A]/15"
+                className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-[#D4AF37] transition hover:bg-[#D4AF37]/15"
               >
                 <Volume2 className="h-4 w-4" />
               </button>
@@ -477,9 +477,9 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
             </div>
           </header>
 
-          <div className="flex-1 space-y-4 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(212,176,106,0.07),transparent_55%)] px-3 py-4 sm:px-4">
+          <div className="flex-1 space-y-4 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.07),transparent_55%)] px-3 py-4 sm:px-4">
             <div className="mx-auto flex w-fit items-center gap-1.5 rounded-full border border-white/5 bg-white/[0.03] px-3 py-1 text-[9px] text-[#8F877B]">
-              <Sparkles className="h-3 w-3 text-[#D4B06A]" />
+              <Sparkles className="h-3 w-3 text-[#D4AF37]" />
               دعم ذكي لمساعدتك في التسوق
             </div>
 
@@ -489,7 +489,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                   <div
                     className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-3 text-[12px] leading-7 shadow-sm sm:text-[13px] ${
                       message.role === 'user'
-                        ? 'rounded-tr-md border border-[#D4B06A]/25 bg-[#3B2F1D] text-[#F8EEDC]'
+                        ? 'rounded-tr-md border border-[#D4AF37]/25 bg-[#3B2F1D] text-[#F8EEDC]'
                         : 'rounded-tl-md border border-white/[0.07] bg-[#211E1A] text-[#E7E0D5]'
                     }`}
                   >
@@ -502,7 +502,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                     <button
                       type="button"
                       onClick={() => { setIsOpen(false); onOpenFAQ(); }}
-                      className="inline-flex items-center gap-2 rounded-xl border border-[#D4B06A]/55 bg-[#D4B06A] px-3.5 py-2.5 text-[11px] font-extrabold text-[#17120A] shadow-[0_5px_20px_rgba(212,176,106,0.13)] transition hover:-translate-y-0.5 hover:bg-[#E8CC8A] active:translate-y-0"
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#D4AF37]/55 bg-[#D4AF37] px-3.5 py-2.5 text-[11px] font-extrabold text-[#17120A] shadow-[0_5px_20px_rgba(212,175,55,0.13)] transition hover:-translate-y-0.5 hover:bg-[#E8CC75] active:translate-y-0"
                     >
                       <BookOpen className="h-4 w-4" />
                       الأسئلة الشائعة وطريقة الطلب
@@ -515,7 +515,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
             {isSending && (
               <div className="flex justify-end">
                 <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-white/[0.07] bg-[#211E1A] px-4 py-3 text-xs text-[#C8BFAF]">
-                  <LoaderCircle className="h-4 w-4 animate-spin text-[#D4B06A]" />
+                  <LoaderCircle className="h-4 w-4 animate-spin text-[#D4AF37]" />
                   نشمي يكتب الآن...
                 </div>
               </div>
@@ -523,8 +523,8 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={sendMessage} className="shrink-0 border-t border-[#D4B06A]/15 bg-[#171411] p-3">
-            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#0E0D0B] p-1.5 transition focus-within:border-[#D4B06A]/55">
+          <form onSubmit={sendMessage} className="shrink-0 border-t border-[#D4AF37]/15 bg-[#171411] p-3">
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#0E0D0B] p-1.5 transition focus-within:border-[#D4AF37]/55">
               <input
                 ref={inputRef}
                 value={input}
@@ -539,7 +539,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                 type="submit"
                 disabled={!input.trim() || isSending}
                 aria-label="إرسال الرسالة"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#E8CC8A] to-[#B88D45] text-[#17120A] shadow-[0_3px_14px_rgba(212,176,106,0.2)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#E8CC75] to-[#B88D45] text-[#17120A] shadow-[0_3px_14px_rgba(212,175,55,0.2)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -566,12 +566,12 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
             setIsOpen(true);
           }}
         >
-          <div className="relative mb-2 bg-[#1C1815] text-[#E8CC8A] px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-[0_4px_20px_rgba(212,176,106,0.15)] border border-[#D4B06A]/30 animate-bounce text-[10px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 group-hover:bg-[#26211D]">
+          <div className="relative mb-2 hidden bg-[#1C1815] text-[#E8CC75] px-3 py-1.5 sm:block sm:px-4 sm:py-2 rounded-2xl shadow-[0_4px_20px_rgba(212,175,55,0.15)] border border-[#D4AF37]/30 animate-bounce text-[10px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 group-hover:bg-[#26211D]">
             تحدث مع نشمي
-            <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1C1815] border-b border-r border-[#D4B06A]/30 rotate-45 group-hover:bg-[#26211D]"></div>
+            <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1C1815] border-b border-r border-[#D4AF37]/30 rotate-45 group-hover:bg-[#26211D]"></div>
           </div>
 
-          <div className="relative w-14 h-14 sm:w-32 sm:h-32 rounded-full overflow-hidden transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_10px_25px_rgba(212,176,106,0.3)]">
+          <div className="relative w-14 h-14 sm:w-32 sm:h-32 rounded-full overflow-hidden transition-transform duration-500 group-hover:scale-110 drop-shadow-[0_10px_25px_rgba(212,175,55,0.3)]">
             {!hasVideoError ? (
               <video
                 src="/nashmi.mp4"
@@ -583,7 +583,7 @@ export const SupportChatbot: React.FC<SupportChatbotProps> = ({
                 className="w-full h-full object-cover bg-transparent pointer-events-none"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#E8CC8A] to-[#8F682D] flex items-center justify-center text-[#17120A] pointer-events-none">
+              <div className="w-full h-full bg-gradient-to-br from-[#E8CC75] to-[#8F682D] flex items-center justify-center text-[#17120A] pointer-events-none">
                 <MessageCircle className="w-6 h-6 sm:w-12 sm:h-12" />
               </div>
             )}

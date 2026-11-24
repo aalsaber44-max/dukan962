@@ -51,8 +51,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <div className="relative mx-auto mb-7 grid place-items-center w-36 h-36">
         <span className="absolute inset-0 rounded-full ring-1 ring-white/10" />
         <span className="absolute inset-4 rounded-full ring-1 ring-white/10 bg-[#1C1815]/60" />
-        <span className="absolute inset-9 rounded-full bg-gradient-to-br from-[#4A3A18] to-[#2A2110] ring-1 ring-[#D4B06A]/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_30px_-10px_rgba(212,176,106,0.45)]" />
-        <Icon className="relative w-9 h-9 text-[#D4B06A] animate-float-slow" strokeWidth={1.6} />
+        <span className="absolute inset-9 rounded-full bg-gradient-to-br from-[#4A3A18] to-[#2A2110] ring-1 ring-[#D4AF37]/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_30px_-10px_rgba(212,175,55,0.45)]" />
+        <Icon className="relative w-9 h-9 text-[#D4AF37] animate-float-slow" strokeWidth={1.6} />
       </div>
 
       <h3 className="relative text-xl sm:text-2xl font-bold font-serif text-[#F3EEE4] mb-2">{title}</h3>
@@ -65,7 +65,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
               key={f.key}
               onClick={f.onRemove}
               aria-label={`إزالة فلتر ${f.label}`}
-              className="group/chip inline-flex items-center gap-1.5 h-8 pr-3.5 pl-2 rounded-full bg-[#1C1815] ring-1 ring-[#D4B06A]/30 text-xs font-semibold text-[#D4B06A] transition-all hover:bg-[#26211D] active:scale-95 cursor-pointer"
+              className="group/chip inline-flex items-center gap-1.5 h-8 pr-3.5 pl-2 rounded-full bg-[#1C1815] ring-1 ring-[#D4AF37]/30 text-xs font-semibold text-[#D4AF37] transition-all hover:bg-[#26211D] active:scale-95 cursor-pointer"
             >
               <span>{f.label}</span>
               <span className="grid place-items-center w-4 h-4 rounded-full bg-[#5C4713]/10 group-hover/chip:bg-[#5C4713]/20 transition-colors">
@@ -80,7 +80,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <div className="relative flex flex-col sm:flex-row items-center justify-center gap-2.5 mt-8">
           <button
             onClick={onReset}
-            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-[#D4B06A] text-[#0B0A09] text-sm font-bold shadow-[0_10px_24px_-10px_rgba(20,17,15,0.6)] transition-all hover:bg-[#E8CC8A] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-full bg-[#D4AF37] text-[#09090B] text-sm font-bold shadow-[0_10px_24px_-10px_rgba(20,17,15,0.6)] transition-all hover:bg-[#E8CC75] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             إعادة ضبط الفلاتر
