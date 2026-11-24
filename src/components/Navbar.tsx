@@ -120,7 +120,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       />
 
       <div
-        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 transition-[height] duration-500 ${
+        className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 transition-[height] duration-500 ${
           scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
         }`}
       >
@@ -130,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="shrink-0 flex items-center cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-95 text-right"
           title="شعار دكان 962"
         >
-          <DukanLogo variant={isLightTheme ? "dark" : "light"} className="h-9 sm:h-12" subtitle={logoSubtitle} />
+          <DukanLogo variant={isLightTheme ? "dark" : "light"} className="h-8 sm:h-12" subtitle={logoSubtitle} />
         </button>
 
         <nav
@@ -161,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-2.5 shrink-0">
           
           {/* 💡 حقل البحث الذكي للكمبيوتر */}
           <div className="relative hidden md:block group/search" ref={searchContainerRef}>

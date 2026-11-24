@@ -258,30 +258,31 @@
    ─────────────────────────────────────────── */
 
 .storefront-theme {
-  --store-bg: #0B0A09;
-  --store-surface: #141210;
-  --store-panel: #1C1815;
-  --store-panel-soft: #211C17;
+  --store-bg: #09090B;
+  --store-surface: #121214;
+  --store-panel: #19191C;
+  --store-panel-soft: #202023;
 
-  --store-text: #F3EEE4;
-  --store-muted: #A39A8B;
-  --store-subtle: #78716C;
+  --store-text: #F4F1EA;
+  --store-muted: #AAA49A;
+  --store-subtle: #827D76;
 
-  --store-border: rgb(255 255 255 / 0.10);
-  --store-border-strong: rgb(255 255 255 / 0.16);
+  --store-border: rgb(232 204 138 / 0.13);
+  --store-border-strong: rgb(232 204 138 / 0.22);
 
-  --store-accent: #D4B06A;
-  --store-accent-strong: #E8CC8A;
-  --store-accent-contrast: #17120B;
+  --store-accent: #D4AF37;
+  --store-accent-strong: #E8CC75;
+  --store-accent-contrast: #17140A;
 
-  --store-input-bg: #141210;
-  --store-input-border: #393128;
+  --store-input-bg: #121214;
+  --store-input-border: #38352E;
 
   --store-success: #7FD1A0;
   --store-danger: #F87171;
 
   --store-shadow:
-    0 12px 32px -18px rgb(0 0 0 / 0.35);
+    0 16px 42px -24px rgb(0 0 0 / 0.72),
+    0 1px 0 rgb(255 255 255 / 0.035) inset;
 
   min-height: 100vh;
   color: var(--store-text);
@@ -289,7 +290,7 @@
   background:
     radial-gradient(
       1000px 420px at 50% -160px,
-      rgb(212 176 106 / 0.08),
+      rgb(212 175 55 / 0.09),
       transparent 72%
     ),
     var(--store-bg);
@@ -300,24 +301,24 @@
 }
 
 /* ───────────────────────────────────────────
-   Warm Luxury — Light Mode
+   Morning White — Light Mode
    ─────────────────────────────────────────── */
 
 .storefront-theme[data-theme="light"] {
-  --store-bg: #FAF8F4;
+  --store-bg: #FAF9F6;
   --store-surface: #FFFFFF;
-  --store-panel: #F5F1E9;
-  --store-panel-soft: #EFEAE2;
+  --store-panel: #FFFFFF;
+  --store-panel-soft: #F4F1EA;
 
-  --store-text: #25231F;
-  --store-muted: #776F64;
-  --store-subtle: #91877A;
+  --store-text: #292722;
+  --store-muted: #716B60;
+  --store-subtle: #888176;
 
-  --store-border: #E5DED2;
-  --store-border-strong: #DCD3C5;
+  --store-border: #E9E5DC;
+  --store-border-strong: #DCD5C8;
 
-  --store-accent: #A88962;
-  --store-accent-strong: #B99B73;
+  --store-accent: #B48A28;
+  --store-accent-strong: #C49A36;
   --store-accent-contrast: #FFFFFF;
 
   --store-input-bg: #FFFFFF;
@@ -327,18 +328,18 @@
   --store-danger: #C24152;
 
   --store-shadow:
-    0 12px 32px -18px rgb(68 52 32 / 0.20),
-    0 1px 0 rgb(255 255 255 / 0.8) inset;
+    0 16px 42px -26px rgb(58 47 28 / 0.22),
+    0 1px 0 rgb(255 255 255 / 0.92) inset;
 
   color: var(--store-text);
 
   background:
     radial-gradient(
       1000px 420px at 50% -160px,
-      rgb(168 137 98 / 0.10),
+      rgb(180 138 40 / 0.08),
       transparent 72%
     ),
-    #FAF8F4;
+    #FAF9F6;
 
   color-scheme: light;
 }
@@ -354,7 +355,7 @@
 
 .storefront-theme[data-theme="light"] :where(input, textarea, select) {
   color: #25231F;
-  accent-color: #A88962;
+  accent-color: #B48A28;
 }
 
 .storefront-theme[data-theme="light"] :where(input, textarea, select)::placeholder {
@@ -363,7 +364,7 @@
 }
 
 .storefront-theme[data-theme="light"] :where(input, textarea, select):focus {
-  border-color: #B99B73;
+  border-color: #C49A36;
 }
 
 .storefront-theme[data-theme="light"] :where(option) {
@@ -384,10 +385,16 @@
 /* الخلفيات الأساسية (أبيض نقي) */
 .storefront-theme[data-theme="light"] [class~="bg-[#080706]"],
 .storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]"],
-.storefront-theme[data-theme="light"] [class~="bg-[#0F0D0B]"],
+  .storefront-theme[data-theme="light"] [class~="bg-[#0F0D0B]"],
 .storefront-theme[data-theme="light"] [class~="bg-[#141210]"],
 .storefront-theme[data-theme="light"] [class~="bg-[#17140F]"] {
   background-color: #FFFFFF !important;
+}
+
+.storefront-theme[data-theme="light"] [class~="bg-[#0B0A09]/70"],
+.storefront-theme[data-theme="light"] [class~="bg-[#141210]/95"] {
+  background-color: rgb(250 249 246 / 92%) !important;
+  backdrop-filter: blur(24px) saturate(150%);
 }
 
 /* 💡 الرأس والفوتر والحقول (بيج عاجي فاتح لتمييزها عن الخلفية البيضاء) */
@@ -408,6 +415,29 @@
 .storefront-theme[data-theme="light"] [class~="bg-white/[0.06]"],
 .storefront-theme[data-theme="light"] [class~="bg-white/[0.07]"] {
   background-color: #F2EEE7 !important;
+}
+
+@media (max-width: 359px) {
+  .storefront-theme header > div:nth-of-type(2) {
+    column-gap: 0.375rem;
+    padding-inline: 0.5rem;
+  }
+
+  .storefront-theme header > div:nth-of-type(2) > button:first-child > div {
+    gap: 0.25rem;
+  }
+
+  .storefront-theme header > div:nth-of-type(2) > button:first-child svg {
+    height: 1.875rem;
+  }
+
+  .storefront-theme header > div:nth-of-type(2) > button:first-child > div > div > div > span {
+    font-size: 1.125rem;
+  }
+
+  .storefront-theme header > div:nth-of-type(2) > button:first-child > div > div > span {
+    font-size: 0.5rem;
+  }
 }
 
 /* ───────────────────────────────────────────
@@ -431,7 +461,7 @@
 
 .storefront-theme[data-theme="light"] [class~="text-[#D4B06A]"],
 .storefront-theme[data-theme="light"] [class~="text-[#E8CC8A]"] {
-  color: #A88962 !important;
+  color: #B48A28 !important;
 }
 
 .storefront-theme[data-theme="light"] [class~="text-[#7FD1A0]"] {
@@ -449,21 +479,21 @@
 
 .storefront-theme[data-theme="light"] [class~="bg-[#D4B06A]"],
 .storefront-theme[data-theme="light"] [class~="bg-[#E8CC8A]"] {
-  background-color: #A88962 !important;
+  background-color: #B48A28 !important;
   color: #FFFFFF !important;
 }
 
 .storefront-theme[data-theme="light"] [class~="from-[#E8CC8A]"],
 .storefront-theme[data-theme="light"] [class~="from-[#D4B06A]"],
 .storefront-theme[data-theme="light"] [class~="from-[#E3C16F]"] {
-  --tw-gradient-from: #B99B73 var(--tw-gradient-from-position) !important;
+  --tw-gradient-from: #C49A36 var(--tw-gradient-from-position) !important;
   --tw-gradient-to: rgb(185 155 115 / 0) var(--tw-gradient-to-position) !important;
 }
 
 .storefront-theme[data-theme="light"] [class~="to-[#D4B06A]"],
 .storefront-theme[data-theme="light"] [class~="to-[#E8CC8A]"],
 .storefront-theme[data-theme="light"] [class~="to-[#B8923A]"] {
-  --tw-gradient-to: #A88962 var(--tw-gradient-to-position) !important;
+  --tw-gradient-to: #B48A28 var(--tw-gradient-to-position) !important;
 }
 
 /* تحويل بعض التدرجات الداكنة فقط، دون التأثير على كل التدرجات */
@@ -546,7 +576,7 @@
    ─────────────────────────────────────────── */
 
 .storefront-theme[data-theme="light"] :focus-visible {
-  outline-color: #A88962;
+  outline-color: #B48A28;
 }
 
 .storefront-theme[data-theme="light"] ::-webkit-scrollbar-track {

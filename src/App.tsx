@@ -605,7 +605,7 @@ export default function App() {
                     <p className="text-sm text-[#A39A8B] mt-2">أفضل العروض المختارة لك بأسعار لا تقاوم.</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                   {offersProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -634,7 +634,7 @@ export default function App() {
                     <p className="text-sm text-[#A39A8B] mt-2">أحدث المنتجات التي أضفناها للمتجر مؤخراً.</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                   {newArrivalsProducts.map((product) => (
                     <ProductCard
                       key={product.id}
