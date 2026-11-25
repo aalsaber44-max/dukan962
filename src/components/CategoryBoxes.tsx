@@ -1,7 +1,8 @@
-import React from 'react';
-import { ArrowUpLeft, Check } from 'lucide-react';
+import React, { useRef } from 'react';
+import { stripEmoji } from '../utils/emoji';
+import { CategoryIcon } from './CategoryIcon';
+import { ArrowLeft, ArrowRight, ArrowUpLeft, Check } from 'lucide-react';
 import { Category } from '../types/furniture';
-import { spotlightMove } from '../utils/useSpotlight';
 
 interface CategoryBoxesProps {
   categories: Category[];
@@ -9,114 +10,149 @@ interface CategoryBoxesProps {
   onSelectCategory: (cat: string) => void;
 }
 
-const getSpanClasses = (index: number, total: number): string => {
-  const rest = total - 1;
-  const bento = total >= 3 && total <= 5;
-  if (!bento) return '';
-  if (index === 0) return 'col-span-2 lg:row-span-2';
-
-  const isLast = index === total - 1;
-  const mobile = isLast && rest % 2 === 1 ? 'col-span-2' : '';
-  let desktop = '';
-  if (rest === 3 && isLast) desktop = 'lg:col-span-2';
-  if (rest === 2) desktop = 'lg:col-span-2';
-  return `${mobile} ${desktop}`.trim();
-};
-
 export const CategoryBoxes: React.FC<CategoryBoxesProps> = ({
   categories,
   selectedCategory,
   onSelectCategory,
 }) => {
+  const railRef = useRef<HTMLDivElement>(null);
+
   if (!categories || categories.length === 0) return null;
 
-  const getThumbnail = (url: string) => {
-    if (url && url.includes('res.cloudinary.com')) {
-      return url.replace('/upload/', '/upload/w_900,c_fill,q_auto:good/');
-    }
-    return url;
+  const thumbnail = (url: string) =>
+    url && url.includes('res.cloudinary.com')
+      ? url.replace('/upload/', '/upload/w_1000,c_fill,q_auto:good/')
+      : url;
+
+  // في RTL التمرير للأمام يعني سالب
+  const nudge = (dir: 1 | -1) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: dir * -Math.round(rail.clientWidth * 0.7), behavior: 'smooth' });
   };
 
-  const total = categories.length;
-
   return (
-    <section id="categories" className="py-8 sm:py-16">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-4 mb-3">
-          <h2 className="text-2xl sm:text-4xl font-bold text-[#F3EEE4] tracking-tight font-serif">
-            تسوّق حسب القسم
-          </h2>
-          <button
-            onClick={() => onSelectCategory('all')}
-            className="group/all inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#A39A8B] hover:text-[#E8CC8A] transition-colors cursor-pointer shrink-0"
-          >
-            <span>عرض كل المنتجات</span>
-            <ArrowUpLeft className="w-4 h-4 transition-transform duration-300 group-hover/all:-translate-x-0.5 group-hover/all:-translate-y-0.5" />
-          </button>
-        </div>
-        <div aria-hidden="true" className="gold-rule mb-5 sm:mb-9" />
+    <section id="categories" className="sf-section-pad">
+      <div className="mx-auto max-w-[1440px]">
+        {/* رأس تحريري */}
+        <div className="px-4 sm:px-6 lg:px-10 flex items-end justify-between gap-6 mb-8 lg:mb-12" data-reveal>
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-[10px] font-semibold tabular-nums text-[var(--sf-subtle)]">02</span>
+              <span aria-hidden="true" className="h-px w-10 bg-[var(--sf-border-strong)]" />
+              <span className="text-[10px] font-semibold tracking-[0.16em] text-[var(--sf-muted)] uppercase">Lookbook</span>
+            </div>
+            <h2 className="sf-title-lg text-[var(--sf-text)]">تسوّق حسب القسم</h2>
+            <p className="text-[12px] text-[var(--sf-muted)] mt-2 max-w-md">
+              تشكيلات مختارة بعناية — اسحب أفقياً لاستعراض الأقسام.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 auto-rows-[168px] sm:auto-rows-[220px] gap-2.5 sm:gap-4 grid-flow-dense">
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onSelectCategory('all')}
+              className="text-[11px] font-semibold text-[var(--sf-muted)] hover:text-[var(--sf-accent)] transition-colors inline-flex items-center gap-1.5"
+            >
+              عرض الكل
+              <ArrowUpLeft className="w-3.5 h-3.5" strokeWidth={1.5} />
+            </button>
+            <span aria-hidden="true" className="w-px h-4 bg-[var(--sf-border)] mx-1" />
+            <button
+              onClick={() => nudge(-1)}
+              aria-label="السابق"
+              className="grid place-items-center w-8 h-8 rounded-full border border-[var(--sf-border)] text-[var(--sf-muted)] hover:text-[var(--sf-text)] hover:border-[var(--sf-border-strong)] transition-colors cursor-pointer"
+            >
+              <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
+            </button>
+            <button
+              onClick={() => nudge(1)}
+              aria-label="التالي"
+              className="grid place-items-center w-8 h-8 rounded-full border border-[var(--sf-border)] text-[var(--sf-muted)] hover:text-[var(--sf-text)] hover:border-[var(--sf-border-strong)] transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+
+        {/* المسار الأفقي */}
+        <div
+          ref={railRef}
+          className="sf-lookbook flex gap-3 sm:gap-5 overflow-x-auto px-4 sm:px-6 lg:px-10 pb-2"
+        >
           {categories.map((cat, index) => {
             const isSelected = selectedCategory === cat.id;
-            const isFeatured = index === 0 && total >= 3 && total <= 5;
+            const offset = index % 2 === 1 ? 'lg:mt-14' : 'lg:mt-0';
+            const width =
+              index === 0
+                ? 'w-[80vw] sm:w-[52vw] lg:w-[34vw]'
+                : 'w-[64vw] sm:w-[38vw] lg:w-[23vw]';
 
             return (
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                onMouseMove={spotlightMove}
                 aria-pressed={isSelected}
-                className={`spotlight group relative isolate overflow-hidden rounded-[20px] sm:rounded-[28px] text-right cursor-pointer flex flex-col justify-end bg-[#141210] transition-all duration-500 ease-out active:scale-[0.985] ${getSpanClasses(
-                  index,
-                  total
-                )} ${
-                  isSelected
-                    ? 'ring-2 ring-[#D4B06A] shadow-lift'
-                    : 'ring-1 ring-white/10 shadow-soft hover:-translate-y-1 hover:shadow-lift'
-                }`}
+                data-reveal
+                style={{ '--reveal-delay': `${Math.min(index, 5) * 70}ms` } as React.CSSProperties}
+                className={`group relative shrink-0 overflow-hidden rounded-[3px] sf-hover-zoom text-right cursor-pointer transition-transform duration-700 ${width} ${offset} ${
+                  index === 0 ? 'aspect-[3/3.4] lg:aspect-[3/3.6]' : 'aspect-[3/4]'
+                } ${isSelected ? 'ring-1 ring-[var(--sf-accent)]' : 'ring-1 ring-[var(--sf-border)]'}`}
               >
                 <img
-                  src={getThumbnail(cat.image)}
-                  alt={`قسم ${cat.name} - دكان 962`}
+                  src={thumbnail(cat.image)}
+                  alt={`قسم ${stripEmoji(cat.name)} - دكان 962`}
                   loading="lazy"
                   decoding="async"
                   referrerPolicy="no-referrer"
-                  className="absolute inset-0 -z-10 w-full h-full object-cover object-center transition-transform duration-[1400ms] ease-out group-hover:scale-[1.06]"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
                 />
-                {/* 💡 التأكد من أن التدرج داكن دائماً لضمان وضوح النص */}
-                <div
-                  className={`absolute inset-0 -z-10 bg-gradient-to-t transition-opacity duration-500 ${
-                    isSelected
-                      ? 'from-black/90 via-black/40 to-transparent'
-                      : 'from-black/80 via-black/20 to-transparent group-hover:from-black/90'
-                  }`}
-                />
+                {/* قناع متدرّج */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent opacity-70" />
 
-                {isSelected && (
-                  <span className="absolute z-10 top-3 right-3 sm:top-4 sm:right-4 inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] !text-[#0B0A09] text-[11px] font-bold shadow-gold">
-                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                    القسم الحالي
+                {/* رقم + حالة */}
+                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-semibold text-white/70 tabular-nums">
+                    {String(index + 1).padStart(2, '0')}
                   </span>
-                )}
+                  {isSelected && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold text-[var(--sf-accent-strong)]">
+                      <Check className="w-3 h-3" strokeWidth={2} />
+                      الحالي
+                    </span>
+                  )}
+                </div>
 
-                {/* 💡 شريحة زجاجية داكنة دائماً ونص أبيض صريح */}
-                <div className="relative z-10 m-2 sm:m-3.5 flex items-center justify-between gap-3 rounded-2xl bg-black/50 backdrop-blur-xl ring-1 ring-white/20 px-3.5 py-2.5 sm:px-5 sm:py-3.5">
-                  <h3
-                    className={`font-serif font-bold !text-white leading-tight drop-shadow-md ${
-                      isFeatured ? 'text-lg sm:text-3xl' : 'text-base sm:text-xl'
-                    }`}
-                  >
-                    {cat.name}
+                {/* النص */}
+                <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-6">
+                  <h3 className="flex items-center gap-2 text-white font-bold leading-tight text-[17px] sm:text-[20px] lg:text-[22px]">
+                    <CategoryIcon name={cat.name} className="w-4 h-4 shrink-0 text-[var(--sf-accent)]" />
+                    <span>{stripEmoji(cat.name)}</span>
                   </h3>
-                  <span className="grid place-items-center w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full bg-white/10 ring-1 ring-white/20 !text-white transition-all duration-500 group-hover:bg-[#D4B06A] group-hover:!text-[#0B0A09] group-hover:ring-[#D4B06A] group-hover:-rotate-12">
-                    <ArrowUpLeft className="w-4 h-4" />
-                  </span>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="block h-px w-6 bg-[var(--sf-accent)] transition-all duration-700 group-hover:w-14" />
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white/70 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
+                      استعرض
+                      <ArrowUpLeft className="w-3 h-3" strokeWidth={1.5} />
+                    </span>
+                  </div>
                 </div>
               </button>
             );
           })}
+
+          {/* بلاطة ختامية */}
+          <button
+            onClick={() => onSelectCategory('all')}
+            className="group shrink-0 w-[64vw] sm:w-[34vw] lg:w-[19vw] aspect-[3/4] lg:mt-14 rounded-[3px] border border-[var(--sf-border)] bg-[var(--sf-panel)] flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-[var(--sf-border-strong)] transition-colors"
+          >
+            <ArrowUpLeft className="w-5 h-5 text-[var(--sf-accent)] transition-transform duration-500 group-hover:-translate-x-1 group-hover:-translate-y-1" strokeWidth={1.5} />
+            <span className="text-[13px] font-bold text-[var(--sf-text)]">كل المنتجات</span>
+            <span className="text-[10px] text-[var(--sf-subtle)] tracking-[0.14em] uppercase">View all</span>
+          </button>
         </div>
+
+        <div aria-hidden="true" className="mx-4 sm:mx-6 lg:mx-10 mt-8 h-px bg-[var(--sf-border)]" />
       </div>
     </section>
   );

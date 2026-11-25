@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Check, Eye, EyeOff, Save, X, Video } from 'lucide-react';
+import { Plus, Trash2, Check, Eye, EyeOff, Save, X, Video, AlertTriangle } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { Category } from '../types/furniture';
@@ -19,7 +19,7 @@ export const CategoryManager: React.FC = () => {
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
-  // 🎬 محرر فيديو لكل قسم (inline)
+  // محرر فيديو لكل قسم (inline)
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [videoUrlDraft, setVideoUrlDraft] = useState('');
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export const CategoryManager: React.FC = () => {
         title: newTitle || newName,
         description: newDesc || '',
         buttonText: newButtonText || 'استكشف الآن',
-        badgeText: newBadge || '✨ جودة ممتازة',
+        badgeText: newBadge || 'جودة ممتازة',
         videoUrl: videoUrl || null,
         isActive: true,
         order: categories.length + 1,
@@ -110,7 +110,7 @@ export const CategoryManager: React.FC = () => {
     setVideoError(null);
   };
 
-  // ✅ الدالة تستقبل الرابط كمعامل مباشر (لحل مشكلة الحذف)
+  // الدالة تستقبل الرابط كمعامل مباشر (لحل مشكلة الحذف)
   const saveVideoUrl = async (cat: Category, rawUrl: string) => {
     const url = rawUrl.trim();
 
@@ -240,8 +240,9 @@ export const CategoryManager: React.FC = () => {
                 className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
                 dir="ltr"
               />
-              <p className="text-[10px] text-[#8A8173] mt-1">
-                ⚠️ يجب أن يكون رابط فيديو مباشر (يحتوي <code className="text-[#E8CC8A]">/video/upload/</code> في Cloudinary)
+              <p className="text-[10px] text-[#8A8173] mt-1 flex items-start gap-1">
+                <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5 text-amber-400" strokeWidth={1.5} aria-hidden="true" />
+                <span>يجب أن يكون رابط فيديو مباشر (يحتوي <code className="text-[#E8CC8A]">/video/upload/</code> في Cloudinary)</span>
               </p>
             </div>
           </div>
@@ -362,7 +363,7 @@ export const CategoryManager: React.FC = () => {
                           </div>
 
                           <div className="flex gap-2">
-                            {/* ✅ إصلاح: تمرير الرابط الحالي مباشرة */}
+                            {/* إصلاح: تمرير الرابط الحالي مباشرة */}
                             <button
                               onClick={() => saveVideoUrl(cat, videoUrlDraft)}
                               disabled={savingVideo}
@@ -372,7 +373,7 @@ export const CategoryManager: React.FC = () => {
                               {savingVideo ? 'جاري الحفظ...' : 'حفظ'}
                             </button>
                             {cat.videoUrl && (
-                              /* ✅ إصلاح: تمرير '' مباشرة بدل الاعتماد على setState */
+                              /* إصلاح: تمرير '' مباشرة بدل الاعتماد على setState */
                               <button
                                 onClick={() => saveVideoUrl(cat, '')}
                                 disabled={savingVideo}

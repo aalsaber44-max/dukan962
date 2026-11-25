@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { stripEmoji } from '../utils/emoji';
 import { X, CheckCircle, Truck, ShieldCheck, Copy, Check, MessageCircle, Smartphone, AlertTriangle } from 'lucide-react';
 import { CartItem, Product } from '../types/furniture';
 import { db } from '../firebase';
@@ -31,7 +32,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onCartChange,
   onSuccessOrder,
 }) => {
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'cliq'>('cod');
+  const [paymentMethod, setPaymentMethod] = useState<'cod'| 'cliq'>('cod');
   const [name, setName] = useState('');
   const [phone1, setPhone1] = useState('');
   const [phone2, setPhone2] = useState('');
@@ -41,7 +42,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [building, setBuilding] = useState('');
   const [notes, setNotes] = useState('');
   const [cliqRef, setCliqRef] = useState('');
-  const [copiedField, setCopiedField] = useState<'alias' | 'phone' | null>(null);
+  const [copiedField, setCopiedField] = useState<'alias'| 'phone'| null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
@@ -69,7 +70,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   useEffect(() => {
     if (cartError.length > 0 && errorRef.current) {
-      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center'});
     }
   }, [cartError]);
 
@@ -127,7 +128,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const cliqAlias = 'Mohammad Alkhatib';
   const cliqPhone = STORE_PHONE;
 
-  const copyToClipboard = (text: string, field: 'alias' | 'phone') => {
+  const copyToClipboard = (text: string, field: 'alias'| 'phone') => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
@@ -167,7 +168,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     const first = errors.find((e) => e.message !== null);
     if (first) {
       first.ref.current?.focus();
-      first.ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      first.ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center'});
       return false;
     }
     return true;
@@ -204,10 +205,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setBuildingError(building.trim() ? null : 'اكتب رقم العمارة / البناية والطابق');
 
     const fieldsOk = focusFirstError([
-      { ref: nameInputRef, message: nameOk ? null : 'err' },
-      { ref: regionInputRef, message: region.trim() ? null : 'err' },
-      { ref: streetInputRef, message: street.trim() ? null : 'err' },
-      { ref: buildingInputRef, message: building.trim() ? null : 'err' },
+      { ref: nameInputRef, message: nameOk ? null : 'err'},
+      { ref: regionInputRef, message: region.trim() ? null : 'err'},
+      { ref: streetInputRef, message: street.trim() ? null : 'err'},
+      { ref: buildingInputRef, message: building.trim() ? null : 'err'},
     ]);
     if (!fieldsOk || !phone1Validation.isValid || phone2ErrorMsg !== null) {
       return;
@@ -229,9 +230,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setCartError([]);
 
     const fullAddress = `المنطقة: ${region.trim()} - الشارع: ${street.trim()} - العمارة: ${building.trim()}`;
-    const paymentLabel = paymentMethod === 'cod'
-      ? 'الدفع كاش عند الاستلام بعد المعاينة'
-      : `تحويل كليك CliQ (${cliqRef ? 'مرجع: ' + cliqRef : 'بانتظار التحويل'})`;
+    const paymentLabel = paymentMethod === 'cod'? 'الدفع كاش عند الاستلام بعد المعاينة': `تحويل كليك CliQ (${cliqRef ? 'مرجع: '+ cliqRef : 'بانتظار التحويل'})`;
 
     const orderDocRef = doc(collection(db, 'orders'));
     const counterDocRef = doc(db, 'counters', 'orders');
@@ -260,7 +259,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         const rebuiltCart: CartItem[] = [];
         const updatedRootStockByProduct = new Map<string, number>();
         
-        // 💡 إضافة متغير لحفظ الكميات المخصومة لكل منتج
+        //إضافة متغير لحفظ الكميات المخصومة لكل منتج
         const stockDeductions: Record<string, number> = {}; 
         
         let finalSubtotal = 0;
@@ -273,7 +272,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           }
           const serverProduct = serverProducts.get(pid);
           if (!serverProduct) {
-            validationErrors.push(`المنتج "${cartItem.product?.name || pid}" لم يعد موجوداً في المتجر.`);
+            validationErrors.push(`المنتج "${cartItem.product?.name || pid}"لم يعد موجوداً في المتجر.`);
             continue;
           }
 
@@ -282,19 +281,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           const needQty = Math.max(0, Number(cartItem.quantity) || 0);
           const cartPrice = getItemUnitPrice(cartItem);
 
-          const productStock = typeof serverProduct.stock === 'number' ? Math.max(0, Number(serverProduct.stock)) : Infinity;
+          const productStock = typeof serverProduct.stock === 'number'? Math.max(0, Number(serverProduct.stock)) : Infinity;
           const prevStock = updatedRootStockByProduct.get(pid) ?? productStock;
 
           if (prevStock < needQty) {
              validationErrors.push(
-                `الكمية المطلوبة من "${serverProduct.name}" غير متوفرة (المتاح: ${prevStock === Infinity ? 'غير محدود' : prevStock}، المطلوب: ${needQty}).`
-             );
+                `الكمية المطلوبة من "${stripEmoji(serverProduct.name)}"غير متوفرة (المتاح: ${prevStock === Infinity ? 'غير محدود': prevStock}، المطلوب: ${needQty}).`);
              continue;
           }
           
           if (prevStock !== Infinity) {
              updatedRootStockByProduct.set(pid, prevStock - needQty);
-             // 💡 تسجيل الكمية المخصومة
+             //تسجيل الكمية المخصومة
              stockDeductions[pid] = (stockDeductions[pid] || 0) + needQty;
           }
 
@@ -302,7 +300,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             const colorName = cartItem.selectedColor?.name;
             const colorIdx = serverColors.findIndex((c) => c?.name === colorName);
             if (colorIdx === -1) {
-              validationErrors.push(`اللون "${colorName || 'غير محدد'}" من "${serverProduct.name}" لم يعد متوفراً.`);
+              validationErrors.push(`اللون "${colorName || 'غير محدد'}"من "${stripEmoji(serverProduct.name)}"لم يعد متوفراً.`);
               continue;
             }
             const serverColor = serverColors[colorIdx];
@@ -314,8 +312,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             if (Math.abs(effectiveServerPrice - cartPrice) > 0.01) {
               validationErrors.push(
-                `تغيّر سعر "${serverProduct.name} - ${colorName}" من ${cartPrice.toFixed(2)} إلى ${effectiveServerPrice.toFixed(2)} د.أ. يرجى تحديث السلة.`
-              );
+                `تغيّر سعر "${stripEmoji(serverProduct.name)} - ${stripEmoji(colorName)}"من ${cartPrice.toFixed(2)} إلى ${effectiveServerPrice.toFixed(2)} د.أ. يرجى تحديث السلة.`);
               continue;
             }
 
@@ -332,8 +329,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             
             if (Math.abs(effectiveServerPrice - cartPrice) > 0.01) {
               validationErrors.push(
-                `تغيّر سعر "${serverProduct.name}" من ${cartPrice.toFixed(2)} إلى ${effectiveServerPrice.toFixed(2)} د.أ. يرجى تحديث السلة.`
-              );
+                `تغيّر سعر "${stripEmoji(serverProduct.name)}"من ${cartPrice.toFixed(2)} إلى ${effectiveServerPrice.toFixed(2)} د.أ. يرجى تحديث السلة.`);
               continue;
             }
 
@@ -368,14 +364,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           building: building.trim(),
           notes: notes.trim(),
           paymentMethod,
-          cliqRef: paymentMethod === 'cliq' ? cliqRef.trim() : '',
+          cliqRef: paymentMethod === 'cliq'? cliqRef.trim() : '',
           items: rebuiltCart,
           subtotal: finalSubtotal,
           deliveryFee: finalDeliveryFee,
           total: finalTotal,
           status: 'جديد',
           stockDeducted: true,
-          stockDeductions: stockDeductions, // 💡 حفظ الكميات المخصومة في الفاتورة
+          stockDeductions: stockDeductions, //حفظ الكميات المخصومة في الفاتورة
           createdAt: new Date().toISOString(),
         });
 
@@ -402,31 +398,29 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setConfirmedItemsCount(result.cart.reduce((s, i) => s + i.quantity, 0));
 
       const whatsAppText = encodeURIComponent(
-        `*طلب جديد من متجر دكان 962 للأثاث*\n\n` +
-        `*رقم الطلب:* ${result.orderNumber}\n` +
-        `*الاسم:* ${name.trim()}\n` +
-        `*رقم الهاتف 1:* ${phone1Validation.cleaned}\n` +
-        (phone2 ? `*رقم الهاتف 2:* ${validateJordanPhone(phone2).cleaned}\n` : '') +
-        `*العنوان:* ${governorate} - ${region.trim()} - ${street.trim()} - عمارة ${building.trim()}\n` +
-        (notes.trim() ? `*ملاحظات:* ${notes.trim()}\n` : '') +
-        `*طريقة الدفع:* ${paymentLabel}\n\n` +
-        `*تفاصيل المنتجات المطلوبة:*\n` +
+        `*طلب جديد من متجر دكان 962 للأثاث*\n\n`+
+        `*رقم الطلب:* ${result.orderNumber}\n`+
+        `*الاسم:* ${name.trim()}\n`+
+        `*رقم الهاتف 1:* ${phone1Validation.cleaned}\n`+
+        (phone2 ? `*رقم الهاتف 2:* ${validateJordanPhone(phone2).cleaned}\n`: '') +
+        `*العنوان:* ${governorate} - ${region.trim()} - ${street.trim()} - عمارة ${building.trim()}\n`+
+        (notes.trim() ? `*ملاحظات:* ${notes.trim()}\n`: '') +
+        `*طريقة الدفع:* ${paymentLabel}\n\n`+
+        `*تفاصيل المنتجات المطلوبة:*\n`+
         result.cart.map((it, i) => {
           const imgUrl = it.selectedColor?.image || it.product?.images?.[0] || '';
           const isBase64 = imgUrl.startsWith('data:image');
-          const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)' : imgUrl;
+          const imgText = isBase64 ? '(الصورة متوفرة في لوحة التحكم)': imgUrl;
           return `${i + 1}. *${it.product?.name || 'قطعة'}*\n- اللون: ${it.selectedColor?.name || 'غير محدد'}\n- الكمية: ${it.quantity}\n- السعر: ${(getItemUnitPrice(it) * it.quantity).toFixed(2)} د.أ\n- صورة المنتج: ${imgText}`;
         }).join('\n\n') +
-        `\n\n------------------------\n` +
-        `*المجموع الفرعي:* ${result.subtotal.toFixed(2)} د.أ\n` +
-        `*أجور التوصيل (${governorate}):* ${result.deliveryFee === 0 ? 'مجاني' : `${result.deliveryFee.toFixed(2)} د.أ`}\n` +
-        `*المبلغ الإجمالي النهائي:* ${result.total.toFixed(2)} دينار أردني\n\n` +
-        `يرجى تأكيد استلام الطلب وتحديد موعد التوصيل.`
-      );
+        `\n\n------------------------\n`+
+        `*المجموع الفرعي:* ${result.subtotal.toFixed(2)} د.أ\n`+
+        `*أجور التوصيل (${governorate}):* ${result.deliveryFee === 0 ? 'مجاني': `${result.deliveryFee.toFixed(2)} د.أ`}\n`+
+        `*المبلغ الإجمالي النهائي:* ${result.total.toFixed(2)} دينار أردني\n\n`+
+        `يرجى تأكيد استلام الطلب وتحديد موعد التوصيل.`);
 
       setFinalWhatsAppUrl(
-        `https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${whatsAppText}`
-      );
+        `https://api.whatsapp.com/send?phone=${STORE_PHONE_INTL}&text=${whatsAppText}`);
 
       setIsSubmitting(false);
       setOrderConfirmed(true);
@@ -454,111 +448,110 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const jordanGovernorates = JORDAN_GOVERNORATES;
 
-  const cliqSection = paymentMethod === 'cliq' ? (
-    <div className="bg-[#7FD1A0]/5 border border-[#7FD1A0]/20 rounded-2xl p-4 space-y-4 animate-fade">
-      <div className="flex items-center gap-2 text-xs font-bold text-[#7FD1A0]">
-        <Smartphone className="w-4 h-4" />
+  const cliqSection = paymentMethod === 'cliq'? (
+    <div className="bg-[var(--sf-success)]/5 border border-[#7FD1A0]/20 rounded-2xl p-4 space-y-4 animate-fade">
+      <div className="flex items-center gap-2 text-xs font-bold text-[var(--sf-success)]">
+        <Smartphone className="w-4 h-4"/>
         <span>بيانات التحويل عبر تطبيق كليك (CliQ):</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-        <div className="bg-[#141210] p-3 rounded-xl border border-[#7FD1A0]/20 flex items-center justify-between shadow-inner">
+        <div className="bg-[var(--sf-surface)] p-3 rounded-xl border border-[#7FD1A0]/20 flex items-center justify-between shadow-inner">
           <div>
-            <span className="text-[10px] text-[#A39A8B] block mb-0.5">اسم الحساب:</span>
-            <strong className="text-[#F3EEE4] font-mono text-sm">{cliqAlias}</strong>
+            <span className="text-[10px] text-[var(--sf-muted)] block mb-0.5">اسم الحساب:</span>
+            <strong className="text-[var(--sf-text)] font-mono text-sm">{cliqAlias}</strong>
           </div>
-          <button type="button" onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-2 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border border-white/5 cursor-pointer text-[#A39A8B] transition-colors">
-            {copiedField === 'alias' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          <button type="button"onClick={() => copyToClipboard(cliqAlias, 'alias')} className="p-2 rounded-lg bg-[var(--sf-panel)] hover:bg-[var(--sf-panel-2)] border border-[var(--sf-border)] cursor-pointer text-[var(--sf-muted)] transition-colors">
+            {copiedField === 'alias'? <Check className="w-4 h-4 text-emerald-400"/> : <Copy className="w-4 h-4"/>}
           </button>
         </div>
 
-        <div className="bg-[#141210] p-3 rounded-xl border border-[#7FD1A0]/20 flex items-center justify-between shadow-inner">
+        <div className="bg-[var(--sf-surface)] p-3 rounded-xl border border-[#7FD1A0]/20 flex items-center justify-between shadow-inner">
           <div>
-            <span className="text-[10px] text-[#A39A8B] block mb-0.5">رقم الهاتف:</span>
-            <strong className="text-[#F3EEE4] font-mono text-sm" dir="ltr">{cliqPhone}</strong>
+            <span className="text-[10px] text-[var(--sf-muted)] block mb-0.5">رقم الهاتف:</span>
+            <strong className="text-[var(--sf-text)] font-mono text-sm" dir="ltr">{cliqPhone}</strong>
           </div>
-          <button type="button" onClick={() => copyToClipboard(cliqPhone, 'phone')} className="p-2 rounded-lg bg-[#1C1815] hover:bg-[#26211D] border border-white/5 cursor-pointer text-[#A39A8B] transition-colors">
-            {copiedField === 'phone' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          <button type="button"onClick={() => copyToClipboard(cliqPhone, 'phone')} className="p-2 rounded-lg bg-[var(--sf-panel)] hover:bg-[var(--sf-panel-2)] border border-[var(--sf-border)] cursor-pointer text-[var(--sf-muted)] transition-colors">
+            {copiedField === 'phone'? <Check className="w-4 h-4 text-emerald-400"/> : <Copy className="w-4 h-4"/>}
           </button>
         </div>
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold text-[#7FD1A0] mb-1.5">رقم عملية التحويل (اختياري):</label>
-        <input type="text" value={cliqRef} onChange={(e) => setCliqRef(e.target.value)} placeholder="مثال: رقم العملية..." className="w-full text-xs py-2.5 px-3 bg-[#141210] border border-[#7FD1A0]/30 focus:border-[#7FD1A0] focus:ring-1 focus:ring-[#7FD1A0] rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none" />
+        <label className="block text-[11px] font-semibold text-[var(--sf-success)] mb-1.5">رقم عملية التحويل (اختياري):</label>
+        <input type="text" value={cliqRef} onChange={(e) => setCliqRef(e.target.value)} placeholder="مثال: رقم العملية..." className="w-full text-xs py-2.5 px-3 bg-[var(--sf-surface)] border border-[var(--sf-border)] focus:border-[#7FD1A0] focus:ring-1 focus:ring-[var(--sf-success)] rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] transition-all outline-none"/>
       </div>
     </div>
   ) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md overflow-y-auto animate-fade">
-      <div className="relative w-full max-w-2xl bg-[#141210] rounded-3xl shadow-[0_0_80px_-20px_rgba(212,176,106,0.15)] border border-white/10 flex flex-col my-4 sm:my-6 max-h-[94vh] sm:max-h-[90vh]">
+      <div className="relative w-full max-w-2xl bg-[var(--sf-surface)] rounded-3xl shadow-[0_0_80px_-20px_var(--sf-accent-soft)] border border-[var(--sf-border)] flex flex-col my-4 sm:my-6 max-h-[94vh] sm:max-h-[90vh]">
 
         {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-[#1C1815] rounded-t-3xl shrink-0">
+        <div className="p-5 sm:p-6 border-b border-[var(--sf-border)] flex items-center justify-between bg-[var(--sf-panel)] rounded-t-3xl shrink-0">
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-[#F3EEE4] font-serif flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-[var(--sf-text)] font-serif flex items-center gap-2">
               {orderConfirmed ? (
-                <><CheckCircle className="w-5 h-5 text-emerald-400" /> تم تأكيد طلبك بنجاح</>
+                <><CheckCircle className="w-5 h-5 text-emerald-400"/> تم تأكيد طلبك بنجاح</>
               ) : (
-                'إتمام الطلب وتحديد التوصيل'
-              )}
+                'إتمام الطلب وتحديد التوصيل')}
             </h3>
-            <p className="text-[11px] sm:text-xs text-[#A39A8B] mt-1">
-              {orderConfirmed ? 'شكراً لاختيارك دكان 962، نعتز بثقتك بنا.' : 'التوصيل لجميع المحافظات والدفع عند الاستلام أو كليك'}
+            <p className="text-[11px] sm:text-xs text-[var(--sf-muted)] mt-1">
+              {orderConfirmed ? 'شكراً لاختيارك دكان 962، نعتز بثقتك بنا.': 'التوصيل لجميع المحافظات والدفع عند الاستلام أو كليك'}
             </p>
           </div>
-          <button onClick={onClose} disabled={isSubmitting} className="p-2.5 rounded-full bg-[#141210]/50 hover:bg-[#141210]/80 text-[#A39A8B] hover:text-[#F3EEE4] transition-colors cursor-pointer disabled:opacity-50">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} disabled={isSubmitting} className="p-2.5 rounded-full bg-[var(--sf-surface)]/50 hover:bg-[var(--sf-surface)]/80 text-[var(--sf-muted)] hover:text-[var(--sf-text)] transition-colors cursor-pointer disabled:opacity-50">
+            <X className="w-5 h-5"/>
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-5 sm:p-6 md:p-8 custom-scrollbar">
           {orderConfirmed ? (
-            /* 💡 شاشة النجاح الفاخرة */
+            /*شاشة النجاح الفاخرة */
             <div className="text-center py-6">
               <div className="relative w-24 h-24 mx-auto mb-6">
-                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse" />
+                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse"/>
                 <div className="relative w-full h-full rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center border-2 border-emerald-400/30 shadow-inner">
-                  <CheckCircle className="w-12 h-12" />
+                  <CheckCircle className="w-12 h-12"/>
                 </div>
               </div>
               
-              <span className="text-xs font-bold text-[#A39A8B] uppercase tracking-wider mb-1 block">رقم تتبع الطلب</span>
-              <h4 className="text-3xl sm:text-4xl font-black text-[#E8CC8A] font-mono mb-4 drop-shadow-md">{orderNumber}</h4>
+              <span className="text-xs font-bold text-[var(--sf-muted)] uppercase tracking-wider mb-1 block">رقم تتبع الطلب</span>
+              <h4 className="text-3xl sm:text-4xl font-black text-[var(--sf-accent)] font-mono mb-4 drop-shadow-md">{orderNumber}</h4>
 
-              <div className="inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-6 bg-[#1C1815] ring-1 ring-white/10 rounded-2xl px-6 py-4 mb-6 text-sm shadow-lg">
-                <span className="text-[#A39A8B] flex items-center gap-2">
-                  إجمالي القطع: <strong className="text-[#F3EEE4] font-mono text-base">{confirmedItemsCount}</strong>
+              <div className="inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-6 bg-[var(--sf-panel)] ring-1 ring-[var(--sf-border)] rounded-2xl px-6 py-4 mb-6 text-sm shadow-lg">
+                <span className="text-[var(--sf-muted)] flex items-center gap-2">
+                  إجمالي القطع: <strong className="text-[var(--sf-text)] font-mono text-base">{confirmedItemsCount}</strong>
                 </span>
-                <span aria-hidden="true" className="hidden sm:block h-4 w-px bg-white/15" />
-                <span className="text-[#A39A8B] flex items-center gap-2">
-                  المبلغ النهائي: <strong className="text-[#E8CC8A] font-mono text-lg">{confirmedTotal.toFixed(2)} د.أ</strong>
+                <span aria-hidden="true" className="hidden sm:block h-4 w-px bg-white/15"/>
+                <span className="text-[var(--sf-muted)] flex items-center gap-2">
+                  المبلغ النهائي: <strong className="text-[var(--sf-accent)] font-mono text-lg">{confirmedTotal.toFixed(2)} د.أ</strong>
                 </span>
               </div>
 
-              <p className="text-xs text-[#B9B0A0] leading-relaxed max-w-md mx-auto mb-8">
+              <p className="text-xs text-[var(--sf-muted)] leading-relaxed max-w-md mx-auto mb-8">
                 تم استلام طلبك وحفظه بنجاح في السحابة. يمكنك الآن إرسال نسخة من الطلب مباشرة إلى واتساب مندوب المتجر لتأكيد موعد التسليم فوراً.
               </p>
               
               <div className="max-w-sm mx-auto space-y-3">
-                <a href={finalWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="w-full py-4 px-6 text-sm font-bold text-white bg-[#25D366] hover:bg-[#1FAF5E] rounded-xl shadow-[0_8px_20px_-8px_rgba(37,211,102,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-                  <MessageCircle className="w-5 h-5" />
+                <a href={finalWhatsAppUrl} target="_blank"rel="noopener noreferrer" className="w-full py-4 px-6 text-sm font-bold text-white bg-[#25D366] hover:bg-[#1FAF5E] rounded-xl shadow-[0_8px_20px_-8px_rgba(37,211,102,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                  <MessageCircle className="w-5 h-5"/>
                   <span>إرسال الطلب إلى واتساب</span>
                 </a>
-                <button onClick={onClose} className="w-full py-3 px-6 text-sm font-bold text-[#F3EEE4] bg-white/5 hover:bg-white/10 rounded-xl transition-all cursor-pointer">
+                <button onClick={onClose} className="w-full py-3 px-6 text-sm font-bold text-[var(--sf-text)] bg-white/5 hover:bg-[var(--sf-soft-strong)] rounded-xl transition-all cursor-pointer">
                   العودة إلى المعرض
                 </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <form onSubmit={handleSubmit} className="space-y-6"noValidate>
 
               {/* Error Message Container */}
               {cartError.length > 0 && (
                 <div ref={errorRef} className="bg-rose-500/10 border border-rose-400/30 rounded-2xl p-4 space-y-2 shadow-[0_0_15px_rgba(225,29,72,0.1)]" role="alert">
                   <div className="flex items-center gap-2 text-sm font-bold text-rose-400">
-                    <AlertTriangle className="w-5 h-5 shrink-0" />
+                    <AlertTriangle className="w-5 h-5 shrink-0"/>
                     <span>تعذر إتمام الطلب، يرجى المراجعة:</span>
                   </div>
                   <ul className="list-disc list-inside space-y-1">
@@ -571,25 +564,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Payment Methods */}
               <div>
-                <label className="block text-xs font-bold text-[#F3EEE4] mb-3">اختر طريقة الدفع <span className="text-rose-400">*</span></label>
+                <label className="block text-xs font-bold text-[var(--sf-text)] mb-3">اختر طريقة الدفع <span className="text-rose-400">*</span></label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button type="button" onClick={() => setPaymentMethod('cod')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cod' ? 'border-[#D4B06A] bg-[#D4B06A]/10 shadow-[0_0_15px_rgba(212,176,106,0.15)] ring-1 ring-[#D4B06A]' : 'border-white/10 bg-[#1C1815] hover:border-[#D4B06A]/50 hover:bg-white/5'}`}>
-                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cod' ? 'bg-[#D4B06A] text-[#0B0A09]' : 'bg-white/5 text-[#A39A8B]'}`}>
-                      <Truck className="w-5 h-5" />
+                  <button type="button"onClick={() => setPaymentMethod('cod')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cod'? 'border-[var(--sf-accent)] bg-[var(--sf-accent-soft)] shadow-[0_0_15px_var(--sf-accent-soft)] ring-1 ring-[var(--sf-accent)]': 'border-[var(--sf-border)] bg-[var(--sf-panel)] hover:border-[var(--sf-accent)]/50 hover:bg-white/5'}`}>
+                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cod'? 'bg-[var(--sf-accent)] text-[var(--sf-accent-contrast)]': 'bg-white/5 text-[var(--sf-muted)]'}`}>
+                      <Truck className="w-5 h-5"/>
                     </div>
                     <div>
-                      <p className={`text-sm font-bold ${paymentMethod === 'cod' ? 'text-[#E8CC8A]' : 'text-[#F3EEE4]'}`}>الدفع عند الاستلام</p>
-                      <p className="text-[11px] text-[#A39A8B] mt-0.5">كاش بعد المعاينة</p>
+                      <p className={`text-sm font-bold ${paymentMethod === 'cod'? 'text-[var(--sf-accent)]': 'text-[var(--sf-text)]'}`}>الدفع عند الاستلام</p>
+                      <p className="text-[11px] text-[var(--sf-muted)] mt-0.5">كاش بعد المعاينة</p>
                     </div>
                   </button>
                   
-                  <button type="button" onClick={() => setPaymentMethod('cliq')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cliq' ? 'border-[#7FD1A0] bg-[#7FD1A0]/10 shadow-[0_0_15px_rgba(127,209,160,0.15)] ring-1 ring-[#7FD1A0]' : 'border-white/10 bg-[#1C1815] hover:border-[#7FD1A0]/50 hover:bg-white/5'}`}>
-                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cliq' ? 'bg-[#7FD1A0] text-[#0B0A09]' : 'bg-white/5 text-[#A39A8B]'}`}>
-                      <Smartphone className="w-5 h-5" />
+                  <button type="button"onClick={() => setPaymentMethod('cliq')} className={`p-4 rounded-2xl border text-right transition-all duration-300 flex items-center gap-3 cursor-pointer ${paymentMethod === 'cliq'? 'border-[#7FD1A0] bg-[var(--sf-success-soft)] shadow-[0_0_15px_rgba(127,209,160,0.15)] ring-1 ring-[var(--sf-success)]': 'border-[var(--sf-border)] bg-[var(--sf-panel)] hover:border-[#7FD1A0]/50 hover:bg-white/5'}`}>
+                    <div className={`w-10 h-10 rounded-full grid place-items-center shrink-0 ${paymentMethod === 'cliq'? 'bg-[var(--sf-success)] text-[var(--sf-accent-contrast)]': 'bg-white/5 text-[var(--sf-muted)]'}`}>
+                      <Smartphone className="w-5 h-5"/>
                     </div>
                     <div>
-                      <p className={`text-sm font-bold ${paymentMethod === 'cliq' ? 'text-[#7FD1A0]' : 'text-[#F3EEE4]'}`}>دفع كليك (CliQ)</p>
-                      <p className="text-[11px] text-[#A39A8B] mt-0.5">تحويل فوري</p>
+                      <p className={`text-sm font-bold ${paymentMethod === 'cliq'? 'text-[var(--sf-success)]': 'text-[var(--sf-text)]'}`}>دفع كليك (CliQ)</p>
+                      <p className="text-[11px] text-[var(--sf-muted)] mt-0.5">تحويل فوري</p>
                     </div>
                   </button>
                 </div>
@@ -599,41 +592,33 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Personal Info */}
               <div className="space-y-4 pt-2">
-                <h4 className="text-sm font-bold text-[#E8CC8A] border-b border-white/10 pb-2">بيانات المستلم</h4>
+                <h4 className="text-sm font-bold text-[var(--sf-accent)] border-b border-[var(--sf-border)] pb-2">بيانات المستلم</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">الاسم الكامل (الرباعي) <span className="text-rose-400">*</span></label>
+                    <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">الاسم الكامل (الرباعي) <span className="text-rose-400">*</span></label>
                     <input
                       ref={nameInputRef}
-                      type="text"
-                      value={name}
+                      type="text" value={name}
                       onChange={(e) => { setName(e.target.value); if (nameError) setNameError(null); }}
-                      placeholder="مثال: محمد أحمد علي محمود"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${nameError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      placeholder="مثال: محمد أحمد علي محمود" className={`w-full text-sm py-3 px-4 bg-[var(--sf-panel)] border rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] transition-all outline-none ${nameError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5': 'border-[var(--sf-border)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)]'}`}
                     />
                     {nameError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{nameError}</p>}
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">رقم الهاتف الأساسي <span className="text-rose-400">*</span></label>
+                    <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">رقم الهاتف الأساسي <span className="text-rose-400">*</span></label>
                     <input
-                      type="tel"
-                      dir="ltr"
-                      value={phone1}
+                      type="tel" dir="ltr" value={phone1}
                       onChange={(e) => handlePhone1Change(e.target.value)}
-                      placeholder="07XXXXXXXX"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone1Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      placeholder="07XXXXXXXX" className={`w-full text-sm py-3 px-4 bg-[var(--sf-panel)] border rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] font-mono text-right transition-all outline-none ${phone1Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5': 'border-[var(--sf-border)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)]'}`}
                     />
                     {phone1Error && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{phone1Error}</p>}
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">رقم هاتف إضافي (اختياري)</label>
+                    <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">رقم هاتف إضافي (اختياري)</label>
                     <input
-                      type="tel"
-                      dir="ltr"
-                      value={phone2}
+                      type="tel" dir="ltr" value={phone2}
                       onChange={(e) => handlePhone2Change(e.target.value)}
-                      placeholder="رقم بديل..."
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] font-mono text-right transition-all outline-none ${phone2Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      placeholder="رقم بديل..." className={`w-full text-sm py-3 px-4 bg-[var(--sf-panel)] border rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] font-mono text-right transition-all outline-none ${phone2Error ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5': 'border-[var(--sf-border)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)]'}`}
                     />
                     {phone2Error && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{phone2Error}</p>}
                   </div>
@@ -642,48 +627,42 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Address */}
               <div className="space-y-4 pt-2">
-                <h4 className="text-sm font-bold text-[#E8CC8A] border-b border-white/10 pb-2">عنوان التوصيل بالتفصيل</h4>
+                <h4 className="text-sm font-bold text-[var(--sf-accent)] border-b border-[var(--sf-border)] pb-2">عنوان التوصيل بالتفصيل</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">المحافظة <span className="text-rose-400">*</span></label>
-                    <select value={governorate} onChange={(e) => { setGovernorate(e.target.value); setAutoDetectedGov(null); }} className="w-full text-sm py-3 px-3 bg-[#1C1815] border border-white/10 rounded-xl text-[#F3EEE4] focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A] outline-none cursor-pointer appearance-none">
+                    <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">المحافظة <span className="text-rose-400">*</span></label>
+                    <select value={governorate} onChange={(e) => { setGovernorate(e.target.value); setAutoDetectedGov(null); }} className="w-full text-sm py-3 px-3 bg-[var(--sf-panel)] border border-[var(--sf-border)] rounded-xl text-[var(--sf-text)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)] outline-none cursor-pointer appearance-none">
                       {jordanGovernorates.map((gov) => <option key={gov} value={gov}>{gov}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">المنطقة / الحي <span className="text-rose-400">*</span></label>
+                    <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">المنطقة / الحي <span className="text-rose-400">*</span></label>
                     <input
                       ref={regionInputRef}
-                      type="text"
-                      value={region}
+                      type="text" value={region}
                       onChange={(e) => handleRegionChange(e.target.value)}
-                      placeholder="مثال: جبل عمان"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${regionError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      placeholder="مثال: جبل عمان" className={`w-full text-sm py-3 px-4 bg-[var(--sf-panel)] border rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] transition-all outline-none ${regionError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5': 'border-[var(--sf-border)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)]'}`}
                     />
                     {regionError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{regionError}</p>}
-                    {!regionError && autoDetectedGov && <span className="text-[9px] text-[#7FD1A0] mt-1 block">تم تحديد المحافظة تلقائياً ✓</span>}
+                    {!regionError && autoDetectedGov && <span className="text-[9px] text-[var(--sf-success)] mt-1 flex items-center gap-1"><Check className="w-3 h-3 shrink-0" strokeWidth={1.5} aria-hidden="true" />تم تحديد المحافظة تلقائياً</span>}
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">اسم الشارع / أقرب معلم <span className="text-rose-400">*</span></label>
+                    <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">اسم الشارع / أقرب معلم <span className="text-rose-400">*</span></label>
                     <input
                       ref={streetInputRef}
-                      type="text"
-                      value={street}
+                      type="text" value={street}
                       onChange={(e) => { setStreet(e.target.value); if (streetError && e.target.value.trim()) setStreetError(null); }}
-                      placeholder="مثال: شارع المدينة المنورة"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${streetError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      placeholder="مثال: شارع المدينة المنورة" className={`w-full text-sm py-3 px-4 bg-[var(--sf-panel)] border rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] transition-all outline-none ${streetError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5': 'border-[var(--sf-border)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)]'}`}
                     />
                     {streetError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{streetError}</p>}
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">رقم العمارة / البناية والطابق <span className="text-rose-400">*</span></label>
+                    <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">رقم العمارة / البناية والطابق <span className="text-rose-400">*</span></label>
                     <input
                       ref={buildingInputRef}
-                      type="text"
-                      value={building}
+                      type="text" value={building}
                       onChange={(e) => { setBuilding(e.target.value); if (buildingError && e.target.value.trim()) setBuildingError(null); }}
-                      placeholder="مثال: عمارة رقم 14، الطابق 2"
-                      className={`w-full text-sm py-3 px-4 bg-[#1C1815] border rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none ${buildingError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5' : 'border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A]'}`}
+                      placeholder="مثال: عمارة رقم 14، الطابق 2" className={`w-full text-sm py-3 px-4 bg-[var(--sf-panel)] border rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] transition-all outline-none ${buildingError ? 'border-rose-400 focus:ring-1 focus:ring-rose-400 bg-rose-500/5': 'border-[var(--sf-border)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)]'}`}
                     />
                     {buildingError && <p className="text-[10px] text-rose-400 mt-1.5 font-semibold">{buildingError}</p>}
                   </div>
@@ -692,32 +671,32 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Notes */}
               <div>
-                <label className="block text-[11px] font-semibold text-[#B9B0A0] mb-1.5">ملاحظات إضافية للتوصيل (اختياري)</label>
-                <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-sm py-3 px-4 bg-[#1C1815] border border-white/10 focus:border-[#D4B06A] focus:ring-1 focus:ring-[#D4B06A] rounded-xl text-[#F3EEE4] placeholder-[#8A8173] transition-all outline-none resize-none" />
+                <label className="block text-[11px] font-semibold text-[var(--sf-muted)] mb-1.5">ملاحظات إضافية للتوصيل (اختياري)</label>
+                <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="أوقات التوصيل المفضلة أو أي تفاصيل خاصة..." className="w-full text-sm py-3 px-4 bg-[var(--sf-panel)] border border-[var(--sf-border)] focus:border-[var(--sf-accent)] focus:ring-1 focus:ring-[var(--sf-accent)] rounded-xl text-[var(--sf-text)] placeholder-[var(--sf-muted)] transition-all outline-none resize-none"/>
               </div>
 
               {/* Summary */}
-              <div className="bg-[#1C1815] p-5 rounded-2xl border border-white/10 shadow-inner space-y-3 text-sm">
-                <div className="flex justify-between text-[#A39A8B]">
+              <div className="bg-[var(--sf-panel)] p-5 rounded-2xl border border-[var(--sf-border)] shadow-inner space-y-3 text-sm">
+                <div className="flex justify-between text-[var(--sf-muted)]">
                   <span>المجموع الفرعي ({totalItemsCount} قطعة)</span>
-                  <span className="font-mono font-bold text-[#F3EEE4]">{subtotal.toFixed(2)} د.أ</span>
+                  <span className="font-mono font-bold text-[var(--sf-text)]">{subtotal.toFixed(2)} د.أ</span>
                 </div>
-                <div className="flex justify-between text-[#A39A8B]">
+                <div className="flex justify-between text-[var(--sf-muted)]">
                   <span>أجور التوصيل ({governorate})</span>
-                  <span className={`font-semibold font-mono ${deliveryFee === 0 ? 'text-[#7FD1A0]' : 'text-[#F3EEE4]'}`}>{deliveryFee === 0 ? 'مجاني' : `${deliveryFee.toFixed(2)} د.أ`}</span>
+                  <span className={`font-semibold font-mono ${deliveryFee === 0 ? 'text-[var(--sf-success)]': 'text-[var(--sf-text)]'}`}>{deliveryFee === 0 ? 'مجاني': `${deliveryFee.toFixed(2)} د.أ`}</span>
                 </div>
-                <div className="pt-3 border-t border-white/10 flex justify-between font-black text-[#F3EEE4] items-end">
+                <div className="pt-3 border-t border-[var(--sf-border)] flex justify-between font-black text-[var(--sf-text)] items-end">
                   <span className="text-base">المبلغ الإجمالي:</span>
-                  <span className="font-mono text-2xl text-[#E8CC8A] leading-none">{total.toFixed(2)} <span className="text-sm font-bold text-[#A39A8B]">د.أ</span></span>
+                  <span className="font-mono text-2xl text-[var(--sf-accent)] leading-none">{total.toFixed(2)} <span className="text-sm font-bold text-[var(--sf-muted)]">د.أ</span></span>
                 </div>
               </div>
 
-              <button type="submit" disabled={isSubmitting} className="w-full py-4 px-6 text-base font-black text-[#0B0A09] bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] hover:from-[#E8CC8A] hover:to-[#E8CC8A] rounded-xl shadow-[0_8px_20px_-8px_rgba(212,176,106,0.6)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-50">
-                <span>{isSubmitting ? 'جارٍ التحقق وحفظ الطلب...' : 'تأكيد طلب الشراء الآن 🛒'}</span>
+              <button type="submit"disabled={isSubmitting} className="w-full py-4 px-6 text-base font-black text-[var(--sf-accent-contrast)] bg-gradient-to-b from-[var(--sf-accent-strong)] to-[var(--sf-accent)] hover:from-[var(--sf-accent-strong)] hover:to-[var(--sf-accent-strong)] rounded-xl shadow-gold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-50">
+                <span>{isSubmitting ? 'جارٍ التحقق وحفظ الطلب...': 'تأكيد طلب الشراء الآن'}</span>
               </button>
 
-              <p className="flex items-center justify-center gap-2 text-[10px] text-[#8A8173]">
-                <ShieldCheck className="w-4 h-4 text-[#7FD1A0]" />
+              <p className="flex items-center justify-center gap-2 text-[10px] text-[var(--sf-muted)]">
+                <ShieldCheck className="w-4 h-4 text-[var(--sf-success)]"/>
                 يُفحص السعر والمخزون من السيرفر لحظة الإرسال — الطلب محمي بمعاملة ذرّية
               </p>
             </form>

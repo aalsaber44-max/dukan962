@@ -5,7 +5,7 @@ import { getStockState } from '../utils/inventory';
 /** شارة حالة المخزون في لوحة التحكم */
 export const StockBadge: React.FC<{ product: Pick<Product, 'stock' | 'lowStockThreshold'> }> = ({ product }) => {
   const state = getStockState(product);
-  if (state === 'untracked') return <span className="text-[11px] text-[#8A8173]">غير مُتتبَّع</span>;
+  if (state === 'untracked') return <span className="text-[11px] text-[var(--sf-muted)]">غير مُتتبَّع</span>;
 
   const styles = {
     out: 'bg-rose-500/10 text-rose-400 ring-rose-400/30',

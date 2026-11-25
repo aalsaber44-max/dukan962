@@ -19,11 +19,12 @@ import { Product, CartItem, ProductColor, Category } from './types/furniture';
 import { Toast, ToastData, ToastVariant } from './components/Toast';
 import { EmptyState, ProductSkeletonGrid, ActiveFilter } from './components/EmptyState';
 import { STORE_PHONE_INTL } from './utils/jordanLocations';
+import { useScrollReveal } from './utils/reveal';
 
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { RecentlyViewed } from './components/RecentlyViewed';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
-import { FAQPage } from './components/FAQPage'; // 💡 استيراد صفحة الأسئلة الشائعة
+import { FAQPage } from './components/FAQPage'; //استيراد صفحة الأسئلة الشائعة
 import { SupportChatbot } from './components/SupportChatbot';
 
 import { collection, onSnapshot, getDocs, setDoc, doc } from 'firebase/firestore';
@@ -35,8 +36,8 @@ const AdminDashboard = lazy(() =>
 
 const AdminDashboardFallback = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
-    <div className="flex items-center gap-3 text-sm font-bold text-[#E8CC8A]">
-      <span className="w-5 h-5 rounded-full border-2 border-[#D4B06A]/30 border-t-[#E8CC8A] animate-spin" />
+    <div className="flex items-center gap-3 text-sm font-bold text-[var(--sf-accent)]">
+      <span className="w-5 h-5 rounded-full border-2 border-[var(--sf-border-strong)] border-t-[#E8CC8A] animate-spin"/>
       جارٍ تحميل لوحة التحكم...
     </div>
   </div>
@@ -51,7 +52,7 @@ const homeCategoryData: Category = {
   title: 'دكان 962.. وجهتك الأولى للتسوق الشامل',
   description: 'أفضل المنتجات والتصاميم المختارة بعناية، بجودة عالية وأسعار منافسة. تسوق كل ما يحتاجه بيتك وأناقتك الآن واستمتع بخدمة المعاينة عند الاستلام والتوصيل لجميع المحافظات.',
   buttonText: 'استكشف تشكيلاتنا الآن',
-  badgeText: '✨ جودة تستحق الاقتناء',
+  badgeText: 'جودة تستحق الاقتناء',
   isActive: true,
   order: 0
 };
@@ -66,11 +67,13 @@ export default function App() {
   });
 
   useEffect(() => {
-    document.documentElement.dataset.theme = isLightTheme ? 'light' : 'dark';
+    document.documentElement.dataset.theme = isLightTheme ? 'light': 'dark';
     try {
-      localStorage.setItem('dukan962_store_theme', isLightTheme ? 'light' : 'dark');
+      localStorage.setItem('dukan962_store_theme', isLightTheme ? 'light': 'dark');
     } catch {}
   }, [isLightTheme]);
+
+  useScrollReveal();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -128,10 +131,10 @@ export default function App() {
         const snapshot = await getDocs(collection(db, 'categories'));
         
         const defaultCategories = [
-          { id: 'tables', name: 'طاولات', image: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', bannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', mobileBannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', title: 'طاولات عصرية تجمع بين الأناقة والعملية', description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات', buttonText: 'استكشف طاولات العرض الآن', badgeText: '✨ يوجد معاينة عند وصول الطلب', isActive: true, order: 1 },
-          { id: 'shoes', name: 'أحذية', image: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', bannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', mobileBannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', title: 'أحدث صيحات الأحذية', description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.', buttonText: 'استكشف الأحذية الآن', badgeText: '👟 خامات أصلية', isActive: true, order: 2 },
-          { id: 'perfumes', name: 'عطور', image: 'https://i.postimg.cc/R0LRh1yY/Designer.png', bannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', mobileBannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', title: 'عطور تدوم طويلاً', description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.', buttonText: 'استكشف العطور الآن', badgeText: '🌟 عطور فاخرة', isActive: true, order: 3 },
-          { id: 'ramadan', name: 'زينة رمضان', image: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', bannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', mobileBannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', title: 'زينة رمضان.. أضف البهجة لبيتك', description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.', buttonText: 'استكشف زينة رمضان', badgeText: '🌙 أجواء رمضانية', isActive: true, order: 4 }
+          { id: 'tables', name: 'طاولات', image: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', bannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', mobileBannerImage: 'https://i.postimg.cc/nLGkrKg6/Designer-(3).png', title: 'طاولات عصرية تجمع بين الأناقة والعملية', description: 'اكتشف تشكيلتنا المميزة من الطاولات المصممة لتناسب كافة زوايا منزلك. تصاميم فاخرة، خامات متينة، وأسعار منافسة مع خدمة المعاينة عند الاستلام والتوصيل لكل المحافظات', buttonText: 'استكشف طاولات العرض الآن', badgeText: 'يوجد معاينة عند وصول الطلب', isActive: true, order: 1 },
+          { id: 'shoes', name: 'أحذية', image: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', bannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', mobileBannerImage: 'https://i.postimg.cc/Ls3T5kwz/Designer-(1).png', title: 'أحدث صيحات الأحذية', description: 'خامات عالية الجودة وتصاميم عصرية تناسب كل الأذواق. راحة وتميز في كل خطوة.', buttonText: 'استكشف الأحذية الآن', badgeText: 'خامات أصلية', isActive: true, order: 2 },
+          { id: 'perfumes', name: 'عطور', image: 'https://i.postimg.cc/R0LRh1yY/Designer.png', bannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', mobileBannerImage: 'https://i.postimg.cc/R0LRh1yY/Designer.png', title: 'عطور تدوم طويلاً', description: 'عطور فاخرة بتركيزات عالية تناسب جميع المناسبات. عبق يبقى معك طوال اليوم.', buttonText: 'استكشف العطور الآن', badgeText: 'عطور فاخرة', isActive: true, order: 3 },
+          { id: 'ramadan', name: 'زينة رمضان', image: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', bannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', mobileBannerImage: 'https://i.postimg.cc/vmtzT7CF/Designer-(2).png', title: 'زينة رمضان.. أضف البهجة لبيتك', description: 'فوانيس وزينة رمضانية مميزة لاستقبال الشهر الفضيل بأجواء روحانية ومبهجة.', buttonText: 'استكشف زينة رمضان', badgeText: 'أجواء رمضانية', isActive: true, order: 4 }
         ];
 
         if (snapshot.empty) {
@@ -172,8 +175,7 @@ export default function App() {
         
         if (oldProducts.length > 0) {
           const confirmMigration = window.confirm(
-            `وجدنا ${oldProducts.length} منتج محفوظ في هذا المتصفح من قبل. هل تريد رفعهم إلى السحابة (Firebase) الآن؟`
-          );
+            `وجدنا ${oldProducts.length} منتج محفوظ في هذا المتصفح من قبل. هل تريد رفعهم إلى السحابة (Firebase) الآن؟`);
           
           if (confirmMigration) {
             try {
@@ -181,7 +183,7 @@ export default function App() {
                 await setDoc(doc(db, 'products', prod.id), prod);
               }
               localStorage.removeItem('dukan962_products_v3');
-              alert('تم رفع جميع المنتجات والتعديلات إلى السحابة بنجاح! 🎉');
+              alert('تم رفع جميع المنتجات والتعديلات إلى السحابة بنجاح!');
               window.location.reload(); 
             } catch (error) {
               console.error('Error migrating data:', error);
@@ -213,7 +215,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); 
-  const [sortBy, setSortBy] = useState<'featured' | 'newest' | 'price-asc' | 'price-desc'>('featured');
+  const [sortBy, setSortBy] = useState<'featured'| 'newest'| 'price-asc'| 'price-desc'>('featured');
   const [selectedColor, setSelectedColor] = useState<string>('');
 
   const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
@@ -221,7 +223,7 @@ export default function App() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
-  const [isFAQPageOpen, setIsFAQPageOpen] = useState(false); // 💡 حالة صفحة الأسئلة
+  const [isFAQPageOpen, setIsFAQPageOpen] = useState(false); //حالة صفحة الأسئلة
 
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -262,7 +264,7 @@ export default function App() {
   const handleAddToCart = (product: Product, chosenColor?: ProductColor, quantity: number = 1) => {
     const liveProduct = products.find((p) => p.id === product.id);
     if (productsLoaded && !liveProduct) {
-      showToast('هذا المنتج لم يعد متوفراً في المتجر', { variant: 'warning' });
+      showToast('هذا المنتج لم يعد متوفراً في المتجر', { variant: 'warning'});
       return;
     }
     
@@ -274,7 +276,7 @@ export default function App() {
     if (chosenColor && chosenColor.name) {
       const matchedColor = liveColors.find((c) => c.name === chosenColor.name);
       if (liveColors.length > 0 && !matchedColor) {
-        showToast(`عذراً، اللون "${chosenColor.name}" لم يعد متاحاً لهذا المنتج. يرجى اختيار لون آخر.`, { variant: 'warning' });
+        showToast(`عذراً، اللون "${chosenColor.name}"لم يعد متاحاً لهذا المنتج. يرجى اختيار لون آخر.`, { variant: 'warning'});
         return;
       }
       activeColor = matchedColor || chosenColor;
@@ -291,7 +293,7 @@ export default function App() {
 
     const canAdd = availableQty(live) - qtyInCart(cart, product.id);
     if (canAdd <= 0) {
-      showToast(`"${product.name}" نفدت الكمية المتاحة`, { variant: 'warning' });
+      showToast(`"${product.name}"نفدت الكمية المتاحة`, { variant: 'warning'});
       return;
     }
     const requestedQty = Math.max(1, Math.floor(Number(quantity) || 1));
@@ -317,7 +319,7 @@ export default function App() {
     });
 
     if (addQty < requestedQty) {
-      showToast(`تمت إضافة ${addQty} فقط من "${product.name}" (المتاح ${availableQty(live)})`, {
+      showToast(`تمت إضافة ${addQty} فقط من "${product.name}"(المتاح ${availableQty(live)})`, {
         variant: 'warning',
         actionLabel: 'عرض السلة',
         onAction: () => setIsCartOpen(true),
@@ -336,7 +338,7 @@ export default function App() {
     if (delta > 0) {
       const live = products.find((p) => p.id === id);
       if (live && availableQty(live) - qtyInCart(cart, id) < delta) {
-        showToast(`الكمية المتاحة من "${live.name}" ${availableQty(live)} فقط`, { variant: 'warning' });
+        showToast(`الكمية المتاحة من "${live.name}"${availableQty(live)} فقط`, { variant: 'warning'});
         return;
       }
     }
@@ -363,7 +365,7 @@ export default function App() {
     setWishlist((prev) => {
       const exists = prev.some((p) => p.id === product.id);
       if (exists) {
-        showToast(product.name, { variant: 'remove' });
+        showToast(product.name, { variant: 'remove'});
         return prev.filter((p) => p.id !== product.id);
       } else {
         showToast(product.name, {
@@ -392,10 +394,10 @@ export default function App() {
     const filtered = products.filter((prod) => {
       if (prod.isActive === false) return false;
 
-      const matchesCategory = selectedCategory === 'all' || prod.categoryId === selectedCategory;
+      const matchesCategory = selectedCategory === 'all'|| prod.categoryId === selectedCategory;
 
       const matchesSearch =
-        searchQuery.trim() === '' ||
+        searchQuery.trim() === ''||
         prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         prod.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         String(prod.itemNumber).includes(searchQuery.trim());
@@ -403,7 +405,7 @@ export default function App() {
       const matchesPrice = prod.basePrice >= priceRange[0] && prod.basePrice <= priceRange[1];
 
       const matchesColor =
-        selectedColor === '' ||
+        selectedColor === ''||
         prod.colors?.some((c) => c.name.toLowerCase().includes(selectedColor.toLowerCase()));
 
       return matchesCategory && matchesSearch && matchesPrice && matchesColor;
@@ -462,18 +464,18 @@ export default function App() {
   );
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth'});
   };
 
   const scrollToCatalog = () => {
     const el = document.getElementById('catalog');
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+      el.scrollIntoView({ behavior: 'smooth'});
     }
   };
 
   const scrollToCategories = () => {
-    document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth'});
   };
 
   const activeFilters: ActiveFilter[] = [];
@@ -498,8 +500,7 @@ export default function App() {
     });
   }
 
-  const currentCategoryData = selectedCategory === 'all' 
-    ? homeCategoryData 
+  const currentCategoryData = selectedCategory === 'all'? homeCategoryData 
     : categories.find(c => c.id === selectedCategory) || homeCategoryData;
 
   useEffect(() => {
@@ -517,46 +518,31 @@ export default function App() {
       const price = Number(selectedProductModal.basePrice || 0).toFixed(2);
       document.title = `${selectedProductModal.name} | ${price} د. أ | دكان 962`;
       setMetaDescription(
-        `${selectedProductModal.name} بسعر ${price} دينار أردني — ${selectedProductModal.description?.slice(0, 120) || 'منتج مختار بعناية...'}`
-      );
+        `${selectedProductModal.name} بسعر ${price} دينار أردني — ${selectedProductModal.description?.slice(0, 120) || 'منتج مختار بعناية...'}`);
       return;
     }
 
-    if (selectedCategory !== 'all' && currentCategoryData) {
-      document.title = `${currentCategoryData.name} | دكان 962 للأثاث`;
+    if (selectedCategory !== 'all'&& currentCategoryData) {
+      document.title = `${currentCategoryData.name} | دكان 962`;
       setMetaDescription(
         currentCategoryData.description ||
-          `تشكيلة ${currentCategoryData.name} المميزة في دكان 962 — جودة عالية وأسعار منافسة...`
-      );
+          `تشكيلة ${currentCategoryData.name} المميزة في دكان 962 — جودة عالية وأسعار منافسة...`);
       return;
     }
 
-    document.title = 'دكان 962 للأثاث | DUKAN 962 - طاولات وعفش فاخر';
+    document.title = 'دكان 962 | DUKAN 962 — وجهتك الأولى للتسوق الشامل';
     setMetaDescription(
-      'دكان 962 للأثاث - تشكيلة طاولات وسط وصالون، طاولات شاشة وتلفزيون ومدافئ ديكور خشب تايلندي ثقيل. توصيل لكافة المحافظات بالدينار الأردني.'
-    );
+      'دكان 962 للأثاث - تشكيلة طاولات وسط وصالون، طاولات شاشة وتلفزيون ومدافئ ديكور خشب تايلندي ثقيل. توصيل لكافة المحافظات بالدينار الأردني.');
   }, [selectedCategory, selectedProductModal, currentCategoryData]);
 
   return (
     <ErrorBoundary>
-      {/* 💡 المتجر يغلف فقط واجهة المتجر */}
+      {/*المتجر يغلف فقط واجهة المتجر */}
       <div 
-        className="storefront-theme min-h-screen flex flex-col text-[#F3EEE4] overflow-x-hidden pb-16 md:pb-0"
-        data-theme={isLightTheme ? 'light' : 'dark'}
+        className="storefront-theme min-h-screen flex flex-col text-[var(--sf-text)] overflow-x-hidden pb-16 md:pb-0" data-theme={isLightTheme ? 'light': 'dark'}
       >
         
         <Toast toast={toast} onDismiss={dismissToast} />
-
-        <aside aria-label="شريط العروض" className="relative bg-[#080706] text-[#A39A8B] text-[11px] sm:text-xs py-2.5 px-4 text-center">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-5">
-            <span className="text-[#E8CC8A] font-semibold">يوجد معاينة عند وصول الطلب قبل الاستلام والدفع</span>
-            <span aria-hidden="true" className="hidden sm:block h-3 w-px bg-white/15" />
-            <span className="hidden sm:inline">التوصيل لجميع محافظات المملكة</span>
-            <span aria-hidden="true" className="hidden md:block h-3 w-px bg-white/15" />
-            <span className="hidden md:inline">الدفع كاش أو عبر كليك (CliQ)</span>
-          </div>
-          <div aria-hidden="true" className="absolute bottom-0 inset-x-0 gold-rule opacity-60" />
-        </aside>
 
         <Navbar
           categories={categories}
@@ -592,20 +578,22 @@ export default function App() {
           }}
         />
 
-        {selectedCategory === 'all' && (
+        {selectedCategory === 'all'&& (
           <>
             {offersProducts.length > 0 && (
-              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-[var(--sf-border)]">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5"data-reveal>
                   <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-[#F3EEE4] tracking-tight font-serif flex items-center gap-2">
-                      <Flame className="w-6 h-6 text-rose-500" />
+                    <span className="sf-eyebrow mb-2">مختارات الموسم</span>
+                    <h2 className="text-[22px] sm:text-3xl font-bold text-[var(--sf-text)] flex items-center gap-2 leading-tight">
+                      <Flame className="w-5 h-5 text-rose-500"strokeWidth={1.8} />
                       عروض وخصومات
                     </h2>
-                    <p className="text-sm text-[#A39A8B] mt-2">أفضل العروض المختارة لك بأسعار لا تقاوم.</p>
+                    <p className="text-[12px] sm:text-sm text-[var(--sf-muted)] mt-2">أفضل العروض المختارة لك بأسعار لا تقاوم.</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div aria-hidden="true" className="sf-hairline mb-6"/>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 sm:gap-x-5 gap-y-9">
                   {offersProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -624,17 +612,19 @@ export default function App() {
             )}
 
             {newArrivalsProducts.length > 0 && (
-              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-[var(--sf-border)]">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5"data-reveal>
                   <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-[#F3EEE4] tracking-tight font-serif flex items-center gap-2">
-                      <Clock className="w-6 h-6 text-[#7FD1A0]" />
+                    <span className="sf-eyebrow mb-2">وصل حديثاً</span>
+                    <h2 className="text-[22px] sm:text-3xl font-bold text-[var(--sf-text)] flex items-center gap-2 leading-tight">
+                      <Clock className="w-5 h-5 text-[var(--sf-success)]"strokeWidth={1.8} />
                       وصل حديثاً
                     </h2>
-                    <p className="text-sm text-[#A39A8B] mt-2">أحدث المنتجات التي أضفناها للمتجر مؤخراً.</p>
+                    <p className="text-[12px] sm:text-sm text-[var(--sf-muted)] mt-2">أحدث المنتجات التي أضفناها للمتجر مؤخراً.</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div aria-hidden="true" className="sf-hairline mb-6"/>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 sm:gap-x-5 gap-y-9">
                   {newArrivalsProducts.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -654,24 +644,26 @@ export default function App() {
           </>
         )}
 
-        <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-white/10">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <main id="catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full border-t border-[var(--sf-border)]">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6"data-reveal>
             <div>
-              <h2 className="text-2xl sm:text-4xl font-bold text-[#F3EEE4] tracking-tight font-serif">
-                {selectedCategory !== 'all' ? `أحدث منتجات ${currentCategoryData.name}` : 'الأكثر مبيعاً وأحدث التشكيلات'}
+              <span className="sf-eyebrow mb-2">المتجر</span>
+              <h2 className="text-[24px] leading-tight sm:text-4xl font-bold text-[var(--sf-text)] text-balance">
+                {selectedCategory !== 'all'? `أحدث منتجات ${currentCategoryData.name}`: 'الأكثر مبيعاً وأحدث التشكيلات'}
               </h2>
-              <p className="text-sm text-[#A39A8B] mt-2">
+              <p className="text-[12px] sm:text-sm text-[var(--sf-muted)] mt-2">
                 اضغط على أي قطعة لمشاهدة التفاصيل والألوان.
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full bg-[#7FD1A0]/10 ring-1 ring-[#7FD1A0]/25 text-xs font-bold text-[#7FD1A0]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7FD1A0]" />
-              الأسعار بالدينار الأردني (د.أ) فقط
+            <div className="inline-flex items-center gap-2 self-start sm:self-auto h-9 px-4 rounded-full border border-[var(--sf-border)] bg-[var(--sf-surface)] text-[11px] font-bold text-[var(--sf-muted)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--sf-success)]"/>
+              الأسعار بالدينار الأردني (د.أ)
             </div>
           </div>
+          <div aria-hidden="true" className="sf-hairline mb-6"/>
 
-          {selectedCategory !== 'all' && currentCategoryData.videoUrl && (
+          {selectedCategory !== 'all'&& currentCategoryData.videoUrl && (
             <CategoryVideoBanner
               videoUrl={currentCategoryData.videoUrl}
               poster={currentCategoryData.image}
@@ -680,18 +672,18 @@ export default function App() {
           )}
 
           {(currentCategoryData.name.includes('عطور') || selectedCategory === 'perfumes') && (
-            <div className="mb-8 relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.15),transparent_50%)] pointer-events-none" />
+            <div className="mb-8 relative overflow-hidden rounded-[22px] bg-[var(--sf-panel)] border border-[var(--sf-border)] shadow-soft p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6"data-reveal>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--sf-accent-soft),transparent_50%)] pointer-events-none"/>
               
               <div className="relative z-10 text-center sm:text-right flex-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4B06A]/10 text-[#E8CC8A] text-[11px] font-bold mb-3 ring-1 ring-[#D4B06A]/30">
-                  <Sparkles className="w-3.5 h-3.5" />
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--sf-accent-soft)] text-[var(--sf-accent)] text-[11px] font-bold mb-3 border border-[var(--sf-border-strong)]">
+                  <Sparkles className="w-3.5 h-3.5"/>
                   خدمة حصرية
                 </div>
-                <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
-                  لم تجد عطرك المفضل؟ نوفر لك <span className="text-[#D4B06A]">عطور حسب الطلب</span>
+                <h3 className="text-xl sm:text-2xl font-black text-[var(--sf-text)] font-serif mb-2">
+                  لم تجد عطرك المفضل؟ نوفر لك <span className="text-[var(--sf-accent)]">عطور حسب الطلب</span>
                 </h3>
-                <p className="text-xs sm:text-sm text-[#A39A8B] leading-relaxed max-w-xl">
+                <p className="text-xs sm:text-sm text-[var(--sf-muted)] leading-relaxed max-w-xl">
                   أرسل لنا اسم البراند ونوع العطر والحجم المطلوب، وسنقوم بتجهيز التركيبة الخاصة بك ومراجعتها.
                   سنبلغك بالسعر ووقت التجهيز فوراً.
                 </p>
@@ -700,13 +692,9 @@ export default function App() {
               <div className="relative z-10 shrink-0">
                 <a
                   href={`https://wa.me/${STORE_PHONE_INTL}?text=${encodeURIComponent(
-                    'مرحباً دكان 962،\nأرغب في طلب عطر مخصص (Custom Made).\n\nتفاصيل طلبي:\n- اسم البراند: \n- نوع العطر: \n- الحجم المطلوب: \n\nأرجو إبلاغي بالسعر ووقت التجهيز. شكراً لكم!'
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
-                >
-                  <MessageCircle className="w-5 h-5" />
+                    'مرحباً دكان 962،\nأرغب في طلب عطر مخصص (Custom Made).\n\nتفاصيل طلبي:\n- اسم البراند: \n- نوع العطر: \n- الحجم المطلوب: \n\nأرجو إبلاغي بالسعر ووقت التجهيز. شكراً لكم!')}`}
+                  target="_blank"rel="noopener noreferrer" className="sf-btn sf-btn-gold">
+                  <MessageCircle className="w-5 h-5"/>
                   اطلب عطرك المخصص الآن
                 </a>
               </div>
@@ -725,11 +713,11 @@ export default function App() {
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <p className="text-xs text-[#A39A8B]">
-              {productsLoaded ? `${filteredProducts.length} منتج` : ''}
+            <p className="text-xs text-[var(--sf-muted)]">
+              {productsLoaded ? `${filteredProducts.length} منتج`: ''}
             </p>
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full">
-              <span className="text-xs font-bold text-[#F3EEE4] shrink-0 ml-1">ترتيب حسب:</span>
+            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar max-w-full">
+              <span className="text-[9.5px] font-semibold tracking-[0.18em] uppercase text-[var(--sf-subtle)] shrink-0">ترتيب حسب</span>
               {([
                 ['featured', 'الأكثر مبيعاً'],
                 ['newest', 'الأحدث'],
@@ -740,11 +728,8 @@ export default function App() {
                   key={value}
                   onClick={() => setSortBy(value)}
                   aria-pressed={sortBy === value}
-                  className={`py-1.5 px-3.5 text-xs font-semibold rounded-full transition-all duration-300 cursor-pointer whitespace-nowrap active:scale-95 ${
-                    sortBy === value
-                      ? 'bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] shadow-gold'
-                      : 'bg-white/[0.04] text-[#A39A8B] ring-1 ring-white/10 hover:text-[#F3EEE4] hover:ring-[#D4B06A]/40'
-                  }`}
+                                    data-active={sortBy === value}
+                  className="shrink-0 text-[11.5px] font-medium sf-link-quiet whitespace-nowrap cursor-pointer"
                 >
                   {label}
                 </button>
@@ -765,14 +750,14 @@ export default function App() {
             <ProductSkeletonGrid />
           ) : filteredProducts.length === 0 ? (
             <EmptyState
-              variant={products.length === 0 ? 'no-products' : 'no-results'}
+              variant={products.length === 0 ? 'no-products': 'no-results'}
               searchQuery={searchQuery}
               activeFilters={activeFilters}
               onReset={handleResetFilters}
               onBrowseCategories={scrollToCategories}
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 sm:gap-x-6 gap-y-10">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -790,16 +775,16 @@ export default function App() {
           )}
         </main>
 
-        {/* 💡 قسم الدعوة لزيارة الأسئلة الشائعة */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full border-t border-white/10">
-          <div className="relative overflow-hidden rounded-[24px] bg-[#141210] ring-1 ring-[#D4B06A]/30 shadow-lift p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,176,106,0.1),transparent_50%)] pointer-events-none" />
+        {/*قسم الدعوة لزيارة الأسئلة الشائعة */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full border-t border-[var(--sf-border)]">
+          <div className="relative overflow-hidden rounded-[22px] bg-[var(--sf-panel)] border border-[var(--sf-border)] shadow-soft p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6"data-reveal>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--sf-accent-soft),transparent_50%)] pointer-events-none"/>
             
             <div className="relative z-10 text-center sm:text-right flex-1">
-              <h3 className="text-xl sm:text-2xl font-black text-[#F3EEE4] font-serif mb-2">
+                              <h3 className="text-xl sm:text-2xl font-bold text-[var(--sf-text)] mb-2">
                 هل لديك استفسار قبل الطلب؟
               </h3>
-              <p className="text-xs sm:text-sm text-[#A39A8B] leading-relaxed max-w-xl">
+              <p className="text-xs sm:text-sm text-[var(--sf-muted)] leading-relaxed max-w-xl">
                 كل ما تحتاج معرفته عن التوصيل، الدفع، والمعاينة موجود في صفحة مخصصة لراحتتك.
               </p>
             </div>
@@ -807,9 +792,8 @@ export default function App() {
             <div className="relative z-10 shrink-0">
               <button
                 onClick={() => setIsFAQPageOpen(true)}
-                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[#D4B06A] hover:bg-[#E8CC8A] text-[#0B0A09] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
-              >
-                <HelpCircle className="w-5 h-5" />
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-[var(--sf-accent)] hover:bg-[var(--sf-accent-strong)] text-[var(--sf-accent-contrast)] font-bold text-sm transition-all shadow-gold hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer">
+                <HelpCircle className="w-5 h-5"/>
                 الأسئلة الشائعة وطريقة الطلب
               </button>
             </div>
@@ -848,15 +832,15 @@ export default function App() {
           onRemoveItem={handleRemoveFromCart}
           onProceedToCheckout={() => {
             if (!productsLoaded) {
-              showToast('انتظر لحظة حتى يتم تحديث بيانات المنتجات والمخزون', { variant: 'warning' });
+              showToast('انتظر لحظة حتى يتم تحديث بيانات المنتجات والمخزون', { variant: 'warning'});
               return;
             }
             const { cart: reconciled, messages } = reconcileCart(cart, products);
             setCart(reconciled);
             if (messages.length > 0) {
               showToast(
-                messages[0] + (messages.length > 1 ? ` (و${messages.length - 1} تنبيهات أخرى)` : ''),
-                { variant: 'warning' }
+                messages[0] + (messages.length > 1 ? `(و${messages.length - 1} تنبيهات أخرى)`: ''),
+                { variant: 'warning'}
               );
               return;
             }
@@ -890,7 +874,7 @@ export default function App() {
           onClose={() => setIsOrderTrackingOpen(false)}
         />
 
-        {/* 💡 صفحة الأسئلة الشائعة */}
+        {/*صفحة الأسئلة الشائعة */}
         <FAQPage
           isOpen={isFAQPageOpen}
           onClose={() => setIsFAQPageOpen(false)}
@@ -898,7 +882,7 @@ export default function App() {
 
         <FloatingActions onOpenTracking={() => setIsOrderTrackingOpen(true)} />
 
-        {/* 💡 السطر المطلوب إضافته هنا */}
+        {/*السطر المطلوب إضافته هنا */}
         <SupportChatbot
           onOpenFAQ={() => setIsFAQPageOpen(true)}
           products={products}
@@ -909,7 +893,7 @@ export default function App() {
             setSelectedProductModal(product);
           }}
           onNavigateCategory={(categoryId) => {
-            // 💡 عند طلب نشمي فتح قسم: نلغي أي فلاتر قد تخفي منتجات القسم ثم ننتقل إليه
+            //عند طلب نشمي فتح قسم: نلغي أي فلاتر قد تخفي منتجات القسم ثم ننتقل إليه
             setSearchQuery('');
             setPriceRange([0, 1000]);
             setSelectedColor('');
@@ -927,9 +911,9 @@ export default function App() {
           onOpenTracking={() => setIsOrderTrackingOpen(true)}
         />
 
-      </div> {/* 💡 إغلاق المتجر هنا */}
+      </div> {/*إغلاق المتجر هنا */}
 
-      {/* 💡 لوحة الإدارة والنوافذ خارج الثيم لتبقى داكنة دائماً */}
+      {/*لوحة الإدارة والنوافذ خارج الثيم لتبقى داكنة دائماً */}
       <AdminAuthModal
         isOpen={isAdminAuthOpen}
         onClose={() => setIsAdminAuthOpen(false)}

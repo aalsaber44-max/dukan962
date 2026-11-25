@@ -20,7 +20,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  // 🔐 كلمة السر المعقدة (يمكنك تغييرها من هنا في أي وقت)
+  // كلمة السر المعقدة (يمكنك تغييرها من هنا في أي وقت)
   const SECRET_PASSWORD = "Dukan962@Admin#2024!";
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -124,8 +124,9 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           </button>
         </form>
 
-        <p className="text-[10px] text-[#8A8173] text-center mt-4 leading-relaxed">
-          🔒 منطقة محمية — الدخول مخصص لصاحب المتجر فقط
+        <p className="text-[10px] text-[#8A8173] mt-4 leading-relaxed flex items-center justify-center gap-1.5">
+          <Lock className="w-3 h-3 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+          منطقة محمية — الدخول مخصص لصاحب المتجر فقط
         </p>
       </div>
     </div>

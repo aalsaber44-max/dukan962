@@ -1,4 +1,5 @@
 import React from 'react';
+import { stripEmoji } from '../utils/emoji';
 import { AnimatePresence, motion } from 'motion/react';
 import { ShoppingBag, Heart, HeartOff, CircleCheck, TriangleAlert, X } from 'lucide-react';
 
@@ -31,7 +32,7 @@ const variants: Record<ToastVariant, { title: string; Icon: React.ElementType; t
   remove: {
     title: 'أُزيل من المفضلة',
     Icon: HeartOff,
-    tile: 'from-white/15 to-white/5 text-white/80 ring-white/20',
+    tile: 'from-white/15 to-white/5 text-white/80 ring-[var(--sf-border)]',
   },
   warning: {
     title: 'تنبيه المخزون',
@@ -59,7 +60,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => (
           animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
           exit={{ opacity: 0, y: 16, scale: 0.97, filter: 'blur(4px)' }}
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-          className="pointer-events-auto relative overflow-hidden w-full max-w-md flex items-center gap-3.5 pl-3 pr-3.5 py-3 rounded-[22px] bg-[#141210]/85 backdrop-blur-2xl backdrop-saturate-150 text-[#F3EEE4] ring-1 ring-[#D4B06A]/25 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]"
+          className="pointer-events-auto relative overflow-hidden w-full max-w-md flex items-center gap-3.5 pl-3 pr-3.5 py-3 rounded-[22px] bg-[var(--sf-surface)]/85 backdrop-blur-2xl backdrop-saturate-150 text-[var(--sf-text)] ring-1 ring-[var(--sf-accent)]/25 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]"
         >
           {(() => {
             const { Icon, tile, title } = variants[toast.variant];
@@ -70,8 +71,8 @@ export const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => (
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-bold leading-tight">{title}</p>
-                  <p className="text-xs text-white/65 mt-0.5 truncate">{toast.message}</p>
+                  <p className="text-[13px] font-bold leading-tight">{stripEmoji(title)}</p>
+                  <p className="text-xs text-white/65 mt-0.5 truncate">{stripEmoji(toast.message)}</p>
                 </div>
 
                 {toast.actionLabel && toast.onAction && (
@@ -80,23 +81,23 @@ export const Toast: React.FC<ToastProps> = ({ toast, onDismiss }) => (
                       toast.onAction?.();
                       onDismiss();
                     }}
-                    className="shrink-0 h-8 px-3.5 rounded-full bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] text-xs font-bold transition-all hover:brightness-110 active:scale-95 cursor-pointer"
+                    className="shrink-0 h-8 px-3.5 rounded-full bg-gradient-to-b from-[var(--sf-accent-strong)] to-[var(--sf-accent)] text-[var(--sf-accent-contrast)] text-xs font-bold transition-all hover:brightness-110 active:scale-95 cursor-pointer"
                   >
-                    {toast.actionLabel}
+                    {stripEmoji(toast.actionLabel)}
                   </button>
                 )}
 
                 <button
                   onClick={onDismiss}
                   aria-label="إغلاق"
-                  className="shrink-0 grid place-items-center w-7 h-7 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  className="shrink-0 grid place-items-center w-7 h-7 rounded-full text-white/50 hover:text-white hover:bg-[var(--sf-soft-strong)] transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
 
                 <span
                   key={`bar-${toast.id}`}
-                  className="absolute bottom-0 inset-x-0 h-[3px] origin-right bg-gradient-to-l from-[#E3C16F] to-[#B8923A] animate-toast-progress"
+                  className="absolute bottom-0 inset-x-0 h-[3px] origin-right bg-gradient-to-l from-[var(--sf-accent-strong)] to-[var(--sf-accent-strong)] animate-toast-progress"
                 />
               </>
             );

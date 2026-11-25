@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   X, Plus, Trash2, Edit2, Save, Upload, Check, RefreshCw, Layers, ShoppingBag,
   Phone, MessageCircle, Lock, KeyRound, Smartphone, Clock, MapPin, Star, Search,
-  Download, DollarSign, Bell, BarChart3,
+  Download, DollarSign, Bell, BarChart3, Crown, Lightbulb, Camera,
 } from 'lucide-react';
 import { Product, ProductColor, Order, Category, ProductAttribute } from '../types/furniture';
 import { db } from '../firebase';
@@ -11,7 +11,7 @@ import { CategoryManager } from '../CategoryManager';
 import { AdminStats } from './AdminStats';
 import { StockBadge } from './StockBadge';
 import { aggregateItems, getStockState, planOrderStockChange, DEFAULT_LOW_STOCK } from '../utils/inventory';
-import { stripUndefined } from '../utils/firestoreData'; // 💡 تم حذف toUpdateData
+import { stripUndefined } from '../utils/firestoreData'; // تم حذف toUpdateData
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -205,7 +205,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
 
     try {
-      // 💡 هذا هو الإصلاح: معالجة الحقول الفارغة باستخدام deleteField لمنع خطأ invalid-argument
+      // هذا هو الإصلاح: معالجة الحقول الفارغة باستخدام deleteField لمنع خطأ invalid-argument
       const dataToUpdate: Record<string, any> = {};
       const payload = { ...updated, sku };
       
@@ -637,7 +637,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between bg-[#1C1815]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-[#E8CC8A] to-[#D4B06A] text-[#0B0A09] flex items-center justify-center font-bold shadow-gold">
-              👑
+              <Crown className="w-5 h-5" strokeWidth={1.5} aria-hidden="true" />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-[#F3EEE4] font-serif">
@@ -1384,7 +1384,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <div className="p-3 bg-[#D4B06A]/10 border border-[#D4B06A]/25 rounded-xl text-xs text-[#E8CC8A] flex items-start gap-2 mb-3">
-                  <span className="text-base shrink-0">💡</span>
+                  <Lightbulb className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.5} aria-hidden="true" />
                   <div>
                     <strong className="block text-[#E8CC8A] font-bold">تنبيه بخصوص حجم الصور:</strong>
                     <span>يتم ضغط الصور تلقائياً. إذا واجهت مشكلة، استخدم رابط URL مباشر.</span>
@@ -1421,7 +1421,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
                           </div>
                           <div className="flex flex-col gap-2">
-                            <input type="text" value={color.image.startsWith('data:image') ? '' : color.image} onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)} placeholder={color.image.startsWith('data:image') ? 'تم رفع الصورة ✓' : 'ضع رابط الصورة...'} className="w-full text-xs py-1 px-2 bg-[#141210] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]" dir="ltr" />
+                            <input type="text" value={color.image.startsWith('data:image') ? '' : color.image} onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)} placeholder={color.image.startsWith('data:image') ? 'تم رفع الصورة' : 'ضع رابط الصورة...'} className="w-full text-xs py-1 px-2 bg-[#141210] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]" dir="ltr" />
                             <label className="flex items-center justify-center gap-1 p-1 bg-white/[0.04] border border-white/10 rounded-lg cursor-pointer text-[10px] font-bold text-[#E8CC8A] hover:bg-white/10 transition-colors">
                               <Upload className="w-3 h-3" /> رفع من الجهاز
                               <input type="file" accept="image/*" onChange={(e) => handleColorImageUpload(idx, e)} className="hidden" />
@@ -1437,7 +1437,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="pt-2 border-t border-white/10">
                         <div className="flex flex-col gap-2 mb-2">
                           <span className="text-[11px] text-[#A39A8B]">
-                            {`📷 زوايا إضافية لهذا اللون (${color.additionalImages?.length || 0}):`}
+                            <span className="inline-flex items-center gap-1.5">
+                              <Camera className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                              {`زوايا إضافية لهذا اللون (${color.additionalImages?.length || 0}):`}
+                            </span>
                           </span>
                           <div className="flex flex-col sm:flex-row gap-2 w-full">
                             <input type="text" placeholder="رابط الصورة الإضافية..." value={tempNewColorUrls[idx] || ''} onChange={(e) => setTempNewColorUrls(prev => ({...prev, [idx]: e.target.value}))} className="w-full text-xs py-1.5 px-2 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]" dir="ltr" />
@@ -1890,7 +1893,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                           type="text" 
                           value={color.image.startsWith('data:image') ? '' : color.image} 
                           onChange={(e) => handleColorUpdate(idx, 'image', e.target.value)} 
-                          placeholder={color.image.startsWith('data:image') ? 'تم الرفع ✓' : 'رابط الصورة...'} 
+                          placeholder={color.image.startsWith('data:image') ? 'تم الرفع' : 'رابط الصورة...'} 
                           className="w-full text-xs py-1 px-2 bg-[#141210] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]" 
                           dir="ltr" 
                         />
@@ -1918,7 +1921,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, categories
                   <div className="pt-2 border-t border-white/10">
                     <div className="flex flex-col gap-2 mb-2">
                       <span className="text-[11px] text-[#A39A8B]">
-                        {`📷 زوايا إضافية (${color.additionalImages?.length || 0}):`}
+                        <span className="inline-flex items-center gap-1.5">
+                          <Camera className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                          {`زوايا إضافية (${color.additionalImages?.length || 0}):`}
+                        </span>
                       </span>
                       
                       <div className="flex flex-col sm:flex-row gap-2 w-full">

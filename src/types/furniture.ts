@@ -13,7 +13,7 @@ export interface Category {
   badgeText: string;
   isActive: boolean;
   order: number;
-  /** 🎬 رابط فيديو بانر القسم (URL مباشر: Cloudinary / ImgBB / أي استضافة) */
+  /**رابط فيديو بانر القسم (URL مباشر: Cloudinary / ImgBB / أي استضافة) */
   videoUrl?: string;
 }
 
@@ -73,7 +73,7 @@ export interface Order {
   id: string;
   firestoreId?: string;
   createdAt: string;
-  status: 'جديد' | 'جاري التجهيز' | 'جاري التوصيل' | 'تم التسليم' | 'ملغي';
+  status: 'جديد'| 'جاري التجهيز'| 'جاري التوصيل'| 'تم التسليم'| 'ملغي';
   stockDeducted?: boolean;
   stockDeductions?: Record<string, number>;
   name: string;
@@ -85,7 +85,7 @@ export interface Order {
   street?: string; 
   building?: string; 
   notes?: string;
-  paymentMethod: 'cod' | 'cliq'; 
+  paymentMethod: 'cod'| 'cliq'; 
   cliqRef?: string;
   items: CartItem[];
   subtotal: number;

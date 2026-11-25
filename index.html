@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="theme-color" content="#0B0A09" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#09090B" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>دكان 962 للأثاث | DUKAN 962 - طاولات وعفش فاخر</title>
-    <meta name="description" content="دكان 962 للأثاث - تشكيلة طاولات وسط وصالون، طاولات شاشة وتلفزيون ومدافئ ديكور خشب تايلندي ثقيل. توصيل لكافة المحافظات بالدينار الأردني." />
-    <meta property="og:title" content="دكان 962 للأثاث | DUKAN 962" />
-    <meta property="og:description" content="طاولات وسط وشاشة ومدافئ ديكورية فاخرة من خشب تايلندي ثقيل - التوصيل لكافة المحافظات بالدينار الأردني." />
+    <title>دكان 962 | DUKAN 962 — وجهتك الأولى للتسوق الشامل</title>
+    <meta name="description" content="دكان 962 — وجهتك الأولى للتسوق الشامل في الأردن: أثاث وديكور، عطور، هدايا ومنتجات لايف ستايل مختارة بعناية. توصيل لكافة المحافظات بالدينار الأردني." />
+    <meta property="og:title" content="دكان 962 | DUKAN 962" />
+    <meta property="og:description" content="وجهتك الأولى للتسوق الشامل — أثاث وديكور، عطور، هدايا ومنتجات لايف ستايل. توصيل لكافة المحافظات." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta property="og:image" content="https://i.postimg.cc/TPJ91jBX/Designer1.png" />
@@ -19,8 +19,8 @@
     {
       "@context": "https://schema.org",
       "@type": "FurnitureStore",
-      "name": "دكان 962 للأثاث | DUKAN 962",
-      "description": "دكان 962 للأثاث - تشكيلة طاولات وسط وصالون، طاولات شاشة وتلفزيون ومدافئ ديكور خشب تايلندي ثقيل. توصيل لكافة المحافظات بالدينار الأردني.",
+      "name": "دكان 962 | DUKAN 962",
+      "description": "دكان 962 — وجهتك الأولى للتسوق الشامل: أثاث وديكور، عطور، هدايا ومنتجات لايف ستايل.",
       "telephone": "+962780981214",
       "image": "https://i.postimg.cc/TPJ91jBX/Designer1.png",
       "address": {
@@ -35,9 +35,16 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // منع وميض الوضع الخاطئ قبل أول رسم
+      try {
+        var t = localStorage.getItem('dukan962_store_theme');
+        if (t === 'light') document.documentElement.dataset.theme = 'light';
+      } catch (e) {}
+    </script>
   </head>
-  <body class="bg-[#0B0A09] text-[#F3EEE4] antialiased selection:bg-[#D4B06A] selection:text-[#0B0A09]">
+  <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

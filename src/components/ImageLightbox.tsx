@@ -49,7 +49,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({ images, index, alt
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   const btn =
-    'grid place-items-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-white/15 text-[#F3EEE4] backdrop-blur-md transition-all active:scale-90 cursor-pointer';
+    'grid place-items-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 ring-1 ring-[var(--sf-border)] text-[var(--sf-text)] backdrop-blur-md transition-all active:scale-90 cursor-pointer';
 
   return createPortal(
     <div
@@ -63,7 +63,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({ images, index, alt
       aria-label="عرض الصورة"
     >
       <div className="flex items-center justify-between p-3 sm:p-5" onClick={stop}>
-        <span className="text-xs font-mono text-[#A39A8B] bg-white/10 px-3 py-1 rounded-full">
+        <span className="text-xs font-mono text-[var(--sf-muted)] bg-white/10 px-3 py-1 rounded-full">
           {index + 1} / {count}
         </span>
         <div className="flex items-center gap-2">
@@ -121,8 +121,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({ images, index, alt
             <button
               key={`${src}-${i}`}
               onClick={() => { setZoomed(false); onIndexChange(i); }}
-              className={`w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-xl overflow-hidden bg-[#EFE9DE] transition-all cursor-pointer ${
-                i === index ? 'ring-2 ring-[#D4B06A] scale-105' : 'opacity-60 hover:opacity-100'
+              className={`w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-xl overflow-hidden bg-[var(--sf-plate-a)] transition-all cursor-pointer ${
+                i === index ? 'ring-2 ring-[var(--sf-accent)] scale-105' : 'opacity-60 hover:opacity-100'
               }`}
               aria-label={`الصورة ${i + 1}`}
             >

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Check, Eye, EyeOff, Save, X, Video } from 'lucide-react';
-import { db } from './firebase'; // 💡 تم تصحيح المسار
+import { db } from './firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-import { Category } from './types/furniture'; // 💡 تم تصحيح المسار
+import { Category } from './types/furniture';
 
 export const CategoryManager: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -20,7 +20,7 @@ export const CategoryManager: React.FC = () => {
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
-  // 🎬 محرر فيديو لكل قسم (inline)
+  // محرر فيديو لكل قسم (inline)
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [videoUrlDraft, setVideoUrlDraft] = useState('');
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -63,7 +63,7 @@ export const CategoryManager: React.FC = () => {
         title: newTitle || newName,
         description: newDesc || '',
         buttonText: newButtonText || 'استكشف الآن',
-        badgeText: newBadge || '✨ جودة ممتازة',
+        badgeText: newBadge || 'جودة ممتازة',
         videoUrl: videoUrl || null,
         isActive: true,
         order: categories.length + 1,
@@ -229,14 +229,14 @@ export const CategoryManager: React.FC = () => {
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1">نص الشارة (Badge)</label>
               <input
                 type="text"
-                placeholder="مثال: ✨ خامات أصلية"
+                placeholder="مثال: خامات أصلية"
                 value={newBadge}
                 onChange={(e) => setNewBadge(e.target.value)}
                 className="w-full text-sm py-2 px-3 bg-[#0B0A09] border border-white/10 rounded-lg text-[#F3EEE4] placeholder-[#8A8173] focus:outline-none focus:border-[#D4B06A]"
               />
             </div>
 
-            {/* 🎬 حقل الفيديو في فورم الإضافة */}
+            {/* حقل الفيديو في فورم الإضافة */}
             <div className="md:col-span-2 pt-2 border-t border-white/10">
               <label className="block text-[11px] font-bold text-[#F3EEE4] mb-1 flex items-center gap-1.5">
                 <Video className="w-3.5 h-3.5 text-[#D4B06A]" />
@@ -369,7 +369,7 @@ export const CategoryManager: React.FC = () => {
                     </td>
                   </tr>
 
-                  {/* 🎬 محرر الفيديو (inline) */}
+                  {/* محرر الفيديو (inline) */}
                   {editingVideoId === cat.id && (
                     <tr>
                       <td colSpan={5} className="p-4 bg-[#0B0A09] border-t border-white/10">
